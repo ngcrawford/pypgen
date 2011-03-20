@@ -48,7 +48,7 @@ class population(object):
         allele_counts = larry(empty_data,[unique_alleles,self.loci])
         return allele_counts
     
-    def exp_hetero(self):
+    def exp_het(self):
         "Calculate Expected Heterozygosity"
         Hexp_dict = {}
         for locus in self.loci:
@@ -155,9 +155,28 @@ class populations(object):
     def __init__(self,):
         super(populations, self).__init__()
         self.pops = []
+        
+    def allelefreqs3Dlarry(self):
+        "returns populations as labeled 'larry.'"
+        pop_names = self.pop_names()
+        pop_loci = self.pops[0].loci
+        unique_alleles = self.unique_alleles()
+        empty_data = zeros((len(unique_alleles), len(pop_loci)))
+        complete_alleles = larry(empty_data.copy(),[unique_alleles, pop_loci])
+        data3d = []
+        for count, pop in enumerate(self.pops):
+            pop.allele_freqs()
+            alleles_data = complete_alleles.merge(pop.allele_freqs(), update=True)
+            data3d.append(alleles_data.copyx())
+        data3d = array(data3d)
+        data3d = larry(data3d.copy(), [pop_names,unique_alleles,pop_loci])
+        
+        return data3d
+
+        
     
     def empty_pop_by_loci_larry(self):
-        """Make Empty Array for Internal Use
+        """Make Empty Array for Internal Use.
         should probably be __empty_pop_by_loci_larry__
         """
         pop_names = self.pop_names()
@@ -238,14 +257,14 @@ class populations(object):
         # Each het. then gets 'set', really appended, to the final
         # storage array
         for pop in self.pops:
-            pop_heterozygosities = pop.exp_hetero()
+            pop_heterozygosities = pop.exp_het()
             for locus in pop_heterozygosities.keys():
                 current_het = pop_heterozygosities[locus]
                 heterozygosity.set((pop.name, locus), current_het)
         
         # return the mean heterozygosity for each locus.
         return heterozygosity.mean(axis=0)
-    
+               
     def Ht(self):
         """Calculate Ht the heterozygosity of the pooled subpopulations (Nei and Chesser 1983)"""
         # for the same allele in each locus sum the frequencies from each population and square
@@ -264,31 +283,12 @@ class populations(object):
                 pop_allele_freqs = pop.allele_freqs()
                 locus_freqs = pop_allele_freqs.lix[:,[locus]]
                 allele_names = locus_freqs.getlabel(axis=0)
-                
-                for count, freq in enumerate(locus_freqs):
-                    allele_name = allele_names[count]
-                    labeled_empty_larry.set([allele_name, pop.name],freq) 
             
             Ht = 1.0-(pow(labeled_empty_larry.mean(axis=1),2).sum())
             Ht_larry.set([locus],Ht)
-        return Ht_larry
             
-    def Hs_est(self):
-        """ Basic Equation: ((2*N_harmonic)/(2*N_harmonic-1))*Hs"""
-        locus_harmonic_means = self.loci_harmonic_means()
-        Hs = self.Hs()
-        Hs_est = ((2.0*locus_harmonic_means)/(2.0*locus_harmonic_means-1.0))*Hs
-        return Hs_est
-        
-    def Ht_est(self):
-        """Basic Equation: Ht+Hs_est/(2*N_harmonic*n)"""
-        locus_harmonic_means = self.loci_harmonic_means()
-        Hs_est = self.Hs_est()
-        Ht = self.Ht()
-        n = len(self.pop_names())
-        Ht_est = Ht+Hs_est/(2.0*locus_harmonic_means*n)
-        return Ht_est
-    
+        return Ht_larry
+       
     def Hst(self):
         Ht = self.Ht()
         Hs = self.Hs()
@@ -326,6 +326,39 @@ class populations(object):
         n = self.n()
         D = ((Ht-Hs)/(1.0-Hs))*(n/(n-1.0))
         return D
+    
+    # DIVERSITY ESTIMATORS
+    def Hs_prime_est(self):
+        """Calculate corrected Hs: the mean within-subpopulation heterozygosity (Nei and Chesser 1983)."""
+        n = self.n()
+        allele_freqs = self.allelefreqs3Dlarry()
+        Hj = 1-(allele_freqs.power(2).sum(axis=1))
+        Hs_prime_est = (1/n)*(Hj.sum(axis=0))
+        return Hs_prime_est
+    
+    def Ht_prime_est(self):
+        """Calculate corrected Ht: the heterozygosity of the pooled subpopulations (Nei and Chesser 1983)"""
+        n = self.n()
+        allele_freqs = self.allelefreqs3Dlarry()
+        inner = ((1/n)*allele_freqs.sum(axis=0)).power(2)
+        Ht_prime_est = 1-inner.sum(axis=0)
+        return Ht_prime_est
+    
+    def Hs_est(self):
+        """ Basic Equation: ((2*N_harmonic)/(2*N_harmonic-1))*Hs"""
+        locus_harmonic_means = self.loci_harmonic_means()
+        Hs = self.Hs_prime_est()
+        Hs_est = ((2.0*locus_harmonic_means)/(2.0*locus_harmonic_means-1.0))*Hs
+        return Hs_est
+    
+    def Ht_est(self):
+        """Basic Equation: Ht+Hs_est/(2*N_harmonic*n)"""
+        locus_harmonic_means = self.loci_harmonic_means()
+        Hs_est = self.Hs_est()
+        Ht = self.Ht_prime_est()
+        n = len(self.pop_names())
+        Ht_est = Ht+Hs_est/(2.0*locus_harmonic_means*n)
+        return Ht_est
     
     def Gst_est(self):
         Ht_est = self.Ht_est()
@@ -407,8 +440,6 @@ class populations(object):
         multilocusD_est = self.harmonic_mean_chao(D_est)
         return multilocusD_est
     
-
-    
     def write_genepop():
         """Write demes class to GenePop file"""
         pass
@@ -470,6 +501,7 @@ def parse_genepop(lines):
         # FLAG POPULATION AND UPDATE STORAGE LIST (All_Loci)
         if line_match:              # Flag Pops
             population_name = lines[line_counter+2].split()[0]      # get current pop name
+            population_name = population_name.strip(',')
             population_names.append(population_name)
             pops_flag += 1
             if pops_flag >= 2:
@@ -567,7 +599,7 @@ class PopulationTests(unittest.TestCase):
     
     def testExpectedHeterozygosity(self):
         pop = population(self.popA, loci=['Locus 1', 'Locus 2'])
-        Hexp = pop.exp_hetero()
+        Hexp = pop.exp_het()
         testvalues = {'Locus 1': 0.31999999999999984, 'Locus 2': 0.5}
         self.assertEqual(Hexp,testvalues) # not working
     
@@ -616,6 +648,11 @@ class PopulationsTests(unittest.TestCase):
         testvalues = larry.fromtuples([('Locus 1', 0.31999999999999984), 
                                        ('Locus 2', 0.5)])
         self.assertEqual(Hs,testvalues, 'Incorrect Hs values')
+    
+    def testHs_prime_est(self):
+        testdemes = self.make_test_demes()
+        testdemes.Hs_prime_est()
+        # finish this...
 
     def testHt(self):
         testdemes = self.make_test_demes()
@@ -624,6 +661,10 @@ class PopulationsTests(unittest.TestCase):
                                        ('Locus 2', 0.5)])
         self.assertEqual(Ht, testvalues, 'Incorrect Ht values')
     
+    def testHt_prime_est(self):
+        testdemes = self.make_test_demes()
+        testdemes.Ht_prime_est()
+        
     def testAlleleCounts(self):
         testdemes = self.make_test_demes()
         allele_counts = testdemes.allele_counts()
@@ -645,7 +686,7 @@ class PopulationsTests(unittest.TestCase):
         Hs_est = testdemes.Hs_est()
         testvalues = larry.fromtuples([('Locus 1', 0.33684210526315772),
                                        ('Locus 2', 0.52631578947368418)])
-        self.assertEqual(Hs_est, testvalues, 'Incorrect Hs-est values')
+        self.assertEqual(Hs_est, testvalues, ) # 'Incorrect Hs-est values'
         
     def testHt_est(self):
         testdemes = self.make_test_demes()
@@ -755,16 +796,22 @@ if __name__ == '__main__':
     # pops = parse_genepop(lines)
     # #print 'Ht', pops.Ht()
     # # print 'loci_harmonic_means', pops.loci_harmonic_means()
-    # # print 'Hs_est', pops.Hs_est()
-    # # print 'Ht_est', pops.Ht_est()
+    # test = pops.allelefreqs3Dlarry()
+    # alleles = pops.pops[0].allele_freqs()
+    #print 'Hs', pops.Hs_est()
+    # print 'Hs_prime_est', pops.Hs_prime_est()
+    # print 'Ht_prime_est', pops.Ht_prime_est()
+
+
+
     # # print 'Gst_est', pops.Gst_est().totuples()
     # # print 'Gst_est', pops.multilocusGst_est()
     # # print "G'st_est", pops.G_prime_st_est().totuples()
     # # print "G'st_est", pops.multilocusG_prime_st_est()
     # print "G''st_est", pops.G_double_prime_st_est().totuples()
     # print "G''st_est", pops.multilocusG_double_prime_st_est()
-    # # print "D_est", pops.D_est().totuples()
-    # # print "D_est", pops.multilocusD_est()
+    # print "D_est", pops.D_est().totuples()
+    # print "D_est", pops.multilocusD_est()
 
     
     suite = unittest.TestLoader().loadTestsFromTestCase(InputFileTest)
@@ -772,7 +819,7 @@ if __name__ == '__main__':
     
     suite = unittest.TestLoader().loadTestsFromTestCase(PopulationTests)
     unittest.TextTestRunner(verbosity=1).run(suite)
-    
+    # 
     suite = unittest.TestLoader().loadTestsFromTestCase(PopulationsTests)
     unittest.TextTestRunner(verbosity=1).run(suite)
 
