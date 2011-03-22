@@ -7,9 +7,13 @@ This is repository contains a python classes for parsing [genepop files](http://
 
 Pypop requires that you install the python mathematics and plotting software [MatPlotLib](http://matplotlib.sourceforge.net/index.html).  If you're installing on OSX or linux I recommend using [easy install](http://pypi.python.org/pypi/setuptools) to do the installation as MatPlotLib can be difficult to install from source.  With that in mind the basic steps would be as follows:
 
-1.) Download and install easy install (aka setuptools). Instructions [here](http://pypi.python.org/pypi/setuptools).
+1.) They easy way: [download](http://www.enthought.com/products/edudownload.php) and install the *free*, to academics anyway, [Enthought Python](http://www.enthought.com/products/epd.php) which contains matplotlib, scipy, numpy, and ipython preinstalled  . 
 
-2.) Open terminal and type the following command: `easy_install matplotlib`. This should install all the dependancies for pypgen.
+Alternately you can use *easy_install* to install just the modules you need:
+
+1.) Download and install easy install (aka setuptools) following these [instructions](http://pypi.python.org/pypi/setuptools).
+
+2.) Then open terminal and type the following command: `easy_install matplotlib`. This should install all the dependancies for pypgen.
 
 3.) Check that everything worked by running `python` at the command line and once in the python shell typing `import pylab`.  If you don't see any errors you're good to go. 
 
