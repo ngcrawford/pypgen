@@ -1,14 +1,27 @@
 #!/usr/bin/env python
 # encoding: utf-8
 """
-pop.py
+pypgen.py
 
-Created by Nick Crawford on 2010-08-30.
-Copyright (c) 2010 Boston Univeristy. All rights reserved.
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses
+
+The author may be contacted at ngcrawford@gmail.comm
 """
 
 import os
 import re
+import csv
 import sys
 import copy
 import unittest
@@ -40,7 +53,7 @@ class population(object):
         self.genotypes = label_genotypes(self)   # store genotypes as labeled array (larry)
     
     
-    def empty_matrix(self):
+    def __empty_matrix__(self):
         """ creat empty matrix for counts or frequencies"""
         unique_alleles = self.unique_alleles()
         ua_len, l_len = (len(unique_alleles), len(self.loci))
@@ -92,7 +105,7 @@ class population(object):
     def allele_counts(self):
         """Convert set of raw genotypes (larry) to a matrix of allele counts"""
         # set up empty labeled set of data
-        allele_counts = self.empty_matrix()
+        allele_counts = self.__empty_matrix__()
             
         # added counts to alleles
         for locus in self.loci:
@@ -115,7 +128,7 @@ class population(object):
     def allele_freqs(self):
         """Convert matrix of allele counts to allele frequencies"""
          # set up empty labeled set of data
-        allele_freqs = self.empty_matrix()
+        allele_freqs = self.__empty_matrix__()
         
         for locus in self.loci:
             locus_counts = self.allele_counts().lix[:,[locus]]
@@ -156,7 +169,7 @@ class populations(object):
         super(populations, self).__init__()
         self.pops = []
         
-    def allelefreqs3Dlarry(self):
+    def __allele_freqs_3D_larry__(self):
         "returns populations as labeled 'larry.'"
         pop_names = self.pop_names()
         pop_loci = self.pops[0].loci
@@ -175,10 +188,9 @@ class populations(object):
 
         
     
-    def empty_pop_by_loci_larry(self):
+    def __empty_pop_by_loci_larry__(self):
         """Make Empty Array for Internal Use.
-        should probably be __empty_pop_by_loci_larry__
-        """
+        should probably be __empty_pop_by_loci_larry__"""
         pop_names = self.pop_names()
         empty_data = zeros((len(pop_names), len(self.pops[0].loci)))
         labeled_empty_larry = larry(empty_data.copy(), [pop_names, self.pops[0].loci])
@@ -204,7 +216,7 @@ class populations(object):
         """Count the number of loci in each population 
         accounting for missing data."""
 
-        n_alleles = self.empty_pop_by_loci_larry()
+        n_alleles = self.__empty_pop_by_loci_larry__()
         for pop in self.pops:
             n_dict = pop.n()
             for locus in self.pops[0].loci:
@@ -251,7 +263,7 @@ class populations(object):
     def Hs(self):
         """Calculate Hs (mean within-subpopulation heterozygosity, Nei and Chesser 1983)"""
         # setup names, empty array, and final storage matrix
-        heterozygosity = self.empty_pop_by_loci_larry()
+        heterozygosity = self.__empty_pop_by_loci_larry__()
         
         # loop through population calculating heterozygosity for each locus.
         # Each het. then gets 'set', really appended, to the final
@@ -331,7 +343,7 @@ class populations(object):
     def Hs_prime_est(self):
         """Calculate corrected Hs: the mean within-subpopulation heterozygosity (Nei and Chesser 1983)."""
         n = self.n()
-        allele_freqs = self.allelefreqs3Dlarry()
+        allele_freqs = self.__allele_freqs_3D_larry__()
         Hj = 1-(allele_freqs.power(2).sum(axis=1))
         Hs_prime_est = (1/n)*(Hj.sum(axis=0))
         return Hs_prime_est
@@ -339,7 +351,7 @@ class populations(object):
     def Ht_prime_est(self):
         """Calculate corrected Ht: the heterozygosity of the pooled subpopulations (Nei and Chesser 1983)"""
         n = self.n()
-        allele_freqs = self.allelefreqs3Dlarry()
+        allele_freqs = self.__allele_freqs_3D_larry__()
         inner = ((1/n)*allele_freqs.sum(axis=0)).power(2)
         Ht_prime_est = 1-inner.sum(axis=0)
         return Ht_prime_est
@@ -440,9 +452,102 @@ class populations(object):
         multilocusD_est = self.harmonic_mean_chao(D_est)
         return multilocusD_est
     
+    def all_estimators(self):
+        """Calculate all the estimators simultaneously (e.g., Gst, G'st, G''st and Dest)
+        This is substantially faster than calculating each one independantly."""
+        n = self.n()
+        Ht_est = self.Ht_est()
+        Hs_est = self.Hs_est()
+        
+        # calculate estimators. Saving values as narrays using .copyx()
+        Gst_est = ((Ht_est-Hs_est)/Ht_est).copyx()
+        G_prime_st_est = ((Gst_est*(n-1.0+Hs_est))/((n-1.0)*(1.0-Hs_est))).copyx()
+        G_double_prime_st_est = (n*(Ht_est-Hs_est)/((n*Ht_est-Hs_est)*(1-Hs_est))).copyx()
+        D_est = (((Ht_est-Hs_est)/(1.0-Hs_est))*(n/(n-1))).copyx()
+        
+        # create final larry with appropriate labels
+        estimator_array = larry(array([Gst_est, G_prime_st_est, G_double_prime_st_est, D_est]),
+                                [["Gst-est", "G'st-est", "G''st-est","D-est"], Ht_est.getlabel(axis=0)])
+        return estimator_array
+
+    
+    def all_multilocus_estimators(self):
+        """Calculate all the multilocus estimators simultaneously (e.g., Gst, G'st, G''st and Dest)
+        This is substantially faster than calculating each one independantly."""
+        n = self.n()
+        Ht_est = self.Ht_est()
+        Hs_est = self.Hs_est()
+        Ht_est_mean = Ht_est.mean()
+        Hs_est_mean = Hs_est.mean()
+        
+        # Calculate multilocus estimators using the means of the Ht and Hs estimators 
+        #   Note that Dest is estimated using the harmonic mean chao function
+        multilocus_Gst_est = (Ht_est_mean-Hs_est_mean)/Ht_est_mean
+        multilocus_G_prime_st = (multilocus_Gst_est*(n-1.0+Hs_est_mean))/((n-1.0)*(1.0-Hs_est_mean))
+        multilocus_G_double_prime_st_est = n*(Ht_est_mean-Hs_est_mean)/((n*Ht_est_mean-Hs_est_mean)*(1.0-Hs_est_mean))
+        multilocus_D_est = self.harmonic_mean_chao(((Ht_est-Hs_est)/(1.0-Hs_est))*(n/(n-1)))
+        
+        multilocus_estimators_array = larry(array([multilocus_Gst_est,multilocus_G_prime_st,multilocus_G_double_prime_st_est,multilocus_D_est]),
+                                            [["multilocus Gst-est","multilocus G'st-est","multilocus G''st-est","multilocus D-est"]])
+
+        return multilocus_estimators_array
+    
+    def calculate_pairwise_estimators(self, estimator='D_est'):
+        """rename"""
+        pop_names = len(self.pop_names())
+        storage_array = larry(zeros((pop_names,pop_names)), [self.pop_names(), self.pop_names()])
+        
+        for count, pop_list in enumerate(self.pops):
+            count = count + 1 # correct offset
+            for left, right in zip(self.pops[count:], self.pops[:-count]):
+                
+                # setup population class and add paired populations
+                paired_pops = populations()
+                paired_pops.append(right)
+                paired_pops.append(left)
+                
+                # apply appropriate multilocus estimator
+                if estimator == 'Gst_est':
+                    value = paired_pops.multilocusGst_est()
+                if estimator == 'G_prime_st_est':
+                    value = paired_pops.multilocusG_prime_st_est()
+                if estimator == 'G_double_prime_st_est':
+                    value = paired_pops.multilocusG_double_prime_st_est()
+                if estimator == 'D_est':
+                    value = paired_pops.multilocusD_est()
+                
+                # update storage array
+                storage_array.set(paired_pops.pop_names(),value)
+
+        return storage_array
+            
+    def pairwise_estimators(self, estimator='D_est'):
+        print estimator
+        # get data, header, and side label
+        data = self.calculate_pairwise_estimators(estimator)
+        header = data.getlabel(0)
+        side = data.getlabel(1)
+        header = [estimator] + list(header) # add estimator labeled cell to header 
+        
+        # set up csv writer and write header
+        filename = '/Users/nick/Desktop/%s.csv' % (estimator)
+        outfile = open(filename, 'w')
+        data_writer = csv.writer(outfile)
+        data_writer.writerow(header)
+        
+        # write data
+        for count, row in enumerate(data):
+            side_item = side[count]
+            row = [side_item] + list(row)
+            data_writer.writerow(row)
+        
+        
     def write_genepop():
         """Write demes class to GenePop file"""
         pass
+    
+    def write_Rstat():
+        """Write output for input into DEMEtics"""
     
     def read_arlequin():
         """Read in arlequin file into demes class"""
@@ -467,7 +572,7 @@ class populations(object):
 
 def parse_genepop(lines):
     """process genpop lines into multidimentional array"""
-
+    
     header = lines[0].strip()           # header info
     loci_names = []
     all_loci = []
@@ -647,23 +752,28 @@ class PopulationsTests(unittest.TestCase):
         Hs = testdemes.Hs()
         testvalues = larry.fromtuples([('Locus 1', 0.31999999999999984), 
                                        ('Locus 2', 0.5)])
-        self.assertEqual(Hs,testvalues, 'Incorrect Hs values')
+        self.assertEqual(Hs, testvalues, 'Incorrect Hs values')
     
     def testHs_prime_est(self):
         testdemes = self.make_test_demes()
-        testdemes.Hs_prime_est()
-        # finish this...
-
+        Hs_prime_est = testdemes.Hs_prime_est()
+        testvalues = larry.fromtuples([('Locus 1', 0.31999999999999984), 
+                                      ('Locus 2', 0.5)])
+        self.assertEqual(Hs_prime_est, testvalues, "Incorrect Hs'-est values")                       
+        
     def testHt(self):
         testdemes = self.make_test_demes()
         Ht = testdemes.Ht()
         testvalues = larry.fromtuples([('Locus 1', 0.5),
                                        ('Locus 2', 0.5)])
         self.assertEqual(Ht, testvalues, 'Incorrect Ht values')
-    
+        
     def testHt_prime_est(self):
         testdemes = self.make_test_demes()
-        testdemes.Ht_prime_est()
+        Ht_prime_est = testdemes.Ht_prime_est()
+        testvalues = larry.fromtuples([('Locus 1', 0.5), 
+                                       ('Locus 2', 0.5)])
+        self.assertEqual(Ht_prime_est, testvalues, "Incorrect Ht'-est values") 
         
     def testAlleleCounts(self):
         testdemes = self.make_test_demes()
@@ -791,21 +901,32 @@ class PopulationsTests(unittest.TestCase):
          
 if __name__ == '__main__':
     
-    # fin = open('/Users/nick/Desktop/GrandeTerreGenePop.txt', 'r')
-    # lines = fin.readlines()
-    # pops = parse_genepop(lines)
+    fin = open('/Users/nick/Desktop/GrandeTerreGenePop.txt', 'rU')
+    lines = fin.readlines()
+    pops = parse_genepop(lines)
+    # new_pair = populations()
+    # new_pair.append(pops.pops[4])
+    # new_pair.append(pops.pops[-1])
+    # print new_pair.pop_names()
+    # print new_pair.multilocusGst_est()
+    # pops.pairwise_estimators('Gst_est')
+    # pops.pairwise_estimators('G_prime_st_est')
+    # pops.pairwise_estimators('G_double_prime_st_est')
+    #pops.pairwise_estimators('D_est')
+    
+    
+    #data =  pops.larry2csv()
     # #print 'Ht', pops.Ht()
     # # print 'loci_harmonic_means', pops.loci_harmonic_means()
-    # test = pops.allelefreqs3Dlarry()
+    #test = pops.__allele_freqs_3D_larry__()
     # alleles = pops.pops[0].allele_freqs()
-    #print 'Hs', pops.Hs_est()
+    # print 'Hs', pops.Hs_est()
     # print 'Hs_prime_est', pops.Hs_prime_est()
     # print 'Ht_prime_est', pops.Ht_prime_est()
-
-
-
+    # print pops.all_estimators()
+    # print pops.all_multilocus_estimators()
     # # print 'Gst_est', pops.Gst_est().totuples()
-    # # print 'Gst_est', pops.multilocusGst_est()
+    # print 'Gst_est', pops.multilocusGst_est()
     # # print "G'st_est", pops.G_prime_st_est().totuples()
     # # print "G'st_est", pops.multilocusG_prime_st_est()
     # print "G''st_est", pops.G_double_prime_st_est().totuples()
