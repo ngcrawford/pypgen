@@ -25,8 +25,23 @@ import csv
 import sys
 import copy
 import unittest
+import argparse
+import pandas
 from la import *
 from pylab import *
+import multiprocessing
+from functools import partial
+
+
+
+def get_args():
+    """Parse sys.argv"""
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-i','--input-file', required=True, 
+        help='The input file. Either genepop or arlequin formated.')
+    args = parser.parse_args()
+    return args
+
 
 class population(object):
     """docstring for population"""
@@ -87,7 +102,6 @@ class population(object):
             storage_larry.set([locus], individual_count)
         return storage_larry
         
-    
     def unique_alleles(self):
         """Get list of unique alleles in population of genotypes"""
         alleles = []
@@ -99,6 +113,7 @@ class population(object):
                 right = genotype[len(genotype)/2:]
                 alleles.append(left)
                 alleles.append(right)
+
         unique_alleles = list(set(alleles))
         return unique_alleles
         
@@ -163,12 +178,20 @@ class population(object):
         n = n.copy()
         return n
 
-class populations(object):
+class populations(list):
     """Class to operate """
     def __init__(self,):
         super(populations, self).__init__()
         self.pops = []
-        
+    
+    def __iter__(self):
+        """Make the pops in populations an interable"""
+        for pop in self.pops:
+            yield pop
+    
+    def __getitem__(self, key):
+        return self.pops[key]
+            
     def __allele_freqs_3D_larry__(self):
         "returns populations as labeled 'larry.'"
         pop_names = self.pop_names()
@@ -183,10 +206,7 @@ class populations(object):
             data3d.append(alleles_data.copyx())
         data3d = array(data3d)
         data3d = larry(data3d.copy(), [pop_names,unique_alleles,pop_loci])
-        
         return data3d
-
-        
     
     def __empty_pop_by_loci_larry__(self):
         """Make Empty Array for Internal Use.
@@ -223,6 +243,22 @@ class populations(object):
                 n = n_dict[locus]
                 n_alleles.set((pop.name, locus), n)     
         return n_alleles
+    
+    def proportion_variable_loci(self):
+        """Unfinished: prints out the population name and the propotion of variable loci"""
+        
+        for pop in self.pops:
+            allele_counts = pop.allele_counts()
+            variable_loci = 0.0
+            monomorphoic_loci = 0.0
+            alleles_in_pop = 0
+            for pos in range(allele_counts.shape[-1]):
+                if len(set(allele_counts[:,pos])) == 2:
+                    monomorphoic_loci += 1
+                else:
+                    variable_loci += 1
+                alleles_in_pop +=  len(set(allele_counts[:,pos]))
+            print pop.name, variable_loci/len(pop.loci), alleles_in_pop
         
     def loci_harmonic_means(self):
         """calculates harmonic mean from list of integers"""
@@ -237,13 +273,8 @@ class populations(object):
             fractional_counts = 1/inds_per_locs
             fractional_allele_counts += fractional_counts
             n += 1
-        
         loci_harmonic_means = n/fractional_allele_counts
-        return loci_harmonic_means
 
-        summed_fractional_counts =  fractional_allele_counts.sum(axis=0)
-        n =  allele_counts.shape[1]
-        loci_harmonic_means = n/summed_fractional_counts
         return loci_harmonic_means
 
     def harmonic_mean_chao(self, values):
@@ -260,7 +291,7 @@ class populations(object):
         return n
     
     
-    def Hs(self):
+    def Hs(self, by_pop=False):
         """Calculate Hs (mean within-subpopulation heterozygosity, Nei and Chesser 1983)"""
         # setup names, empty array, and final storage matrix
         heterozygosity = self.__empty_pop_by_loci_larry__()
@@ -275,7 +306,11 @@ class populations(object):
                 heterozygosity.set((pop.name, locus), current_het)
         
         # return the mean heterozygosity for each locus.
-        return heterozygosity.mean(axis=0)
+        if by_pop == True:
+            print heterozygosity.std(axis=1)
+            return heterozygosity.mean(axis=1)
+        else:    
+            return heterozygosity.mean(axis=0)
                
     def Ht(self):
         """Calculate Ht the heterozygosity of the pooled subpopulations (Nei and Chesser 1983)"""
@@ -418,8 +453,6 @@ class populations(object):
         
         empty_data =  zeros((len(self.pops[0].loci)))
         storage_loci_larry = larry(empty_data.copy(), [self.pops[0].loci])
-        
-
         pass
         
     
@@ -471,19 +504,22 @@ class populations(object):
         return estimator_array
 
     
-    def all_multilocus_estimators(self):
+    def all_multilocus_estimators(self, n=None, Ht_est=None, Hs_est=None):
         """Calculate all the multilocus estimators simultaneously (e.g., Gst, G'st, G''st and Dest)
         This is substantially faster than calculating each one independantly."""
-        n = self.n()
-        Ht_est = self.Ht_est()
-        Hs_est = self.Hs_est()
-        Ht_est_mean = Ht_est.mean()
-        Hs_est_mean = Hs_est.mean()
+        
+        if n == None and Ht_est == None and Hs_est == None:
+            n = self.n()
+            Ht_est = self.Ht_est()
+            Hs_est = self.Hs_est()
+            Ht_est_mean = Ht_est.mean()
+            Hs_est_mean = Hs_est.mean()
         
         # Calculate multilocus estimators using the means of the Ht and Hs estimators 
         #   Note that Dest is estimated using the harmonic mean chao function
         multilocus_Gst_est = (Ht_est_mean-Hs_est_mean)/Ht_est_mean
-        multilocus_G_prime_st = (multilocus_Gst_est*(n-1.0+Hs_est_mean))/((n-1.0)*(1.0-Hs_est_mean))
+        multilocus_G_prime_st = (multilocus_Gst_est*(n-1.0+Hs_est_mean))/\
+                                    ((n-1.0)*(1.0-Hs_est_mean))
         multilocus_G_double_prime_st_est = n*(Ht_est_mean-Hs_est_mean)/((n*Ht_est_mean-Hs_est_mean)*(1.0-Hs_est_mean))
         multilocus_D_est = self.harmonic_mean_chao(((Ht_est-Hs_est)/(1.0-Hs_est))*(n/(n-1)))
         
@@ -492,7 +528,26 @@ class populations(object):
 
         return multilocus_estimators_array
     
-    def calculate_pairwise_estimators(self, estimator='D_est'):
+    def __randomize_pop_pairs__(self, z, y):
+ 
+        z_g = z.genotypes.copyx()
+        y_g = y.genotypes.copyx()
+  
+        merged_data = np.row_stack((z_g,y_g))
+
+        shuffled_loci = array([np.random.permutation(item) \
+                        for item in merged_data.transpose()]).transpose() # shuffle columns
+
+        z_shuffled = shuffled_loci[:z_g.shape[0]]
+        y_shuffled = shuffled_loci[z_g.shape[0]:]
+
+        z_shuffled_pop = population(z_shuffled , loci=z.loci, name=z.name)
+        y_shuffled_pop = population(y_shuffled , loci=y.loci, name=y.name)
+
+
+        return (z_shuffled_pop,y_shuffled_pop)
+
+    def calculate_pairwise_estimators(self, estimator='D_est', randomize_samples=False):
         """rename"""
         pop_names = len(self.pop_names())
         storage_array = larry(zeros((pop_names,pop_names)), [self.pop_names(), self.pop_names()])
@@ -503,6 +558,10 @@ class populations(object):
                 
                 # setup population class and add paired populations
                 paired_pops = populations()
+
+                if randomize_samples == True:
+                    right, left = self.__randomize_pop_pairs__(right, left)
+
                 paired_pops.append(right)
                 paired_pops.append(left)
                 
@@ -520,7 +579,7 @@ class populations(object):
                 storage_array.set(paired_pops.pop_names(),value)
 
         return storage_array
-            
+     
     def pairwise_estimators(self, estimator='D_est'):
         print estimator
         # get data, header, and side label
@@ -530,7 +589,7 @@ class populations(object):
         header = [estimator] + list(header) # add estimator labeled cell to header 
         
         # set up csv writer and write header
-        filename = '/Users/nick/Desktop/%s.csv' % (estimator)
+        filename = '/Users/ngcrawford/%s.csv' % (estimator)
         outfile = open(filename, 'w')
         data_writer = csv.writer(outfile)
         data_writer.writerow(header)
@@ -540,7 +599,52 @@ class populations(object):
             side_item = side[count]
             row = [side_item] + list(row)
             data_writer.writerow(row)
+    
+   
+    def make_bootstraps(self, replicates=10, start=0):
         
+        bootreps = []
+        for rep in range(0,replicates):
+            booted_pops = populations()
+
+            for count, pop in enumerate(self.pops):
+                sample_size = pop.genotypes.shape[0]
+                choices = list(np.random.random_integers(0, sample_size-1, sample_size))
+                
+                # bootstrap individuals within each population
+                booted_genotypes = pop.genotypes.copyx()[choices,:]
+                new_pop = population(booted_genotypes, loci=pop.loci, name=pop.name) 
+                booted_pops.append(new_pop)
+            
+            bootreps.append(booted_pops)
+        
+        return bootreps
+
+
+    def bootstrap_all_multilocus_estimators(self):
+        bootstraps = self.make_bootstraps()
+        for pop in bootstraps:
+            print pop.all_multilocus_estimators()
+
+    def bootstrap_pairwise_estimators(self):
+        bootstraps = self.make_bootstraps(replicates=200)
+        pairwise_estimators = []
+        
+        for count, pop in enumerate(bootstraps):
+            print count
+            pairwise_estimators.append(pop.calculate_pairwise_estimators("Gst_est"))
+
+        return pairwise_estimators
+
+    def bootstrap_all_estimators(self):
+        bootstraps = self.make_bootstraps(replicates=200)
+        all_estimators = []
+        for count, pops in enumerate(bootstraps):
+            print count
+            # print pops.all_estimators()
+            all_estimators.append(pops.all_estimators())
+        
+        return all_estimators
         
     def write_genepop():
         """Write demes class to GenePop file"""
@@ -569,6 +673,72 @@ class populations(object):
         # test if population
         self.pops.append(pop)
         # added code to update matrix too...
+    def from_list(self,pops):
+        self.pops = pops
+
+
+# THERES A BUG IN PYTHON THAT PREVENTS A 'POOL'
+# FROM CORRECTLY IMPORTING A CLASS FUNCTION
+# PUTTING THE FUNCTION BEING 'MAPPED' CORRECTS THIS,
+# BUT IS CLUDGY.
+
+def wrap_calculate_pairwise_estimators(args):
+    demes, count, estimator = args
+    print 'running replicate {0}'.format(count) 
+    d = demes.calculate_pairwise_estimators(estimator,\
+        randomize_samples=True)
+    return d
+
+class MonteCarlo(object):
+    """docstring for MonteCarlo"""
+    def __init__(self,):
+        super(MonteCarlo, self).__init__()
+
+    def simulate(self, demes, replicates=4, estimator="Gst_est"):
+        p = multiprocessing.Pool(multiprocessing.cpu_count())
+
+        result = p.map(wrap_calculate_pairwise_estimators,\
+            [(demes, count, estimator) for count in range(0,replicates)])
+
+        return result
+
+    def p_values(self, data, demes, estimator="D_est"):
+        
+        ready_4_panda = []
+        for count, datum in enumerate(data):
+            ready_4_panda.append(datum.copyx())
+        
+        ready_4_panda = array(ready_4_panda)
+
+        pop_names = data[0].label[0]
+
+        final = pandas.Panel(ready_4_panda,\
+            major_axis= pop_names,\
+            minor_axis= pop_names)
+  
+
+        obs = demes.calculate_pairwise_estimators(estimator=estimator)
+        
+        obs = pandas.DataFrame(obs.copyx(),
+            index=pop_names, 
+            columns=pop_names)
+
+        for count, pop_list in enumerate(pop_names):
+            count = count + 1 # correct offset
+            for left, right in zip(pop_names[count:], pop_names[:-count]):
+                null_dist = final.major_xs(right).xs(left)
+                real_value = obs[left][right]
+                p_value = np.searchsorted(null_dist,real_value)/float(null_dist.shape[0]) - 1.0
+                obs[right][left]= p_value
+                print p_value
+
+        print obs
+
+
+
+
+
+
 
 def parse_genepop(lines):
     """process genpop lines into multidimentional array"""
@@ -629,8 +799,9 @@ def parse_genepop(lines):
     return demes
 
 
-# Unit Tests
 
+
+# Unit Tests
 class InputFileTest(unittest.TestCase):
     genpopformat = """Title line: delete this example..
     Locus 1
@@ -681,6 +852,15 @@ class PopulationTests(unittest.TestCase):
             ['002002', '001001'],
             ['002002', '001001'],
             ['002002', '001001']]
+
+    def testUnique_alleles(self):
+        pop = population(self.popA, loci=['Locus 1', 'Locus 2'])
+        unique_alleles = pop.allele_counts()
+        testvalues = larry.fromtuples([('002', 'Locus 1', 16.0), 
+                                        ('002', 'Locus 2', 10.0), 
+                                        ('001', 'Locus 1', 4.0), 
+                                        ('001', 'Locus 2', 10.0)])
+        self.assertEqual(unique_alleles,testvalues)
     
     def testAlleleCounts(self):
         pop = population(self.popA, loci=['Locus 1', 'Locus 2'])
@@ -898,12 +1078,59 @@ class PopulationsTests(unittest.TestCase):
         multilocusD_est = testdemes.multilocusD_est()
         testvalue = 0.090963240209061477
         self.assertEqual(multilocusD_est, testvalue, 'Incorrect multilocus D-est value.')
-         
+
+class MonteCarloTests(unittest.TestCase):
+
+        #        Locus 1    Locus 2
+    popA = [['001001', '002002'],
+            ['001001', '002002'],
+            ['002002', '002002'],
+            ['002002', '002002'],
+            ['002002', '002002'],
+            ['002002', '001001'],
+            ['002002', '001001'],
+            ['002002', '001001'],
+            ['002002', '001001'],
+            ['002002', '001001']]
+
+    popB = [['002002', '003003'],
+            ['002002', '003003'],
+            ['001001', '003003'],
+            ['001001', '003003'],
+            ['001001', '003003'],
+            ['001001', '001001'],
+            ['001001', '001001'],
+            ['001001', '001001'],
+            ['001001', '001001'],
+            ['001001', '001001']]
+            
+    def make_test_demes(self):
+        """setups up basic test deme"""
+        pop1 = population(self.popA, loci=['Locus 1', 'Locus 2'], name = 'PopA')
+        pop2 = population(self.popB, loci=['Locus 1', 'Locus 2'], name = 'PopB')
+        testdemes = populations()
+        testdemes.append(pop1)
+        testdemes.append(pop2)
+        return testdemes
+
+
+    def testSimulate(self):
+        demes = self.make_test_demes()
+        MtC = MonteCarlo()
+        sim_data = MtC.simulate(demes, estimator="D_est", replicates=50)
+        MtC.p_values(sim_data, demes, estimator="D_est")
+        pass
+
+
 if __name__ == '__main__':
     
-    fin = open('/Users/nick/Desktop/GrandeTerreGenePop.txt', 'rU')
+    args = get_args()
+    fin = open(args.input_file, 'rU')
     lines = fin.readlines()
     pops = parse_genepop(lines)
+    fin.close()
+
+
     # new_pair = populations()
     # new_pair.append(pops.pops[4])
     # new_pair.append(pops.pops[-1])
@@ -912,7 +1139,7 @@ if __name__ == '__main__':
     # pops.pairwise_estimators('Gst_est')
     # pops.pairwise_estimators('G_prime_st_est')
     # pops.pairwise_estimators('G_double_prime_st_est')
-    #pops.pairwise_estimators('D_est')
+    # pops.pairwise_estimators('D_est')
     
     
     #data =  pops.larry2csv()
@@ -924,23 +1151,26 @@ if __name__ == '__main__':
     # print 'Hs_prime_est', pops.Hs_prime_est()
     # print 'Ht_prime_est', pops.Ht_prime_est()
     # print pops.all_estimators()
-    # print pops.all_multilocus_estimators()
+    # pops.all_multilocus_estimators()
     # # print 'Gst_est', pops.Gst_est().totuples()
-    # print 'Gst_est', pops.multilocusGst_est()
+    #print 'Gst_est', pops.multilocusGst_est()
     # # print "G'st_est", pops.G_prime_st_est().totuples()
     # # print "G'st_est", pops.multilocusG_prime_st_est()
     # print "G''st_est", pops.G_double_prime_st_est().totuples()
     # print "G''st_est", pops.multilocusG_double_prime_st_est()
     # print "D_est", pops.D_est().totuples()
     # print "D_est", pops.multilocusD_est()
-
+    #result = pops.generate_null_distribution(estimator='Gst_est', replicates=5)
     
-    suite = unittest.TestLoader().loadTestsFromTestCase(InputFileTest)
-    unittest.TextTestRunner(verbosity=5).run(suite)
-    
-    suite = unittest.TestLoader().loadTestsFromTestCase(PopulationTests)
-    unittest.TextTestRunner(verbosity=1).run(suite)
-    # 
-    suite = unittest.TestLoader().loadTestsFromTestCase(PopulationsTests)
-    unittest.TextTestRunner(verbosity=1).run(suite)
+    #obs = pops.calculate_pairwise_estimators(estimator='Gst_est')
 
+    # suite = unittest.TestLoader().loadTestsFromTestCase(InputFileTest)
+    # unittest.TextTestRunner(verbosity=5).run(suite)
+    
+    # suite = unittest.TestLoader().loadTestsFromTestCase(PopulationTests)
+    # unittest.TextTestRunner(verbosity=1).run(suite)
+    # suite = unittest.TestLoader().loadTestsFromTestCase(PopulationsTests)
+    # unittest.TextTestRunner(verbosity=1).run(suite)
+
+    suite = unittest.TestLoader().loadTestsFromTestCase(MonteCarloTests)
+    unittest.TextTestRunner(verbosity=1).run(suite)
