@@ -680,9 +680,13 @@ class populations(list):
 # THERES A BUG IN PYTHON THAT PREVENTS A 'POOL'
 # FROM CORRECTLY IMPORTING A CLASS FUNCTION
 # PUTTING THE FUNCTION BEING 'MAPPED' CORRECTS THIS,
-# BUT IS CLUDGY.
+# BUT IT IS CLUDGY.
 
 def wrap_calculate_pairwise_estimators(args):
+    """Wrapper function that takes a tuple of argments
+       and is therefore appopriate for mapping in a 
+       multiprocessing pool."""
+       
     demes, count, estimator = args
     print 'running replicate {0}'.format(count) 
     d = demes.calculate_pairwise_estimators(estimator,\
@@ -690,11 +694,19 @@ def wrap_calculate_pairwise_estimators(args):
     return d
 
 class MonteCarlo(object):
-    """docstring for MonteCarlo"""
+    """Class for simulating null distributions and estimating p-values
+        from pairs of populations.
+        
+        Requires Python 2.7 and for "pandas" to be installed
+        
+        """
+    
     def __init__(self,):
         super(MonteCarlo, self).__init__()
 
     def simulate(self, demes, replicates=4, estimator="Gst_est"):
+        """Simulate pairwise multi-locus estimators."""
+        
         p = multiprocessing.Pool(multiprocessing.cpu_count())
 
         result = p.map(wrap_calculate_pairwise_estimators,\
@@ -704,42 +716,41 @@ class MonteCarlo(object):
 
     def p_values(self, data, demes, estimator="D_est"):
         
+        # get values from larrys
         ready_4_panda = []
         for count, datum in enumerate(data):
             ready_4_panda.append(datum.copyx())
-        
         ready_4_panda = array(ready_4_panda)
 
+        # get population names
         pop_names = data[0].label[0]
 
+        # create panda (panal data array)
         final = pandas.Panel(ready_4_panda,\
             major_axis= pop_names,\
             minor_axis= pop_names)
-  
-
+            
+        # cacluate observed values and convert to panda
         obs = demes.calculate_pairwise_estimators(estimator=estimator)
-        
         obs = pandas.DataFrame(obs.copyx(),
             index=pop_names, 
             columns=pop_names)
 
+        # Do pairwise p_value calculation
         for count, pop_list in enumerate(pop_names):
             count = count + 1 # correct offset
             for left, right in zip(pop_names[count:], pop_names[:-count]):
                 null_dist = final.major_xs(right).xs(left)
                 real_value = obs[left][right]
-                p_value = np.searchsorted(null_dist,real_value)/float(null_dist.shape[0]) - 1.0
+                p_value = 1.0 - np.searchsorted(null_dist,real_value)\
+                                  /float(null_dist.shape[0])
                 obs[right][left]= p_value
                 print p_value
-
+        
         print obs
-
-
-
-
-
-
-
+        # store = pandas.HDFStore('store.h5')
+        # store['final'] = final
+        
 def parse_genepop(lines):
     """process genpop lines into multidimentional array"""
     
@@ -752,6 +763,7 @@ def parse_genepop(lines):
     population_name = ''                # use to find first line of a population
     loci_on_multiple_lines = True
     line_counter = 0                    # tracks index of current line
+    
     # REGEX stuff
     pattern = re.compile('pop', re.IGNORECASE)
     loci_punct = re.compile(',(?:\s*)|\s*')
@@ -790,7 +802,7 @@ def parse_genepop(lines):
         line_counter += 1
     all_loci.append(loci_list)          # add last set of loci to all_loci
 
-    # create Populations class
+    # create populations class
     demes = populations()
     loci_names, population_names, all_loci
     for count, pop in enumerate(all_loci):
@@ -1127,8 +1139,17 @@ if __name__ == '__main__':
     args = get_args()
     fin = open(args.input_file, 'rU')
     lines = fin.readlines()
-    pops = parse_genepop(lines)
+    demes = parse_genepop(lines)
     fin.close()
+    
+    pops = parse_genepop(lines)
+    MtC = MonteCarlo()
+    estimator = "G_prime_st_est"
+    sim_data = MtC.simulate(demes, estimator=estimator, replicates=50)
+    MtC.p_values(sim_data, demes, estimator=estimator)
+    
+    
+    
 
 
     # new_pair = populations()
@@ -1172,5 +1193,5 @@ if __name__ == '__main__':
     # suite = unittest.TestLoader().loadTestsFromTestCase(PopulationsTests)
     # unittest.TextTestRunner(verbosity=1).run(suite)
 
-    suite = unittest.TestLoader().loadTestsFromTestCase(MonteCarloTests)
-    unittest.TextTestRunner(verbosity=1).run(suite)
+    # suite = unittest.TestLoader().loadTestsFromTestCase(MonteCarloTests)
+    # unittest.TextTestRunner(verbosity=1).run(suite)
