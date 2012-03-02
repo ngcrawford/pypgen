@@ -24,9 +24,9 @@ import re
 import csv
 import sys
 import copy
+import pandas
 import unittest
 import argparse
-import pandas
 from la import *
 from pylab import *
 import multiprocessing
@@ -728,7 +728,7 @@ class MonteCarlo(object):
             for left, right in zip(pop_names[count:], pop_names[:-count]):
                 null_dist = final.major_xs(right).xs(left)
                 real_value = obs[left][right]
-                p_value = np.searchsorted(null_dist,real_value)/float(null_dist.shape[0]) - 1.0
+                p_value = 1.0 - np.searchsorted(null_dist,real_value)/float(null_dist.shape[0])
                 obs[right][left]= p_value
                 print p_value
 
