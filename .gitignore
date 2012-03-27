@@ -1,2 +1,6 @@
 *working
 *.h5
+*.sync
+*.csv
+*.out
+*.pyc
