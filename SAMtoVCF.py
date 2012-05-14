@@ -40,14 +40,12 @@ def get_args():
 def bam_slice_2_VCF(coords):
 	""" data = (chrm,start,stop,pileup) """
 	
-	chrm, start, stop = coords
+	chrm, start, stop, args = coords
 
-	mar = ['CEJ107','CEJ082','CEJ083','CEJ085','CEJ108','CEJ106','CEJ097','CEJ084','CEJ088','CEJ095']
-	cap = ['CEJ037','CEJ036','CEJ035','CEJ040','CEJ039','CEJ010','CEJ013','CEJ041','CEJ020','CEJ019']
-	samples = mar + cap
+	samples = args.samples
 
-	bam = pysam.Samfile("/Users/ngcrawford/Desktop/anoMar/bams/Amar.CAP-MAR.local.sorted.bam")
-	genome = pysam.Fastafile("/Users/ngcrawford/Desktop/Genomes/Anolis_carolinensis.AnoCar2.0.65.dna_rm.toplevel.fa")
+	bam = pysam.Samfile(args.bam)
+	genome = pysam.Fastafile(args.genome)
 
 	pileup = bam.pileup()
 	pileup.addReference(genome)
@@ -175,19 +173,19 @@ def create_vcf_header():
 	return textwrap.dedent(header.format(d))
 
 
-def coordTuples(bam, slice_size= 1000):
+def coordTuples(bam, args, slice_size= 1000):
 	count = 0
 	for ref, length in zip(bam.references, bam.lengths):
 
 		if length <= slice_size:
-			yield (ref, 0, length)
+			yield (ref, 0, length, args)
 
 		else:
 			for numb in xrange(0,length,slice_size):
 
 				end = numb + slice_size -1
 				if end > length: end = length
-				yield (ref, numb, end)
+				yield (ref, numb, end, args)
 
 		count += 1
 
@@ -235,7 +233,7 @@ def main(args):
 	chunks_processed = 0
 
 	# create tuples of slices of bp such that each processor gets a number of slices to process independantly
-	for count, chunk in enumerate(grouper(coordTuples(bam, slice_size=slice_size), slices_per_processor)):
+	for count, chunk in enumerate(grouper(coordTuples(bam, args, slice_size=slice_size), slices_per_processor)):
 
 		chunk = [item for item in chunk if item != None] # filter out missing data
 
@@ -250,7 +248,7 @@ def main(args):
 		if count == 0:
 			start_time = time.time()
 		
-		if chunks_processed % 1000 == 0:
+		# if chunks_processed % 1000 == 0:
 			secs_per_chunk = (time.time() - start_time) / chunks_processed
 			min_elapsed = (time.time() - start_time) / 60.0
 			proportion_processsed = chunks_processed / stats['total_chunks']
