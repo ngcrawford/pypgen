@@ -104,7 +104,6 @@ def bam_slice_2_VCF(coords):
 			if len(unique_alleles) == 1:
 				continue
 
-
 		# FORMAT SAMPLE INFO
 		sample_genotypes = []
 		for sample in samples:
@@ -130,13 +129,16 @@ def bam_slice_2_VCF(coords):
 				sample_genotypes.append(formated_data)
 			
 			# Skip samples with more than two alleles
+			# TO DO: add random down sampling to fix this.
 			elif len(read_dict[sample]['GT']) > 2:	
 				sample_genotypes.append('./.')
+				read_dict[sample] = False			# make sure it is ignored in the future
 
+			# 
 			if read_dict.has_key(sample) == True:
 				mq_list = read_dict[sample]['MQ'] 
 				mean_mq = sum(mq_list)/len(mq_list)
-				sample_genotypes[-1] += ":"+str(mean_mq)
+				sample_genotypes[-1] += ":" + str(mean_mq)
 
 		# CREATE LIST WITH ALL VCF DATA
 		if len(ref_base[1:]) > 0:
@@ -144,10 +146,9 @@ def bam_slice_2_VCF(coords):
 		else:
 			alt_alleles = "."
 
-
 		NS = len(sample_genotypes) - sample_genotypes.count("./.")
 
-		info = "DP={0},NS={1}".format(DP, NS)
+		info = "DP={0};NS={1}".format(DP, NS)
 		vcf_list = [chrm, str(pos), ".", ref_base[0], alt_alleles, '.', '.', info ,'GT:DP:MQ'] + sample_genotypes
 		vcf_string = '\t'.join(vcf_list) + "\n"
 
@@ -248,12 +249,13 @@ def main(args):
 		if count == 0:
 			start_time = time.time()
 		
-		# if chunks_processed % 1000 == 0:
+		if chunks_processed % 1000 == 0:
 			secs_per_chunk = (time.time() - start_time) / chunks_processed
 			min_elapsed = (time.time() - start_time) / 60.0
 			proportion_processsed = chunks_processed / stats['total_chunks']
 			update = '{0:.2f} min. elapsed, {1:.2f} secs/chunk, {2:.2%} bases processed.\n'.format(min_elapsed, secs_per_chunk, proportion_processsed)
 			sys.stdout.write(update)
+	
 	fout.close()
 
 

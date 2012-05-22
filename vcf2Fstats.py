@@ -23,11 +23,23 @@ def get_args():
     parser = argparse.ArgumentParser()
     parser.add_argument('-i','--input', required=True,
                         help='Path to VCF file.')
-
     parser.add_argument('-o','--output', required=True,
                         help='Path to output csv file.')
+    parser.add_argument('-c','--cores', required=True,
+                        help='Number of cores to use.')
+    parser.add_argument('-p','--populations', nargs='+',
+                        help='Names of populations and samples.')
 
     args = parser.parse_args()
+
+    populations_dict  = {}
+    for pop in args.populations:
+        pop_name, sample_ids = pop.strip().split(":")
+        sample_ids = sample_ids.split(",")
+        populations_dict[pop_name] = sample_ids
+
+    args.populations = populations_dict
+
     return args
 
 
@@ -44,10 +56,7 @@ class VCF(object):
 
         self.populations = None
 
-    def set_populations(self, pop_dict):
-        self.populations = pop_dict
-
-    def parse_file_path(self, vcf, fout):
+    def parse_file_path(self, vcf, fout, stat_id):
 
         vcf = open(vcf,'rU')
         fout = open(fout,'w')
@@ -77,7 +86,8 @@ class VCF(object):
                 allele_counts = self.calc_allele_counts(vcf_line_dict)
                 fstats = self.fstats(allele_counts)
                 info = self.parse_info(vcf_line_dict["INFO"])
-                formated_data, header = self.__write_to_outfiles__(vcf_line_dict["CHROM"], vcf_line_dict["POS"],info["DP"],fstats)
+                formated_data, header = self.__write_to_outfiles__(vcf_line_dict["CHROM"],\
+                                    vcf_line_dict["POS"],info["DP"], stat_id, fstats)
 
                 if line_count == 1:
                     fout.write(header+"\n")
@@ -94,11 +104,10 @@ class VCF(object):
     def parse_info(self,info_field):
         
         info = []
-        for item in info_field.split(';'):
+        for item in info_field.split(','): # TO DO: comma should be ';'
             pair = item.split("=") 
             if len(pair) == 2:
                 info.append(pair)
-
 
         info_dict = dict(info)
         return info_dict
@@ -132,10 +141,10 @@ class VCF(object):
     def calc_allele_counts(self, vcf_line_dict):
 
         allele_counts = self.populations.fromkeys(self.populations.keys(),None)
-        
+
         for population in self.populations.keys():
 
-            allele_format_dict = {0:0,1:0,2:0,3:0}   # create dict to prevent pointer issues
+            allele_format_dict = {0:0,1:0,2:0,3:0,4:0}   # create dict to prevent pointer issues
             allele_counts[population] = allele_format_dict
 
             for sample_id in self.populations[population]:
@@ -144,6 +153,9 @@ class VCF(object):
                     
                     genotype = vcf_line_dict[sample_id]
                     genotype = genotype["GT"].split("/")
+
+                    if genotype == [".","."]: continue
+
                     genotype = [int(item) for item in genotype]
                     
                     for allele in genotype:
@@ -159,7 +171,7 @@ class VCF(object):
         # CALCULATE ALLELE FREQUENCIES
         allele_freqs_dict = self.populations.fromkeys(self.populations.keys(),None)
         for population in allele_counts.keys():
-            counts =  allele_counts[population].values()  
+            counts =  allele_counts[population].values()
             freqs =  counts/np.sum(counts,dtype=float)
             allele_freqs_dict[population] = freqs
 
@@ -167,14 +179,15 @@ class VCF(object):
 
         # CACULATE PAIRWISE F-STATISTICS
         pairwise_results = {}
-        for population_pair in combinations(populations,2):
+        for population_pair in combinations(self.populations.keys(),2):
             
             pop1, pop2 =  population_pair
             Ns = [ sum(allele_counts[pop].values()) for pop in [pop1, pop2]]
 
             if 0 in Ns: 
                 values = [np.nan, np.nan, np.nan, np.nan, np.nan, np.nan]
-                pairwise_results[population_pair] = values
+                values_dict = dict(zip(['Hs_est', 'Ht_est', 'Gst_est', 'G_prime_st_est', 'G_double_prime_st_est', 'D_est'],values))
+                pairwise_results[population_pair] = values_dict
                 continue
             
             else:
@@ -201,37 +214,32 @@ class VCF(object):
                 D_est_ = fstats.D_est(Ht_est_, Hs_est_, n)
                 
                 # PRINT OUTPUT
-                values = [ Hs_est_, Ht_est_, Gst_est_, G_prime_st_est_, G_double_prime_st_est_, D_est_,]
-                pairwise_results[population_pair] = values
+                values = [Hs_est_, Ht_est_, Gst_est_, G_prime_st_est_, G_double_prime_st_est_, D_est_]
+                values_dict = dict(zip(['Hs_est', 'Ht_est', 'Gst_est', 'G_prime_st_est', 'G_double_prime_st_est', 'D_est'],values))
+
+                pairwise_results[population_pair] = values_dict
 
         return pairwise_results
 
-    def __write_to_outfiles__(self, chrm, pos, depth,fstats):
+    def __write_to_outfiles__(self, chrm, pos, depth, stat_id,fstats):
 
         line = ",".join((chrm, pos, str(depth)))
         for pair in fstats.keys():
-            if fstats[pair][0] == np.nan:
+            if fstats[pair][stat_id] == np.nan:
                 value = 'NA'
             else:
-                value = str(fstats[pair][0])
+                value = str(fstats[pair][stat_id])
             line += "," + value
         
-        header = 'chrm,pos,total_depth,' + ','.join([left+"-"+right for left, right in fstats.keys()])
+        header = 'chrm,pos,total_depth,' + ','.join([left+"-"+right for left, right in fstats.keys()]) + "," + stat_id
         return (line, header)
 
 if __name__ == '__main__':
 
-    populations = {"Capasterre": ['CEJ035', 'CEJ036', 'CEJ037', 'CEJ039',  'CEJ040', 'CEJ041',],
-                "Marina": ['CEJ084', 'CEJ085', 'CEJ088', 'CEJ106', 'CEJ108'],
-                "No_of_Goyave": ['CEJ111','CEJ112', 'CEJ119','CEJ120', 'CEJ121', 'CEJ122',],
-                "Plage_au_Petit_Bourg": ['CEJ092', 'CEJ094', 'CEJ114', 'CEJ116', 'CEJ117'], 
-                "Plage_de_Viard": ['CJS1974','CJS1976'],
-                "So_Riviere_Goyaves": ['CJS2068','CJS2069','CJS2073', 'CJS2074'],
-                "St_Marie": ['CEJ029', 'CEJ030', 'CEJ031','CEJ032','CEJ033', 'CEJ034']}
-
     args = get_args()
     vcf = VCF()
-    vcf.set_populations(populations)
-    vcf.parse_file_path(args.input, args.output)
+    stat_id = "D_est"
+    vcf.populations = args.populations
+    vcf.parse_file_path(args.input, args.output, stat_id)
 
 
