@@ -30,6 +30,11 @@ def get_args():
     parser.add_argument('-p','--populations', nargs='+',
                         help='Names of populations and samples. The format is: "PopName:sample1,sample2,sample3,etc..."')
 
+    parser.add_argument('-w','--window-size',default=None, type=int,
+                        help='Size of the window in which to calculate pairwise F-staticstics')
+    parser.add_argument("-f",'--f-statistic',required=True, 
+                        choices=['Gst_est', 'G_prime_st_est', 'G_double_prime_st_est', 'D_est'])
+
     args = parser.parse_args()
 
     populations_dict  = {}
@@ -283,20 +288,22 @@ class VCF(object):
                 chunk = [line]
         
 
-def main():
     args = get_args()
+
     vcf = VCF()
-    stat_id = "D_est"
+    vcf_file = args.input
+    vcf.set_header(vcf_file)
     vcf.populations = args.populations
-    # vcf.parse_file_path(args.input, args.output, stat_id)
 
-if __name__ == '__main__':
+    if args.window_size != None:
 
-    vcf = VCF()
-    vcf_file = "test_data/Amar.CAP-MAR.vcf"
-    vcf_file = open(vcf_file,'rU')
-    print [item for item in vcf.slidingWindow(vcf_file,2000)]
+        vcf_file = open(vcf_file,'rU')
+        for window in vcf.slidingWindow(vcf_file,2000):
+            vcf.process_window(window, args)
 
+    else:
+        vcf.populations = args.populations
+        vcf.parse_individual_snps(args.input, args.output, args.f_statistic)
 
 
 
