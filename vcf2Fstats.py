@@ -12,6 +12,7 @@ The author may be contacted at ngcrawford@gmail.com
 
 import os
 import sys
+import math
 import argparse
 import numpy as np
 from fstats import fstats
@@ -61,7 +62,7 @@ class VCF(object):
 
         self.populations = None
 
-    def parse_file_path(self, vcf, fout, stat_id):
+    def parse_individual_snps(self, vcf, fout, stat_id):
 
         vcf = open(vcf,'rU')
         
@@ -93,10 +94,10 @@ class VCF(object):
                 vcf_line_dict = self.parse_vcf_line(line)
   
                 allele_counts = self.calc_allele_counts(vcf_line_dict)
-                fstats = self.fstats(allele_counts)
+                f_statistics = self.calc_fstats(allele_counts)
                 info = self.parse_info(vcf_line_dict["INFO"])
                 formated_data, header = self.__write_to_outfiles__(vcf_line_dict["CHROM"],\
-                                    vcf_line_dict["POS"],info["DP"], stat_id, fstats)
+                                    vcf_line_dict["POS"],info["DP"], stat_id, f_statistics)
 
                 if line_count == 1:
                     fout.write(header+"\n")
@@ -172,7 +173,7 @@ class VCF(object):
         return allele_counts
 
    
-    def fstats(self, allele_counts):
+    def calc_fstats(self, allele_counts):
 
         #test_pair = {'So_Riviere_Goyaves': np.array([ 0.0, 1.0, 0.0, 0.0]), 'Plage_de_Viard': np.array([ 1.0, 0.0, 0.0, 0.0]),}
         
@@ -230,21 +231,24 @@ class VCF(object):
 
         return pairwise_results
 
-    def __write_to_outfiles__(self, chrm, pos, depth, stat_id, fstats):
+    def __write_to_outfiles__(self, chrm, pos, depth, stat_id, f_statistics):
 
         line = ",".join((chrm, pos, str(depth)))
-        for pair in fstats.keys():
-            if fstats[pair][stat_id] == np.nan:
+        for pair in f_statistics.keys():
+            if f_statistics[pair] == None:
+                continue
+
+            if f_statistics[pair][stat_id] == np.nan:
                 value = 'NA'
             else:
-                value = str(fstats[pair][stat_id])
+                value = str(f_statistics[pair][stat_id])
             line += "," + value
         
-        header = 'chrm,pos,total_depth,' + ','.join([left+"-"+right for left, right in fstats.keys()]) + "," + stat_id
+        header = 'chrm,pos,total_depth,' + ','.join([left+"-"+right for left, right in f_statistics.keys()]) + "," + stat_id
         return (line, header)
 
     def slidingWindow(self, vcf, window_size=1000):
-        """Generator fucntion that yields non overlapping chunks of VCF lines."""
+        """Generator function that yields non overlapping chunks of VCF lines."""
 
         # TO DO: add overlapping increment
         chrm_id = None
@@ -268,7 +272,7 @@ class VCF(object):
                 chrm_id = chrm
 
             # REZERO AT NEW CHRM
-            # AND YIELD CHUNK
+            #   AND YIELD CHUNK
             if chrm_id != chrm:
                 yield chunk
                 stop = window_size 
@@ -281,12 +285,12 @@ class VCF(object):
                 chunk.append(line)
 
             # YIELD CHUNK IF CRURRENT 
-            # POS EXCEEDS STOP
+            #   POS EXCEEDS STOP
             if pos >= stop:
                 yield chunk
                 stop += window_size
                 chunk = [line]
-        
+     
     def set_header(self, vcf_path):
         vcf_file = open(vcf_path,'rU')
         for line in vcf_file:
@@ -295,6 +299,55 @@ class VCF(object):
                 self.__header_dict__ = OrderedDict([(item,None) for item in self.header])
 
         vcf_file.close()
+       
+    def process_window(self, window, args):
+
+        Hs_est_list = []
+        Ht_est_list = []
+
+        chrm = None
+        pos = None
+        depth = None
+
+        for count, line in enumerate(window):
+            vcf_line_dict = self.parse_vcf_line(line)
+            if count == 0:
+                chrm = vcf_line_dict["CHROM"]
+                pos = vcf_line_dict['POS']
+                info = self.parse_info(vcf_line_dict["INFO"])
+                depth = info["DP"]
+
+            allele_counts = self.calc_allele_counts(vcf_line_dict)
+            f_statistics = self.calc_fstats(allele_counts)
+
+            Hs_est = f_statistics[('MAR', 'CAP')]['Hs_est']
+            Hs_est_list.append(Hs_est)
+
+            Ht_est = f_statistics[('MAR', 'CAP')]['Ht_est']
+            Ht_est_list.append(Ht_est)
+
+
+        # Remove uninformative SNPs (nans)
+        Hs_est_list = [item for item in Hs_est_list if not math.isnan(item)]  
+        Ht_est_list = [item for item in Ht_est_list if not math.isnan(item)]
+
+        multilocus_f_statistics = {('MAR', 'CAP'): None}
+        if len(Hs_est_list) != 0 or len(Ht_est_list)!= 0:
+
+            n = 2 # fix this
+            Gst_est = fstats.multilocus_Gst_est(Ht_est_list, Hs_est_list)
+            G_prime_st_est = fstats.multilocus_G_prime_st_est(Ht_est_list, Hs_est_list, n)
+            G_double_prime_st_est = fstats.multilocus_G_double_prime_st_est(Ht_est_list, Hs_est_list, n)
+            D_est = fstats.multilocus_D_est(Ht_est_list, Hs_est_list, n)
+
+            values_dict = dict(zip(['Gst_est', 'G_prime_st_est', 'G_double_prime_st_est', 'D_est'],\
+                          [Gst_est, G_prime_st_est, G_double_prime_st_est, D_est]))
+
+            multilocus_f_statistics[('MAR', 'CAP')] = values_dict
+
+        self.__write_to_outfiles__( chrm, pos, depth, args.f_statistic, multilocus_f_statistics)
+
+if __name__ == '__main__':
 
     args = get_args()
 
