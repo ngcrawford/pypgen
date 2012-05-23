@@ -95,10 +95,43 @@ def G_double_prime_st_est(Ht_est, Hs_est, n):
 	G_double_prime_st_est = n*(Ht_est-Hs_est)/((n*Ht_est-Hs_est)*(1-Hs_est))
 	return  G_double_prime_st_est
 
-def D_est(Ht_est, Hs_est, n):
+def D_est(Ht_est, Hs_est, n=2):
 	"""((Ht-Hs)/(1.0-Hs))*(n/(n-1))"""
 
 	n = float(n)
 	if ((1.0-Hs_est))*(n/(n-1)) == 0.0: return 0.0
 	D_est = ((Ht_est-Hs_est)/(1.0-Hs_est))*(n/(n-1))
 	return D_est
+
+# MULTILOCUS FUNCTIONS
+def multilocus_Gst_est(Ht_est, Hs_est):
+	"""Averages across loci before calculating Gst."""
+	Ht_est = sum(Ht_est)/float(len(Ht_est))
+	Hs_est = sum(Hs_est)/float(len(Hs_est))
+	Gst_est = (Ht_est-Hs_est)/Ht_est
+	return Gst_est
+
+def multilocus_G_prime_st_est(Ht_est, Hs_est,n):
+	"""Averages across loci before calculating G'st."""
+	Ht_est_ = sum(Ht_est)/float(len(Ht_est))
+	Hs_est_ = sum(Hs_est)/float(len(Hs_est))
+	G_est = multilocus_Gst_est(Ht_est,Hs_est)
+	G_prime_st = (G_est*(n-1.0+Hs_est_))/((n-1.0)*(1.0-Hs_est_))
+	return G_prime_st
+
+def multilocus_G_double_prime_st_est(Ht_est, Hs_est, n):
+	"""Averages across loci before calculating G''st."""
+	Ht_est = sum(Ht_est)/float(len(Ht_est))
+	Hs_est = sum(Hs_est)/float(len(Hs_est))
+	# G_est = multilocus_Gst_est(Ht_est,Hs_est)
+	G_double_prime_st_est = n*(Ht_est-Hs_est)/((n*Ht_est-Hs_est)*(1.0-Hs_est))
+	return G_double_prime_st_est
+
+def multilocus_D_est(Ht_est, Hs_est, n):
+	"""Calculate Anne Chao's harmonic mean all Dest values."""
+	pairs = zip(Ht_est, Hs_est)
+	Dest_values = [D_est(pair[0], pair[1]) for pair in pairs]
+	D_est_ = harmonic_mean_chao(Dest_values)
+	return D_est_
+
+
