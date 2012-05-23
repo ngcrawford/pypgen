@@ -287,6 +287,14 @@ class VCF(object):
                 stop += window_size
                 chunk = [line]
         
+    def set_header(self, vcf_path):
+        vcf_file = open(vcf_path,'rU')
+        for line in vcf_file:
+            if line.startswith("#CHROM"):
+                self.header = line.strip("#").strip().split()
+                self.__header_dict__ = OrderedDict([(item,None) for item in self.header])
+
+        vcf_file.close()
 
     args = get_args()
 
