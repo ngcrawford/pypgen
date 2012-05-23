@@ -23,12 +23,12 @@ def get_args():
     parser = argparse.ArgumentParser()
     parser.add_argument('-i','--input', required=True,
                         help='Path to VCF file.')
-    parser.add_argument('-o','--output', required=True,
-                        help='Path to output csv file.')
+    parser.add_argument('-o','--output',
+                        help='Path to output csv file. If path is not set defaults to STDOUT.')
     parser.add_argument('-c','--cores', required=True,
                         help='Number of cores to use.')
     parser.add_argument('-p','--populations', nargs='+',
-                        help='Names of populations and samples.')
+                        help='Names of populations and samples. The format is: "PopName:sample1,sample2,sample3,etc..."')
 
     args = parser.parse_args()
 
@@ -59,7 +59,11 @@ class VCF(object):
     def parse_file_path(self, vcf, fout, stat_id):
 
         vcf = open(vcf,'rU')
-        fout = open(fout,'w')
+        
+        if fout == None:
+            fout = sys.stdout
+        else:
+            fout = open(fout,'w')
 
         # SETUP NAMED TUPLE TO STORE INFO FROM A SINGLE BASE
         field_labels = []
@@ -97,8 +101,6 @@ class VCF(object):
 
             if line_count >= 0:
                 line_count += 1
-
-            # if line_count > 5: break
 
 
     def parse_info(self,info_field):
@@ -149,6 +151,7 @@ class VCF(object):
 
             for sample_id in self.populations[population]:
                 
+
                 if vcf_line_dict[sample_id] != None:
                     
                     genotype = vcf_line_dict[sample_id]
@@ -215,13 +218,14 @@ class VCF(object):
                 
                 # PRINT OUTPUT
                 values = [Hs_est_, Ht_est_, Gst_est_, G_prime_st_est_, G_double_prime_st_est_, D_est_]
-                values_dict = dict(zip(['Hs_est', 'Ht_est', 'Gst_est', 'G_prime_st_est', 'G_double_prime_st_est', 'D_est'],values))
+                values_dict = dict(zip(['Hs_est', 'Ht_est', 'Gst_est', \
+                                        'G_prime_st_est', 'G_double_prime_st_est', 'D_est'],values))
 
                 pairwise_results[population_pair] = values_dict
 
         return pairwise_results
 
-    def __write_to_outfiles__(self, chrm, pos, depth, stat_id,fstats):
+    def __write_to_outfiles__(self, chrm, pos, depth, stat_id, fstats):
 
         line = ",".join((chrm, pos, str(depth)))
         for pair in fstats.keys():
