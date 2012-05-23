@@ -234,12 +234,65 @@ class VCF(object):
         header = 'chrm,pos,total_depth,' + ','.join([left+"-"+right for left, right in fstats.keys()]) + "," + stat_id
         return (line, header)
 
-if __name__ == '__main__':
+    def slidingWindow(self, vcf, window_size=1000):
+        """Generator fucntion that yields non overlapping chunks of VCF lines."""
 
+        # TO DO: add overlapping increment
+        chrm_id = None
+        start = 0
+        stop = window_size
+        chunk = []
+
+        for count, line in enumerate(vcf):
+            
+            # SKIP HEADER
+            if line.startswith("#"):
+                continue
+
+            # GET CHRM AND POS
+            line_parts = line.strip().split()
+            chrm, pos = line_parts[:2]
+            pos = int(pos)
+
+            # UPDATE CHRM ID FOR INITAL SITE
+            if chrm_id == None:
+                chrm_id = chrm
+
+            # REZERO AT NEW CHRM
+            # AND YIELD CHUNK
+            if chrm_id != chrm:
+                yield chunk
+                stop = window_size 
+                chrm_id = chrm
+                chunk = [line]
+                continue
+
+            # UPDATE CHUNK
+            if pos < stop:
+                chunk.append(line)
+
+            # YIELD CHUNK IF CRURRENT 
+            # POS EXCEEDS STOP
+            if pos >= stop:
+                yield chunk
+                stop += window_size
+                chunk = [line]
+        
+
+def main():
     args = get_args()
     vcf = VCF()
     stat_id = "D_est"
     vcf.populations = args.populations
-    vcf.parse_file_path(args.input, args.output, stat_id)
+    # vcf.parse_file_path(args.input, args.output, stat_id)
+
+if __name__ == '__main__':
+
+    vcf = VCF()
+    vcf_file = "test_data/Amar.CAP-MAR.vcf"
+    vcf_file = open(vcf_file,'rU')
+    print [item for item in vcf.slidingWindow(vcf_file,2000)]
+
+
 
 
