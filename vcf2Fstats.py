@@ -14,9 +14,12 @@ import os
 import sys
 import math
 import argparse
+import copy_reg
+import types
+import multiprocessing
 import numpy as np
 from fstats import fstats
-from itertools import combinations
+from itertools import combinations, izip_longest
 from collections import OrderedDict
 
 def get_args():
@@ -48,6 +51,22 @@ def get_args():
 
     return args
 
+def _pickle_method(method):
+    func_name = method.im_func.__name__
+    obj = method.im_self
+    cls = method.im_class
+
+    return _unpickle_method, (func_name, obj, cls)
+
+def _unpickle_method(func_name, obj, cls):
+    for cls in cls.mro():
+        try:
+            func = cls.__dict__[func_name]
+        except KeyError:
+            pass
+        else:
+            break
+    return func.__get__(obj, cls)
 
 class VCF(object):
     """docstring for VCF"""
@@ -61,6 +80,9 @@ class VCF(object):
         self.sample_format_dict = None
 
         self.populations = None
+        self.f_statistic  = None
+        self.vcf_file = None
+        self.window_size = None
 
     def parse_individual_snps(self, vcf, fout, stat_id):
 
@@ -107,7 +129,6 @@ class VCF(object):
 
             if line_count >= 0:
                 line_count += 1
-
 
     def parse_info(self,info_field):
         
@@ -191,7 +212,7 @@ class VCF(object):
         for population_pair in combinations(self.populations.keys(),2):
             
             pop1, pop2 =  population_pair
-            Ns = [ sum(allele_counts[pop].values()) for pop in [pop1, pop2]]
+            Ns = [sum(allele_counts[pop].values()) for pop in [pop1, pop2]]
 
             if 0 in Ns: 
                 values = [np.nan, np.nan, np.nan, np.nan, np.nan, np.nan]
@@ -246,50 +267,6 @@ class VCF(object):
         
         header = 'chrm,pos,total_depth,' + ','.join([left+"-"+right for left, right in f_statistics.keys()]) + "," + stat_id
         return (line, header)
-
-    def slidingWindow(self, vcf, window_size=1000):
-        """Generator function that yields non overlapping chunks of VCF lines."""
-
-        # TO DO: add overlapping increment
-        chrm_id = None
-        start = 0
-        stop = window_size
-        chunk = []
-
-        for count, line in enumerate(vcf):
-            
-            # SKIP HEADER
-            if line.startswith("#"):
-                continue
-
-            # GET CHRM AND POS
-            line_parts = line.strip().split()
-            chrm, pos = line_parts[:2]
-            pos = int(pos)
-
-            # UPDATE CHRM ID FOR INITAL SITE
-            if chrm_id == None:
-                chrm_id = chrm
-
-            # REZERO AT NEW CHRM
-            #   AND YIELD CHUNK
-            if chrm_id != chrm:
-                yield chunk
-                stop = window_size 
-                chrm_id = chrm
-                chunk = [line]
-                continue
-
-            # UPDATE CHUNK
-            if pos < stop:
-                chunk.append(line)
-
-            # YIELD CHUNK IF CRURRENT 
-            #   POS EXCEEDS STOP
-            if pos >= stop:
-                yield chunk
-                stop += window_size
-                chunk = [line]
      
     def set_header(self, vcf_path):
         vcf_file = open(vcf_path,'rU')
@@ -300,67 +277,149 @@ class VCF(object):
 
         vcf_file.close()
        
-    def process_window(self, window, args):
 
-        Hs_est_list = []
-        Ht_est_list = []
+def grouper(n, iterable, padvalue=None):
+    """grouper(3, 'abcdefg', 'x') -->
+    ('a','b','c'), ('d','e','f'), ('g','x','x')"""
 
-        chrm = None
-        pos = None
-        depth = None
-
-        for count, line in enumerate(window):
-            vcf_line_dict = self.parse_vcf_line(line)
-            if count == 0:
-                chrm = vcf_line_dict["CHROM"]
-                pos = vcf_line_dict['POS']
-                info = self.parse_info(vcf_line_dict["INFO"])
-                depth = info["DP"]
-
-            allele_counts = self.calc_allele_counts(vcf_line_dict)
-            f_statistics = self.calc_fstats(allele_counts)
-
-            Hs_est = f_statistics[('MAR', 'CAP')]['Hs_est']
-            Hs_est_list.append(Hs_est)
-
-            Ht_est = f_statistics[('MAR', 'CAP')]['Ht_est']
-            Ht_est_list.append(Ht_est)
+    return izip_longest(*[iter(iterable)]*n, fillvalue=padvalue)
 
 
-        # Remove uninformative SNPs (nans)
-        Hs_est_list = [item for item in Hs_est_list if not math.isnan(item)]  
-        Ht_est_list = [item for item in Ht_est_list if not math.isnan(item)]
+def slidingWindow(vcf, window_size=1000):
+    """Generator function that yields non overlapping chunks of VCF lines."""
 
-        multilocus_f_statistics = {('MAR', 'CAP'): None}
-        if len(Hs_est_list) != 0 or len(Ht_est_list)!= 0:
+    # TO DO: add overlapping increment
+    chrm_id = None
+    start = 0
+    stop = window_size
+    chunk = []
 
-            n = 2 # fix this
-            Gst_est = fstats.multilocus_Gst_est(Ht_est_list, Hs_est_list)
-            G_prime_st_est = fstats.multilocus_G_prime_st_est(Ht_est_list, Hs_est_list, n)
-            G_double_prime_st_est = fstats.multilocus_G_double_prime_st_est(Ht_est_list, Hs_est_list, n)
-            D_est = fstats.multilocus_D_est(Ht_est_list, Hs_est_list, n)
+    for count, line in enumerate(vcf):
+        
+        # SKIP HEADER
+        if line.startswith("#"):
+            continue
 
-            values_dict = dict(zip(['Gst_est', 'G_prime_st_est', 'G_double_prime_st_est', 'D_est'],\
-                          [Gst_est, G_prime_st_est, G_double_prime_st_est, D_est]))
+        # GET CHRM AND POS
+        line_parts = line.strip().split()
+        chrm, pos = line_parts[:2]
+        pos = int(pos)
 
-            multilocus_f_statistics[('MAR', 'CAP')] = values_dict
+        # UPDATE CHRM ID FOR INITAL SITE
+        if chrm_id == None:
+            chrm_id = chrm
 
-        self.__write_to_outfiles__( chrm, pos, depth, args.f_statistic, multilocus_f_statistics)
+        # REZERO AT NEW CHRM
+        #   AND YIELD CHUNK
+        if chrm_id != chrm:
+            yield chunk
+            stop = window_size 
+            chrm_id = chrm
+            chunk = [line]
+            continue
+
+        # UPDATE CHUNK
+        if pos < stop:
+            chunk.append(line)
+
+        # YIELD CHUNK IF CRURRENT 
+        #   POS EXCEEDS STOP
+        if pos >= stop:
+            yield chunk
+            stop += window_size
+            chunk = [line]
+
+
+def process_window(window):
+    vcf = VCF()
+
+    Hs_est_list = []
+    Ht_est_list = []
+
+    chrm = None
+    pos = None
+    depth = None
+
+    for count, line in enumerate(window):
+        vcf_line_dict = vcf.parse_vcf_line(line)
+        print vcf_line_dict
+        if count == 0:
+            chrm = vcf_line_dict["CHROM"]
+            pos = vcf_line_dict['POS']
+            info = vcf.parse_info(vcf_line_dict["INFO"])
+            depth = info["DP"]
+
+        allele_counts = vcf.calc_allele_counts(vcf_line_dict)
+        f_statistics = vcf.calc_fstats(allele_counts)
+
+        Hs_est = f_statistics[('MAR', 'CAP')]['Hs_est']
+        Hs_est_list.append(Hs_est)
+
+        Ht_est = f_statistics[('MAR', 'CAP')]['Ht_est']
+        Ht_est_list.append(Ht_est)
+
+    print Ht_est_list
+
+    # # Remove uninformative SNPs (nans)
+    # Hs_est_list = [item for item in Hs_est_list if not math.isnan(item)]  
+    # Ht_est_list = [item for item in Ht_est_list if not math.isnan(item)]
+
+    # multilocus_f_statistics = {('MAR', 'CAP'): None}
+    # if len(Hs_est_list) != 0 or len(Ht_est_list)!= 0:
+
+    #     n = 2 # fix this
+    #     Gst_est = fstats.multilocus_Gst_est(Ht_est_list, Hs_est_list)
+    #     G_prime_st_est = fstats.multilocus_G_prime_st_est(Ht_est_list, Hs_est_list, n)
+    #     G_double_prime_st_est = fstats.multilocus_G_double_prime_st_est(Ht_est_list, Hs_est_list, n)
+    #     D_est = fstats.multilocus_D_est(Ht_est_list, Hs_est_list, n)
+
+    #     values_dict = dict(zip(['Gst_est', 'G_prime_st_est', 'G_double_prime_st_est', 'D_est'],\
+    #                   [Gst_est, G_prime_st_est, G_double_prime_st_est, D_est]))
+
+    #     multilocus_f_statistics[('MAR', 'CAP')] = values_dict
+
+    # return vcf.__write_to_outfiles__( chrm, pos, depth, 'Gst_est', multilocus_f_statistics)
+
+
+def do_windowed_analysis(vcf):
+
+    fout = open(args.output, 'w')
+    vcf_file = open(vcf.vcf_file,'rU')
+
+    p = multiprocessing.Pool(4)
+
+    for chunk in grouper(10, slidingWindow(vcf_file,vcf.window_size)):
+        results = p.map(process_window, chunk)
+        for r in results:
+            print r     
+
+        # for count, window in enumerate(vcf.slidingWindow(vcf_file,args.window_size)):
+        #     formated_data, header = vcf.process_window(window, args)
+            
+        #     if line_count == 0:
+        #         fout.write(header+"\n")
+        #         fout.write(formated_data+"\n")
+        #     else:
+        #         fout.write(formated_data+"\n")
+        # fout.close()
+
+
+
+
 
 if __name__ == '__main__':
 
     args = get_args()
-
+    copy_reg.pickle(types.MethodType, _pickle_method, _unpickle_method)
     vcf = VCF()
-    vcf_file = args.input
-    vcf.set_header(vcf_file)
+    vcf.vcf_file = args.input
+    vcf.set_header(vcf.vcf_file)
     vcf.populations = args.populations
+    vcf.f_statistic = args.f_statistic
+    vcf.window_size = args.window_size
 
     if args.window_size != None:
-
-        vcf_file = open(vcf_file,'rU')
-        for window in vcf.slidingWindow(vcf_file,2000):
-            vcf.process_window(window, args)
+        do_windowed_analysis(vcf)
 
     else:
         vcf.populations = args.populations
