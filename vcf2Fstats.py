@@ -108,7 +108,6 @@ class VCF(object):
             if line_count >= 0:
                 line_count += 1
 
-
     def parse_info(self,info_field):
         
         info = []
@@ -191,7 +190,7 @@ class VCF(object):
         for population_pair in combinations(self.populations.keys(),2):
             
             pop1, pop2 =  population_pair
-            Ns = [ sum(allele_counts[pop].values()) for pop in [pop1, pop2]]
+            Ns = [sum(allele_counts[pop].values()) for pop in [pop1, pop2]]
 
             if 0 in Ns: 
                 values = [np.nan, np.nan, np.nan, np.nan, np.nan, np.nan]
@@ -345,7 +344,8 @@ class VCF(object):
 
             multilocus_f_statistics[('MAR', 'CAP')] = values_dict
 
-        self.__write_to_outfiles__( chrm, pos, depth, args.f_statistic, multilocus_f_statistics)
+        return self.__write_to_outfiles__( chrm, pos, depth, args.f_statistic, multilocus_f_statistics)
+
 
 if __name__ == '__main__':
 
@@ -357,10 +357,17 @@ if __name__ == '__main__':
     vcf.populations = args.populations
 
     if args.window_size != None:
-
+        fout = open(args.output, 'w')
         vcf_file = open(vcf_file,'rU')
-        for window in vcf.slidingWindow(vcf_file,2000):
-            vcf.process_window(window, args)
+        for count, window in enumerate(vcf.slidingWindow(vcf_file,args.window_size)):
+            formated_data, header = vcf.process_window(window, args)
+            
+            if count == 0:
+                fout.write(header+"\n")
+                fout.write(formated_data+"\n")
+            else:
+                fout.write(formated_data+"\n")
+        fout.close()
 
     else:
         vcf.populations = args.populations
