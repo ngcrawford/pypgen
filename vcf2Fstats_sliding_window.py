@@ -253,7 +253,7 @@ def slidingWindow(vcf, window_size=1000):
         #   POS EXCEEDS STOP
         if pos >= stop:
             yield (chunk, stop-window_size, stop)
-            stop += window_size
+            stop = pos - (pos % window_size)
             chunk = [line]
  
 def set_header(vcf_path):
@@ -352,8 +352,6 @@ def process_window(data):
             dict(zip(['Gst_est', 'G_prime_st_est', 'G_double_prime_st_est', 'D_est'], ['nan']*4))
 
     return format_output(chrm, start, stop, mean_depth, f_statistic, multilocus_f_statistics)
-
-
 
 
 def do_windowed_analysis(vcf_path, output, window_size, populations, f_statistic, cores):
