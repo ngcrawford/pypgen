@@ -1,14 +1,15 @@
 import os
 import sys
 import math
+import types
 import argparse
 import copy_reg
-import types
-import multiprocessing
 import numpy as np
+import multiprocessing
 from fstats import fstats
-from itertools import combinations, izip_longest
 from collections import OrderedDict
+from itertools import combinations, izip_longest
+
 
 
 def get_args():
@@ -31,6 +32,9 @@ def get_args():
     
     parser.add_argument("-f",'--f-statistic',required=True, 
                         choices=['Gst_est', 'G_prime_st_est', 'G_double_prime_st_est', 'D_est'])
+
+    parser.add_argument("-m",'--min-samples',type=int,
+                        help="Minimum number of samples per population.")
 
     args = parser.parse_args()
 
@@ -65,7 +69,8 @@ def parse_vcf_line(header_dict, line):
         vcf_line_dict[item] = line_parts[count]
 
     sample_format = vcf_line_dict["FORMAT"].split(":")
-     
+    
+
  
     for count, item in enumerate(vcf_line_dict):
         
@@ -81,6 +86,21 @@ def parse_vcf_line(header_dict, line):
 
     return vcf_line_dict
 
+def filter_on_population_sizes(vcfline, populations, min_samples=0):
+
+    sample_counts = []
+    for pop in populations.keys():
+        sample_count = 0
+        for sample in populations[pop]:
+            if vcfline[sample] != None:
+                sample_count += 1
+
+        sample_counts.append(sample_count)
+
+    sample_counts = [item for item in sample_counts if item >= min_samples]
+    if len(sample_counts) >= 2: return True
+    else: return False
+
 def calc_allele_counts(populations, vcf_line_dict):
 
     allele_counts = populations.fromkeys(populations.keys(),None)
@@ -91,7 +111,6 @@ def calc_allele_counts(populations, vcf_line_dict):
         allele_counts[population] = allele_format_dict
 
         for sample_id in populations[population]:
-            
 
             if vcf_line_dict[sample_id] != None:
                 
@@ -290,6 +309,10 @@ def process_window(data):
             pos = vcf_line_dict['POS']
             info = parse_info(vcf_line_dict["INFO"])
         
+
+        if filter_on_population_sizes(vcf_line_dict, populations, min_samples=5) == False:
+            continue
+
         depth.append(int(info["DP"]))
 
         allele_counts = calc_allele_counts(populations, vcf_line_dict)
@@ -300,12 +323,15 @@ def process_window(data):
         Ht_est = f_statistics[('MAR', 'CAP')]['Ht_est']
         Ht_est_list.append(Ht_est)
 
+
     # Remove uninformative SNPs (nans)
     pairs = zip(Hs_est_list, Ht_est_list)
     pairs = [pair for pair in pairs if np.nan not in pair]
 
+    
     multilocus_f_statistics = {('MAR', 'CAP'): None}
-    if len(Hs_est_list) != 0 or len(Ht_est_list) != 0 or len(Hs_est_list) == len(Ht_est_list):
+    if len(pairs) != 0:
+
         n = 2 # fix this
         Gst_est = fstats.multilocus_Gst_est(Ht_est_list, Hs_est_list)
         G_prime_st_est = fstats.multilocus_G_prime_st_est(Ht_est_list, Hs_est_list, n)
@@ -317,9 +343,18 @@ def process_window(data):
 
         multilocus_f_statistics[('MAR', 'CAP')] = values_dict
 
-    mean_depth = sum(depth)/float(len(depth))
+    if len(depth) != 0:
+         mean_depth = sum(depth)/float(len(depth))
+    
+    else:
+        mean_depth = 0.0
+        multilocus_f_statistics[('MAR', 'CAP')] = \
+            dict(zip(['Gst_est', 'G_prime_st_est', 'G_double_prime_st_est', 'D_est'], ['nan']*4))
 
     return format_output(chrm, start, stop, mean_depth, f_statistic, multilocus_f_statistics)
+
+
+
 
 def do_windowed_analysis(vcf_path, output, window_size, populations, f_statistic, cores):
 
@@ -336,7 +371,7 @@ def do_windowed_analysis(vcf_path, output, window_size, populations, f_statistic
     for chunk in grouper(5000, slidingWindow(vcf_file, window_size)):
 
         chunk = [(window, header_dict, populations, f_statistic) for window in chunk]
-        results = map(process_window, chunk)
+        results = p.map(process_window, chunk)
 
         for line in results:
             if line != None:
@@ -344,6 +379,7 @@ def do_windowed_analysis(vcf_path, output, window_size, populations, f_statistic
 
     fout.close()
     vcf_file.close()
+
 
 def main():
     args = get_args()
