@@ -110,17 +110,23 @@ def calc_allele_counts(populations, vcf_line_dict):
 
 def calc_fstats(populations, allele_counts):
 
+
     #test_pair = {'So_Riviere_Goyaves': np.array([ 0.0, 1.0, 0.0, 0.0]), 'Plage_de_Viard': np.array([ 1.0, 0.0, 0.0, 0.0]),}
     
     # CALCULATE ALLELE FREQUENCIES
     allele_freqs_dict = populations.fromkeys(populations.keys(), None)
     for population in allele_counts.keys():
         counts =  allele_counts[population].values()
-        print counts
-        freqs =  [count/sum(counts) for count in counts]
+        if sum(counts) == 0.0:
+            freqs = [0.0] * 4
+
+        else:
+            freqs =  [count/sum(counts) for count in counts]
+
         allele_freqs_dict[population] = freqs
 
     allele_freqs = allele_freqs_dict.values()
+
 
     # CACULATE PAIRWISE F-STATISTICS
     pairwise_results = {}
@@ -139,6 +145,7 @@ def calc_fstats(populations, allele_counts):
 
             pop1 = allele_freqs_dict[pop1]
             pop2 = allele_freqs_dict[pop2]
+
             allele_freqs = [pop1, pop2]
 
             n = float(len(Ns))
@@ -167,18 +174,18 @@ def calc_fstats(populations, allele_counts):
 
     return pairwise_results
 
-def format_output(chrm, pos, depth, stat_id, f_statistics):
+def format_output(chrm, start, stop, depth, stat_id, multilocus_f_statistics):
 
-    line = ",".join((chrm, pos, str(depth)))
-    for pair in f_statistics.keys():
-        if f_statistics[pair] == None:
+    line = ",".join((chrm, str(start), str(stop), str(depth)))
+    for pair in multilocus_f_statistics.keys():
+        if multilocus_f_statistics[pair] == None:
             continue
 
-        if f_statistics[pair][stat_id] == np.nan:
+        if multilocus_f_statistics[pair][stat_id] == np.nan:
             value = 'NA'
         
         else:
-            value = str(f_statistics[pair][stat_id])
+            value = str(multilocus_f_statistics[pair][stat_id])
         
         line += "," + value
     
@@ -213,7 +220,7 @@ def slidingWindow(vcf, window_size=1000):
         # REZERO AT NEW CHRM
         #   AND YIELD CHUNK
         if chrm_id != chrm:
-            yield chunk
+            yield (chunk, stop-window_size, stop)
             stop = window_size 
             chrm_id = chrm
             chunk = [line]
@@ -226,7 +233,7 @@ def slidingWindow(vcf, window_size=1000):
         # YIELD CHUNK IF CRURRENT 
         #   POS EXCEEDS STOP
         if pos >= stop:
-            yield chunk
+            yield (chunk, stop-window_size, stop)
             stop += window_size
             chunk = [line]
  
@@ -260,17 +267,20 @@ def parse_populations_string(populations):
     return populations_dict
 
 def process_window(data):
-    window, header_dict, populations, f_statistic = data
+
+    window_parts, header_dict, populations, f_statistic = data
+
+    if window_parts == None:
+        return None
+    else:
+        window, start, stop = window_parts
+
     Hs_est_list = []
     Ht_est_list = []
 
     chrm = None
     pos = None
-    depth = None
-
-
-    if window == None:
-        return None
+    depth = []
 
     for count, line in enumerate(window):
         vcf_line_dict = parse_vcf_line(header_dict, line)
@@ -279,11 +289,11 @@ def process_window(data):
             chrm = vcf_line_dict["CHROM"]
             pos = vcf_line_dict['POS']
             info = parse_info(vcf_line_dict["INFO"])
-            depth = info["DP"]
+        
+        depth.append(int(info["DP"]))
 
         allele_counts = calc_allele_counts(populations, vcf_line_dict)
         f_statistics = calc_fstats(populations, allele_counts)
-
         Hs_est = f_statistics[('MAR', 'CAP')]['Hs_est']
         Hs_est_list.append(Hs_est)
 
@@ -291,14 +301,8 @@ def process_window(data):
         Ht_est_list.append(Ht_est)
 
     # Remove uninformative SNPs (nans)
-
-    Hs_est_list = [item for item in Hs_est_list if not math.isnan(item)]  
-    Ht_est_list = [item for item in Ht_est_list if not math.isnan(item)]
-
     pairs = zip(Hs_est_list, Ht_est_list)
     pairs = [pair for pair in pairs if np.nan not in pair]
-    print pairs
-
 
     multilocus_f_statistics = {('MAR', 'CAP'): None}
     if len(Hs_est_list) != 0 or len(Ht_est_list) != 0 or len(Hs_est_list) == len(Ht_est_list):
@@ -313,9 +317,9 @@ def process_window(data):
 
         multilocus_f_statistics[('MAR', 'CAP')] = values_dict
 
-    return format_output( chrm, pos, depth, f_statistic, multilocus_f_statistics)
+    mean_depth = sum(depth)/float(len(depth))
 
-
+    return format_output(chrm, start, stop, mean_depth, f_statistic, multilocus_f_statistics)
 
 def do_windowed_analysis(vcf_path, output, window_size, populations, f_statistic, cores):
 
@@ -326,13 +330,13 @@ def do_windowed_analysis(vcf_path, output, window_size, populations, f_statistic
     # WRITE HEADER
     header_dict = set_header(vcf_path)
     left, right =populations.keys()
-    fout.write('chrm,pos,total_depth,' + ','.join([left+"-"+right]) + "-" + f_statistic+'\n')
+    fout.write('chrm,start,stop,mean_depth,' + ','.join([left+"-"+right]) + "-" + f_statistic+'\n')
 
     p = multiprocessing.Pool(cores)
     for chunk in grouper(5000, slidingWindow(vcf_file, window_size)):
 
         chunk = [(window, header_dict, populations, f_statistic) for window in chunk]
-        results = p.map(process_window, chunk)
+        results = map(process_window, chunk)
 
         for line in results:
             if line != None:
