@@ -67,7 +67,7 @@ def Ht_prime_est(allele_freqs,n):
 
 def Ht_est(Ht_p_est,Hs_est,harm_mean,n):
 	"""Basic Equation: Ht+Hs_est/(2*N_harmonic*n)"""
-	
+
 	n = float(n)
 	Ht = Ht_p_est
 	Ht_est = Ht+Hs_est/(2.0*harm_mean*n)
@@ -77,14 +77,14 @@ def Gst_est(Ht_est, Hs_est):
 	"""Gst = (Ht-Hs)/Ht"""
 
 	if Ht_est == 0.0: return 0.0 
-	Gst_est = (Ht_est-Hs_est)/Ht_est
+	else: Gst_est = (Ht_est-Hs_est)/Ht_est
 	return Gst_est
 
 def G_prime_st_est(Ht_est, Hs_est, Gst_est, n):
 	
 	n = float(n)
 	if (n-1.0)*(1.0-Hs_est) == 0: return 0.0
-	G_prime_st = (Gst_est*(n-1.0+Hs_est))/((n-1.0)*(1.0-Hs_est))
+	else:  G_prime_st = (Gst_est*(n-1.0+Hs_est))/((n-1.0)*(1.0-Hs_est))
 	return G_prime_st
 
 def G_double_prime_st_est(Ht_est, Hs_est, n):
@@ -92,15 +92,15 @@ def G_double_prime_st_est(Ht_est, Hs_est, n):
 	
 	n = float(n)
 	if (n*Ht_est-Hs_est)*(1-Hs_est) == 0.0: return 0.0 
-	G_double_prime_st_est = n*(Ht_est-Hs_est)/((n*Ht_est-Hs_est)*(1-Hs_est))
+	else:  G_double_prime_st_est = n*(Ht_est-Hs_est)/((n*Ht_est-Hs_est)*(1-Hs_est))
 	return  G_double_prime_st_est
 
-def D_est(Ht_est, Hs_est, n=2):
+def D_est(Ht_est, Hs_est, n):
 	"""((Ht-Hs)/(1.0-Hs))*(n/(n-1))"""
 
 	n = float(n)
 	if ((1.0-Hs_est))*(n/(n-1)) == 0.0: return 0.0
-	D_est = ((Ht_est-Hs_est)/(1.0-Hs_est))*(n/(n-1))
+	else: D_est = ((Ht_est-Hs_est)/(1.0-Hs_est))*(n/(n-1))
 	return D_est
 
 # MULTILOCUS FUNCTIONS
@@ -116,7 +116,8 @@ def multilocus_G_prime_st_est(Ht_est, Hs_est,n):
 	Ht_est_ = sum(Ht_est)/float(len(Ht_est))
 	Hs_est_ = sum(Hs_est)/float(len(Hs_est))
 	G_est = multilocus_Gst_est(Ht_est,Hs_est)
-	G_prime_st = (G_est*(n-1.0+Hs_est_))/((n-1.0)*(1.0-Hs_est_))
+	if (n-1.0)*(1.0-Hs_est_) == 0: return 0.0
+	else: G_prime_st = (G_est*(n-1.0+Hs_est_))/((n-1.0)*(1.0-Hs_est_))
 	return G_prime_st
 
 def multilocus_G_double_prime_st_est(Ht_est, Hs_est, n):
@@ -124,14 +125,16 @@ def multilocus_G_double_prime_st_est(Ht_est, Hs_est, n):
 	Ht_est = sum(Ht_est)/float(len(Ht_est))
 	Hs_est = sum(Hs_est)/float(len(Hs_est))
 	# G_est = multilocus_Gst_est(Ht_est,Hs_est)
-	G_double_prime_st_est = n*(Ht_est-Hs_est)/((n*Ht_est-Hs_est)*(1.0-Hs_est))
+	if (n*Ht_est-Hs_est)*(1.0-Hs_est) == 0: return 0.0
+
+	else: G_double_prime_st_est = n*(Ht_est-Hs_est)/((n*Ht_est-Hs_est)*(1.0-Hs_est))
 	return G_double_prime_st_est
 
 def multilocus_D_est(Ht_est, Hs_est, n):
 	"""Calculate Anne Chao's harmonic mean all Dest values."""
 	pairs = zip(Ht_est, Hs_est)
-	Dest_values = [D_est(pair[0], pair[1]) for pair in pairs]
+	Dest_values = [D_est(pair[0], pair[1], 2) for pair in pairs]
 	D_est_ = harmonic_mean_chao(Dest_values)
-	return D_est_
+	return D_est
 
 
