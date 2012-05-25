@@ -87,7 +87,7 @@ def calc_allele_counts(populations, vcf_line_dict):
 
     for population in populations.keys():
 
-        allele_format_dict = {0:0,1:0,2:0,3:0,4:0}   # create dict to prevent pointer issues
+        allele_format_dict = {0:0.0,1:0.0,2:0.0,3:0.0,4:0.0}   # create dict to prevent pointer issues
         allele_counts[population] = allele_format_dict
 
         for sample_id in populations[population]:
@@ -103,7 +103,7 @@ def calc_allele_counts(populations, vcf_line_dict):
                 genotype = [int(item) for item in genotype]
                 
                 for allele in genotype:
-                    allele_counts[population][allele] += 1 
+                    allele_counts[population][allele] += 1.0 
     
     return allele_counts
 
@@ -116,7 +116,8 @@ def calc_fstats(populations, allele_counts):
     allele_freqs_dict = populations.fromkeys(populations.keys(), None)
     for population in allele_counts.keys():
         counts =  allele_counts[population].values()
-        freqs =  counts/np.sum(counts,dtype=float)
+        print counts
+        freqs =  [count/sum(counts) for count in counts]
         allele_freqs_dict[population] = freqs
 
     allele_freqs = allele_freqs_dict.values()
@@ -273,6 +274,7 @@ def process_window(data):
 
     for count, line in enumerate(window):
         vcf_line_dict = parse_vcf_line(header_dict, line)
+        
         if count == 0:
             chrm = vcf_line_dict["CHROM"]
             pos = vcf_line_dict['POS']
@@ -289,14 +291,17 @@ def process_window(data):
         Ht_est_list.append(Ht_est)
 
     # Remove uninformative SNPs (nans)
+
     Hs_est_list = [item for item in Hs_est_list if not math.isnan(item)]  
     Ht_est_list = [item for item in Ht_est_list if not math.isnan(item)]
-    # print Ht_est_list
-    # print Hs_est_list
+
+    pairs = zip(Hs_est_list, Ht_est_list)
+    pairs = [pair for pair in pairs if np.nan not in pair]
+    print pairs
+
 
     multilocus_f_statistics = {('MAR', 'CAP'): None}
-    if len(Hs_est_list) != 0 or len(Ht_est_list)!= 0:
-
+    if len(Hs_est_list) != 0 or len(Ht_est_list) != 0 or len(Hs_est_list) == len(Ht_est_list):
         n = 2 # fix this
         Gst_est = fstats.multilocus_Gst_est(Ht_est_list, Hs_est_list)
         G_prime_st_est = fstats.multilocus_G_prime_st_est(Ht_est_list, Hs_est_list, n)
@@ -308,8 +313,6 @@ def process_window(data):
 
         multilocus_f_statistics[('MAR', 'CAP')] = values_dict
 
-
-
     return format_output( chrm, pos, depth, f_statistic, multilocus_f_statistics)
 
 
@@ -319,7 +322,6 @@ def do_windowed_analysis(vcf_path, output, window_size, populations, f_statistic
     # OPEN INPUT AND OUTPUT FILES
     fout = open(output, 'w')
     vcf_file = open(vcf_path,'rU')
-    
     
     # WRITE HEADER
     header_dict = set_header(vcf_path)
