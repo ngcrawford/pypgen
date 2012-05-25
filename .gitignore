@@ -4,4 +4,6 @@
 *.csv
 *.out
 *.pyc
+*.e*
+*.o*
 48-AnoMars*
