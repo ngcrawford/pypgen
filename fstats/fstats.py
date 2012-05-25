@@ -34,10 +34,15 @@ def harmonic_mean_chao(values):
 	calculating multilocus Dest."""
 	
 	count = float(len(values))
-	A = sum(values)/count
-	varD = sum([(v-A)**2 for v in values])/count
-	harmonic_mean_chao = 1/((1/A)+(varD)*pow((1/A),3))
-	return harmonic_mean_chao
+	if count == 0.0:
+		return 0.0
+	elif sum(values)/count == 0:
+		return 0.0 
+	else:
+		A = sum(values)/count
+		varD = sum([(v-A)**2 for v in values])/count
+		harmonic_mean_chao = 1/((1/A)+(varD)*pow((1/A),3))
+		return harmonic_mean_chao
 
 
 def Hs_prime_est(allele_freqs, n):
@@ -108,7 +113,8 @@ def multilocus_Gst_est(Ht_est, Hs_est):
 	
 	Ht_est = sum(Ht_est)/float(len(Ht_est))
 	Hs_est = sum(Hs_est)/float(len(Hs_est))
-	Gst_est = (Ht_est-Hs_est)/Ht_est
+	if Ht_est == 0.0: return 0.0
+	else: Gst_est = (Ht_est-Hs_est)/Ht_est
 	return Gst_est
 
 def multilocus_G_prime_st_est(Ht_est, Hs_est,n):
