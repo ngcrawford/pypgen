@@ -255,6 +255,52 @@ def slidingWindow(vcf, window_size=1000):
             yield (chunk, stop-window_size, stop)
             stop = pos - (pos % window_size)
             chunk = [line]
+
+def slidingWindow_with_overlap(vcf, window_size=1000, overlap=500):
+    """Generator function that yields non overlapping chunks of VCF lines."""
+
+    # TO DO: add overlapping increment
+    chrm_id = None
+    start = 0
+    stop = window_size
+    chunk = []
+
+    for count, line in enumerate(vcf):
+        
+        # SKIP HEADER
+        if line.startswith("#"):
+            continue
+
+        # GET CHRM AND POS
+        line_parts = line.strip().split()
+        chrm, pos = line_parts[:2]
+        pos = int(pos)
+
+        # UPDATE CHRM ID FOR INITAL SITE
+        if chrm_id == None:
+            chrm_id = chrm
+
+        # REZERO AT NEW CHRM
+        #   AND YIELD CHUNK
+        if chrm_id != chrm:
+            yield (chunk, stop-window_size, stop)
+            stop = window_size 
+            chrm_id = chrm
+            chunk = [line]
+            continue
+
+        # UPDATE CHUNK
+        if pos < stop:
+            chunk.append(line)
+
+        # YIELD CHUNK IF CRURRENT 
+        #   POS EXCEEDS STOP
+        if pos >= stop:
+            yield (chunk, stop-window_size, stop)
+            stop = pos - (pos % window_size)
+            chunk = [line]
+
+
  
 def set_header(vcf_path):
     vcf_file = open(vcf_path,'rU')
