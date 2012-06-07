@@ -19,7 +19,11 @@ import multiprocessing
 class FullPaths(argparse.Action):
     """Expand user- and relative-paths"""
     def __call__(self, parser, namespace, values, option_string=None):
-        setattr(namespace, self.dest, os.path.abspath(os.path.expanduser(values)))
+
+    	if values != "-":
+	    	values = os.path.abspath(os.path.expanduser(values))
+
+        setattr(namespace, self.dest, values)
 
 class SplitNames(argparse.Action):
     """Expand user- and relative-paths"""
@@ -30,10 +34,15 @@ def get_args():
     parser = argparse.ArgumentParser(description='Convert BAM/SAM of pooled samples to VCF')
     parser.add_argument('-b','--bam', help='Path to the BAM/SAM file', action=FullPaths, required=True)
     parser.add_argument('-g','--genome', help='Path to the genome', action=FullPaths, required=True)
-    parser.add_argument('-v','--vcf', help='Name of VCF', action=FullPaths, required=True)
+    parser.add_argument('-v','--vcf', help='Name of VCF', action=FullPaths)
     parser.add_argument('-s','--samples', help='Names of samples.', required=True, action=SplitNames)
     parser.add_argument('-c','--cores', help='Number of cores to use.', type=int, default = 1)
-   
+
+    args = parser.parse_args()
+
+    if args.vcf == '-': 
+    	args.vcf = sys.stdout
+
     return parser.parse_args()
 
 
@@ -50,13 +59,17 @@ def bam_slice_2_VCF(coords):
 	pileup = bam.pileup()
 	pileup.addReference(genome)
 
+	vcf_lines = []
+
 	for count, base in enumerate(bam.pileup(chrm, start, stop)):
 
 		# Get initial base info
 		chrm = bam.getrname(base.tid)
-		pos = base.pos 
+		pos = base.pos
+		if pos < start or pos >= stop: continue # skip overhanging reads in pileup 
 		DP = base.n
 		ref_base = [genome.fetch(chrm,pos,pos+1)]
+
 
 		# PROCESS READS AT SITE	
 		read_dict = {}
@@ -90,7 +103,6 @@ def bam_slice_2_VCF(coords):
 
 			# To Do: add mean mapping quality 
 			# read.alignment.mapq
-
 
 		# CHECK THAT THERE ARE SNPS
 		#unique_alleles = set([allele for allele in sample['GT'] for sample in read_dict.values()])
@@ -135,7 +147,7 @@ def bam_slice_2_VCF(coords):
 				read_dict[sample] = False			# make sure it is ignored in the future
 
 			# 
-			if read_dict.has_key(sample) == True:
+			if read_dict.has_key(sample) == True and read_dict[sample] == True: 
 				mq_list = read_dict[sample]['MQ'] 
 				mean_mq = sum(mq_list)/len(mq_list)
 				sample_genotypes[-1] += ":" + str(mean_mq)
@@ -149,10 +161,11 @@ def bam_slice_2_VCF(coords):
 		NS = len(sample_genotypes) - sample_genotypes.count("./.")
 
 		info = "DP={0};NS={1}".format(DP, NS)
-		vcf_list = [chrm, str(pos), ".", ref_base[0], alt_alleles, '.', '.', info ,'GT:DP:MQ'] + sample_genotypes
+		vcf_list = [chrm, str(pos), ".", ref_base[0], alt_alleles, '.', 'PASS', info ,'GT:DP:MQ'] + sample_genotypes
 		vcf_string = '\t'.join(vcf_list) + "\n"
+		vcf_lines.append(vcf_string)
 
-		return vcf_string
+	return vcf_lines
 
 
 def create_vcf_header():
@@ -176,16 +189,23 @@ def create_vcf_header():
 
 def coordTuples(bam, args, slice_size= 1000):
 	count = 0
+
 	for ref, length in zip(bam.references, bam.lengths):
 
 		if length <= slice_size:
 			yield (ref, 0, length, args)
+			continue
 
 		else:
-			for numb in xrange(0,length,slice_size):
+
+			for numb in xrange(0,length, slice_size):
 
 				end = numb + slice_size -1
-				if end > length: end = length
+				
+				if end > length: 
+					end = length
+				
+
 				yield (ref, numb, end, args)
 
 		count += 1
@@ -224,7 +244,7 @@ def main(args):
 
 	# setup slicing and get stats
 	slice_size = 1000 # 1000 bp slices
-	slices_per_processor = 5
+	slices_per_processor = 1
 	stats = get_genome_stats(args, slice_size, slices_per_processor)
 	
 	# setup timer
@@ -236,12 +256,20 @@ def main(args):
 	# create tuples of slices of bp such that each processor gets a number of slices to process independantly
 	for count, chunk in enumerate(grouper(coordTuples(bam, args, slice_size=slice_size), slices_per_processor)):
 
+		print chunk[0][:3]
 		chunk = [item for item in chunk if item != None] # filter out missing data
 
 		# call the bam procesing function skipping missing data
-		for vcount, vcfline in enumerate(pool.imap(bam_slice_2_VCF, chunk)):
-			if vcfline == None: continue
-			fout.write(vcfline)
+		for vcount, vcflines in enumerate(map(bam_slice_2_VCF, chunk)):
+			
+			if vcflines == None or len(vcflines) == 0: continue
+			
+			print " --------------- "
+			for vline in vcflines:
+
+				if vline == None: continue
+				print vline
+				fout.write(vline)
 		
 		progress.append(time.time())
 		chunks_processed += 1
@@ -263,6 +291,8 @@ if __name__ == '__main__':
 	args = get_args()
 	main(args)
 	
+	#print	bam_slice_2_VCF(("AAWZ02041969", 0, 4000, args))
+
 
 
 
