@@ -6,6 +6,6 @@ for count, line in enumerate(fin):
 	if count == 0: continue # skip header
 	chrm, start, stop, depth, value = line.strip().split(',')
 	if float(value) < 0.2: continue
-	if value == 'nan': value = 0.0
+	if value == 'nan': continue
 	final_line = "{0} {1} {2} {3}\n".format(chrm, start, stop, value)
 	fout.write(final_line)
