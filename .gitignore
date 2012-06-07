@@ -7,3 +7,5 @@
 *.e*
 *.o*
 48-AnoMars*
+*.gz
+*.tbi
