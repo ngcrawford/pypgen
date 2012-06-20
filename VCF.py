@@ -1,3 +1,7 @@
+import gzip
+import pysam
+from collections import OrderedDict
+
 class VCF(object):
     """docstring for VCF"""
     def __init__(self):
@@ -197,9 +201,53 @@ class VCF(object):
         
         header = 'chrm,pos,total_depth,' + ','.join([left+"-"+right for left, right in f_statistics.keys()]) + "," + stat_id
         return (line, header)
-     
+
+    def phred2probablility(self, phred_score):
+        if phred_score == "./.": 
+            return phred_score
+        else:
+            phred_score = int(phred_score)
+            #phred to probability = 10**(-phred/10)
+            probability = 10**((phred_score*-1)/10.0)
+        return probability
+
+    def sample2population(self, sample_id):
+        sample_pop = None
+        for pop in self.populations.keys():
+            if sample_id in self.populations[pop]:
+                sample_pop = pop
+
+        return sample_pop
+
+
+
+    def vcf_chunk_2_dadi(self, tabix_filename, pops, chrm, start, stop):
+
+        tabixfile = pysam.Tabixfile(tabix_filename)
+        chunk = tabixfile.fetch(chrm,start,stop)
+        
+        pop_ids = self.populations.keys()
+
+
+        lines = []
+
+        for line in chunk:
+            line =  self.parse_vcf_line(line)
+            lines.append(line.copy())
+
+        return lines
+
+
+    def calc_MAF(self, gt_likelihoods):
+        pass
+
+
+
     def set_header(self, vcf_path):
-        vcf_file = open(vcf_path,'rU')
+        if vcf_path.endswith('gz'):
+            vcf_file = gzip.open(vcf_path, 'rb')
+        else:
+            vcf_file = open(vcf_path,'rU')
         for line in vcf_file:
             if line.startswith("#CHROM"):
                 self.header = line.strip("#").strip().split()
