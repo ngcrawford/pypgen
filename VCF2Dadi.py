@@ -8,6 +8,18 @@ Created by Nick Crawford on 2012-07-05.
 Copyright (c) 2012
 
 The author may be contacted at ngcrawford@gmail.com
+
+
+python VCF2Dadi.py \
+-i test_data/butterfly.vcf.gz \
+-o test_data/butterfly.dadi.input.txt \
+-l Chr01:500-1000 \
+-p cydno:c511,c512,c513,c514,c515,c563,c614,c630,c639,c640 \
+outgroups:h665,i02-210 \
+melpo:m523,m524,m525,m589,m675,m676,m682,m683,m687,m689 \
+pachi:p516,p517,p518,p519,p520,p591,p596,p690,p694,p696 
+
+
 """
 
 
@@ -26,7 +38,7 @@ def get_args():
     parser.add_argument('-p','--populations', nargs='+',
                         help='Names of populations and samples. The format is: "PopName:sample1,sample2,sample3,etc..."')
 
-    parser.add_argument('-l','--region',default=None, type=str,
+    parser.add_argument('-L','--region',default=None, type=str,
                         help='Chrm:start-stop')
 
 
@@ -91,7 +103,6 @@ def check_outgroup(row):
 	else:
 		return True
 
-
 def get_outgroup_base(row, raw_calls):
 	allele_counts = row["outgroups"]
 	
@@ -102,7 +113,7 @@ def get_outgroup_base(row, raw_calls):
 	
 	return outgroup_base
 
-def get_ingroup_major_allele(row, raw_calls):
+def get_ingroup_major_allele(row, raw_calls, outgroup_allele):
 	
 	pops = row.keys()
 	pops.remove('outgroups')
@@ -110,11 +121,11 @@ def get_ingroup_major_allele(row, raw_calls):
 	ref_sum = sum([row[pop]['REF'] for pop in pops])
 	alt_sum = sum([row[pop]['ALT'] for pop in pops])
 
-	if ref_sum > alt_sum:
-		return raw_calls['REF']
+	if ref_sum < alt_sum:
+		return raw_calls['ALT']
 
 	else:
-		return raw_calls['ALT']
+		return raw_calls['REF']		
 
 def calc_in_group_ref(row):
 	for key in row.keys().remove('outgroups'):
@@ -132,6 +143,7 @@ def main(args):
 
 	pop_ids = args.populations.keys()[:-1]
 
+	# TO DO write function to create header
 	dadi_header = ' '.join(['Outgroup','Helis','Allele1',pop_ids[0],pop_ids[1],pop_ids[2],\
 	       'Allele2',pop_ids[0],pop_ids[1],pop_ids[2],'Chrm','Pos'])
 
@@ -139,32 +151,30 @@ def main(args):
 	fout = open(args.output,'w')
 	fout.write(dadi_header + "\n")
 
-	for count, row in enumerate(g):
-		raw_calls = chunk[count] 
+	for row_count, row in enumerate(g):
+		raw_calls = chunk[row_count] 
 
 		if check_outgroup(row) == False: continue # skip outgroup not fixed at one value
 		if len(raw_calls['REF']) > 1 or len(raw_calls["ALT"]) > 1: continue # skip multi allelic sites
-
-		ref = raw_calls['REF']
-		alt = raw_calls['ALT']	
 		
 		# CALL BASE FOR OUTGROUP
 		outgroup_allele = get_outgroup_base(row, raw_calls)
 
 		# CALL MAJOR ALLELE (BASE) FOR INGROUP
-		major_allele = get_ingroup_major_allele(row, raw_calls)
+		major_allele = get_ingroup_major_allele(row, raw_calls, outgroup_allele)
 
-		# CHECK IF OUTGROUP BASE MATCHES INGROUP
+		# POLORIZE REF AND ALT FOR INGROUP
 		if major_allele != raw_calls['REF']:
 			ref, alt = ('ALT','REF')
 		else:
 			ref, alt = ('REF','ALT')
 
-		dadi_row = [make_triplet(outgroup_allele), make_triplet(major_allele)]
+		#  CREATE DADI ROW
+		dadi_row = [make_triplet(major_allele), make_triplet(outgroup_allele)]
 
 		for count, pop in enumerate(pop_ids):
 			if count == 0:
-				dadi_row.append(chunk[count][ref])
+				dadi_row.append(chunk[row_count][ref])
 				dadi_row.append(row[pop][ref])
 			else:
 				dadi_row.append(row[pop][ref])
@@ -172,7 +182,7 @@ def main(args):
 
 		for count, pop in enumerate(pop_ids):
 			if count == 0:
-				dadi_row.append(chunk[count][alt]) 
+				dadi_row.append(chunk[row_count][alt]) 
 				dadi_row.append(row[pop][alt])
 			else:
 				dadi_row.append(row[pop][alt])
@@ -186,7 +196,5 @@ def main(args):
 if __name__ == '__main__':
 	args = get_args()
 	main(args)
-
-	# "{0}".format(row[0][1]['ref'])
 
 
