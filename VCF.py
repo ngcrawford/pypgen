@@ -17,6 +17,7 @@ class VCF(object):
         self.f_statistic  = None
         self.vcf_file = None
         self.window_size = None
+        self.chrm2length = None
 
     def parse_individual_snps(self, vcf, fout, stat_id):
 
@@ -220,15 +221,12 @@ class VCF(object):
         return sample_pop
 
 
-
-    def vcf_chunk_2_dadi(self, tabix_filename, pops, chrm, start, stop):
+    def slice_vcf(self, tabix_filename, pops, chrm, start, stop):
 
         tabixfile = pysam.Tabixfile(tabix_filename)
         chunk = tabixfile.fetch(chrm,start,stop)
         
         pop_ids = self.populations.keys()
-
-
         lines = []
 
         for line in chunk:
@@ -240,6 +238,24 @@ class VCF(object):
 
     def calc_MAF(self, gt_likelihoods):
         pass
+
+
+    def set_chrms(self, vcf_path):
+        
+        if vcf_path.endswith('gz'):
+            vcf_file = gzip.open(vcf_path, 'rb')
+        else:
+            vcf_file = open(vcf_path,'rU')
+
+        chrm_len_pairs = []
+        for line in vcf_file:
+            if line.startswith("##contig"):
+                line_parts = line.strip("##contig=<ID=").strip(">\n").split(",")
+                line_parts[-1] = int(line_parts[-1].strip("length="))
+                chrm_len_pairs.append(line_parts)
+
+        vcf_file.close()
+        self.chrm2length =  dict(chrm_len_pairs)
 
 
 
