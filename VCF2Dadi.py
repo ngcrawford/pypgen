@@ -29,42 +29,45 @@ import argparse
 from copy import copy, deepcopy
 
 def get_args():
-    """Parse sys.argv"""
-    parser = argparse.ArgumentParser()
+	"""Parse sys.argv"""
+	parser = argparse.ArgumentParser()
 
-    parser.add_argument('-i','--input', required=True,
-                        help='Path to VCF file.')
-    
-    parser.add_argument('-o','--output',
-                        help='Path to output csv file. If path is not set defaults to STDOUT.')
+	parser.add_argument('-i','--input', required=True,
+						help='Path to VCF file.')
+	
+	parser.add_argument('-o','--output',
+						help='Path to output csv file. If path is not set defaults to STDOUT.')
 
-    parser.add_argument('-p','--populations', nargs='+',
-                        help='Names of populations and samples. The format is: "PopName:sample1,sample2,sample3,etc..."')
+	parser.add_argument('-p','--populations', nargs='+',
+						help='Names of populations and samples. The format is: "PopName:sample1,sample2,sample3,etc..."')
 
-    parser.add_argument('-L','--region',default=None, type=str,
-                        help='Chrm:start-stop')
+	parser.add_argument('-L','--region',default=None, type=str,
+						help='Chrm:start-stop')
 
-    parser.add_argument('-w', '--window-size', type=int,
-    					help='The size of the windows')
+	parser.add_argument('-w', '--window-size', type=int,
+						help='The size of the windows')
 
-    parser.add_argument('-overlap', type=int,
-    					help='The number of base pairs each window overlaps the previous')
+	parser.add_argument('-overlap', type=int,
+						help='The number of base pairs each window overlaps the previous')
 
-    args = parser.parse_args()
+	args = parser.parse_args()
 
-    populations_dict  = {}
-    for pop in args.populations:
-        pop_name, sample_ids = pop.strip().split(":")
-        sample_ids = sample_ids.split(",")
-        populations_dict[pop_name] = sample_ids
+	populations_dict  = {}
+	for pop in args.populations:
+		pop_name, sample_ids = pop.strip().split(":")
+		sample_ids = sample_ids.split(",")
+		populations_dict[pop_name] = sample_ids
 
-    args.populations = populations_dict
+	args.populations = populations_dict
 
-    chrm = [args.region.split(":")[0]]
-    start_stop = [int(item) for item in args.region.split(":")[1].split("-")]
-    args.region = chrm + start_stop
+	if ":" in args.region == True:
+		chrm = [args.region.split(":")[0]]
+		start_stop = [int(item) for item in args.region.split(":")[1].split("-")]
+		args.region = chrm + start_stop
+	else:
+		args.region = [args.region]
 
-    return args
+	return args
 
 def process_snp(snp_call):
 	if snp_call == "0/0":
@@ -155,7 +158,7 @@ def create_dadi_header(args):
 	dadi_header = ' '.join(dadi_header)
 	return dadi_header
 
-def make_dadi_fs(args):
+def make_dadi_fs(args, region):
 
 	vcf = VCF.VCF()
 	vcf.populations = args.populations
@@ -164,7 +167,7 @@ def make_dadi_fs(args):
 	pop_ids = args.populations.keys()
 
 	# Get slice and setup output dictionaries
-	chunk = vcf.slice_vcf(args.input, args.populations, *args.region)
+	chunk = vcf.slice_vcf(args.input, args.populations, *region)
 	g = count_alleles(chunk, args.populations)
 
 	final_dadi = {}
@@ -212,12 +215,13 @@ def make_dadi_fs(args):
 	return (final_dadi, pop_ids)
 
 def generate_slices(args):
-	print args
+
 	vcf = VCF.VCF()
 	vcf.populations = args.populations
 	vcf.set_chrms(args.input)
 
 	chrm_2_windows = vcf.chrm2length.fromkeys(vcf.chrm2length.keys(),None)
+	
 	for count, chrm in enumerate(vcf.chrm2length.keys()):
 		length = vcf.chrm2length[chrm]
 		window_size = args.window_size
@@ -235,7 +239,7 @@ def generate_slices(args):
 		if (length % window_size) <= overlap:
 			start = (length % window_size)/2
 			stop = length - overlap*2
-		   	    
+				
 		starts = range(start, stop, overlap)
 		stops = [i+window_size for i in starts]
 		windows = zip(starts, stops)
@@ -332,24 +336,31 @@ def sliding_window_dadi(args):
 	fout = open(args.output,'w')
 
 
-	for key_count,  key in enumerate(slices.keys()):
+	for key_count, key in enumerate(slices.keys()):
 
-		#if key_count == 2: break
+		if args.region != None:
+			chrm = args.region[0]
+			#if key_count == 2: break
+			print args.region
 
-		for count, s in enumerate(slices[key]):
+		for count, s in enumerate(slices[chrm]):
 
-			args.region = ['1'] + list(s)
+			# Break out of loop if loop proceeds beyond
+			#   defined region (-L=1:1-5000 = 5000)
+			if s[-1] > args.region[-1]: break
+
+			region = [chrm] + list(s)
 
 			# Setup Pairwise Dadi
-			dd, pop_ids = make_dadi_fs(args)
+			dd, pop_ids = make_dadi_fs(args, region)
 			projection_size = 10
 			pairwise_fs  = dadi.Spectrum.from_data_dict(dd, pop_ids, [projection_size]*2)
 
-			# write output header
+			# Write output header
 			if count == 0: fout.write(','.join(create_header(pop_ids)) + "\n")
 
-			# create final line, add Fst info
-			final_line = args.region
+			# Create final line, add Fst info
+			final_line = region
 			final_line += [pairwise_fs.Fst()]
 
 			# Add in population level stats
@@ -360,11 +371,16 @@ def sliding_window_dadi(args):
 			# write output
 			final_line = [str(i) for i in final_line]
 			fout.write(','.join(final_line) + "\n")
+
+		# Don't process any more keys than necessary
+		if args.region != None: break
+
 	fout.close()
 
 
 if __name__ == '__main__':
 	args = get_args()
+
 	sliding_window_dadi(args)
 
 

@@ -221,10 +221,10 @@ class VCF(object):
         return sample_pop
 
 
-    def slice_vcf(self, tabix_filename, pops, chrm, start, stop):
+    def slice_vcf(self, tabix_filename, pops, chrm, start=None, stop=None):
 
         tabixfile = pysam.Tabixfile(tabix_filename)
-        chunk = tabixfile.fetch(chrm,start,stop)
+        chunk = tabixfile.fetch(reference=chrm, start=start, end=stop)
         
         pop_ids = self.populations.keys()
         lines = []
