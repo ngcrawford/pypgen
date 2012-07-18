@@ -24,14 +24,17 @@ pachi:p516,p517,p518,p519,p520,p591,p596,p690,p694,p696
 
 
 import VCF
+import dadi
 import argparse
-from copy import copy
+from copy import copy, deepcopy
 
 def get_args():
     """Parse sys.argv"""
     parser = argparse.ArgumentParser()
+
     parser.add_argument('-i','--input', required=True,
                         help='Path to VCF file.')
+    
     parser.add_argument('-o','--output',
                         help='Path to output csv file. If path is not set defaults to STDOUT.')
 
@@ -41,6 +44,11 @@ def get_args():
     parser.add_argument('-L','--region',default=None, type=str,
                         help='Chrm:start-stop')
 
+    parser.add_argument('-w', '--window-size', type=int,
+    					help='The size of the windows')
+
+    parser.add_argument('-overlap', type=int,
+    					help='The number of base pairs each window overlaps the previous')
 
     args = parser.parse_args()
 
@@ -89,7 +97,7 @@ def count_alleles(chunk, pops):
 			pop_counts[pop] =  allele_counts.copy()
 
 		results.append(copy(pop_counts))
-
+	
 	return results
 
 def make_triplet(base):
@@ -104,12 +112,20 @@ def check_outgroup(row):
 		return True
 
 def get_outgroup_base(row, raw_calls):
-	allele_counts = row["outgroups"]
 	
-	if allele_counts['REF'] != 0:
+	if row["outgroups"]['REF'] > row["outgroups"]['ALT']:
 		outgroup_base = raw_calls['REF']
+	
+	elif sum(row['outgroups'].values()) == 0 : # e.g, == {'ALT': 0, 'REF': 0}
+		ref = sum([item['REF'] for item in row.values()])
+		alt = sum([item['ALT'] for item in row.values()])
+		if ref > alt:
+			outgroup_base = raw_calls['REF']
+		else: 
+			outgroup_base = raw_calls['ALT']
+	
 	else:
-		outgroup_base = raw_calls['ALT']
+		outgroup_base = raw_calls['ALT']	
 	
 	return outgroup_base
 
@@ -131,28 +147,129 @@ def calc_in_group_ref(row):
 	for key in row.keys().remove('outgroups'):
 		print key
 
+def create_dadi_header(args):
+	pop_ids = args.populations.keys()
+	dadi_header = ['Outgroup','Ingroup','Allele1','Allele2','Chrm','Pos']
+	dadi_header[3:3] = pop_ids
+	dadi_header[-2:2] = pop_ids
+	dadi_header = ' '.join(dadi_header)
+	return dadi_header
+
+def make_dadi_fs(args):
+
+	vcf = VCF.VCF()
+	vcf.populations = args.populations
+	vcf.set_header(args.input)
+
+	pop_ids = args.populations.keys()
+
+	# Get slice and setup output dictionaries
+	chunk = vcf.slice_vcf(args.input, args.populations, *args.region)
+	g = count_alleles(chunk, args.populations)
+
+	final_dadi = {}
+	population_level_dadis = dict.fromkeys(pop_ids,{})
+
+	for row_count, row in enumerate(g):
+
+		raw_calls = chunk[row_count] 
+		row['outgroups'] = {'ALT': 0, 'REF': 0} # set empty outgroup
+
+		# To Do: Need to create a function to fill outgroup if one is defined.
+		# The heliconius dataset, for example, has this.
+
+		if check_outgroup(row) == False: continue # skip outgroup not fixed at one value
+		if len(raw_calls['REF']) > 1 or len(raw_calls["ALT"]) > 1: continue # skip multi allelic sites
+		
+		# CALL BASE FOR OUTGROUP
+		outgroup_allele = get_outgroup_base(row, raw_calls)
+
+		# CALL MAJOR ALLELE (BASE) FOR INGROUP
+		major_allele = get_ingroup_major_allele(row, raw_calls, outgroup_allele)
+
+		# POLORIZE REF AND ALT FOR INGROUP
+		if major_allele != raw_calls['REF']:
+			ref, alt = ('ALT','REF')
+		else:
+			ref, alt = ('REF','ALT')
+
+
+		calls = {}
+		for count, pop in enumerate(pop_ids):
+			calls[pop] = (row[pop][ref], row[pop][alt])
+
+		row_id = "{0}_{1}".format(raw_calls['CHROM'],raw_calls['POS'])
+	
+		dadi_site = {'calls': calls,
+			   'context': make_triplet(major_allele),
+			   'outgroup_context': make_triplet(outgroup_allele),
+			   'outgroup_allele': outgroup_allele,
+			   'segregating': (raw_calls[ref], raw_calls[alt])
+			   }
+
+		final_dadi[row_id] = dadi_site
+
+	return (final_dadi, pop_ids)
+
+def generate_slices(args):
+	print args
+	vcf = VCF.VCF()
+	vcf.populations = args.populations
+	vcf.set_chrms(args.input)
+
+	chrm_2_windows = vcf.chrm2length.fromkeys(vcf.chrm2length.keys(),None)
+	for count, chrm in enumerate(vcf.chrm2length.keys()):
+		length = vcf.chrm2length[chrm]
+		window_size = args.window_size
+		overlap = args.overlap
+
+		# Skip contigs that are to short
+		if length <= window_size: continue
+		
+		# Fit windows into remaining space
+		if (length % window_size) > overlap:
+			start = (length % window_size)/2
+			stop = (length - window_size) - overlap/2
+
+		# Prevent windows from invading remaining space 
+		if (length % window_size) <= overlap:
+			start = (length % window_size)/2
+			stop = length - overlap*2
+		   	    
+		starts = range(start, stop, overlap)
+		stops = [i+window_size for i in starts]
+		windows = zip(starts, stops)
+		
+		chrm_2_windows[chrm] = windows
+
+	return chrm_2_windows
 
 def main(args):
 
 	vcf = VCF.VCF()
 	vcf.populations = args.populations
 	vcf.set_header(args.input)
-	chunk = vcf.vcf_chunk_2_dadi(args.input, args.populations, *args.region)
 
+	pop_ids = args.populations.keys()
+
+	# get slice and setup output dictionaries
+	chunk = vcf.vcf_chunk_2_dadi(args.input, args.populations, *args.region)
 	g = count_alleles(chunk, args.populations)
 
-	pop_ids = args.populations.keys()[:-1]
 
-	# TO DO write function to create header
-	dadi_header = ' '.join(['Outgroup','Helis','Allele1',pop_ids[0],pop_ids[1],pop_ids[2],\
-	       'Allele2',pop_ids[0],pop_ids[1],pop_ids[2],'Chrm','Pos'])
-
+	# Create Header Row
+	dadi_header = create_dadi_header(args)
 
 	fout = open(args.output,'w')
 	fout.write(dadi_header + "\n")
 
 	for row_count, row in enumerate(g):
+
 		raw_calls = chunk[row_count] 
+		row['outgroups'] = {'ALT': 0, 'REF': 0} # set empty outgroup
+
+		# To Do: Need to create a function to fill outgroup if one is defined.
+		# The heliconius dataset, for example, has this.
 
 		if check_outgroup(row) == False: continue # skip outgroup not fixed at one value
 		if len(raw_calls['REF']) > 1 or len(raw_calls["ALT"]) > 1: continue # skip multi allelic sites
@@ -187,14 +304,70 @@ def main(args):
 			else:
 				dadi_row.append(row[pop][alt])
 
-
 		dadi_row.append(raw_calls['CHROM'])
 		dadi_row.append(raw_calls['POS'])
+
 		dadi_row = " ".join([str(item) for item in dadi_row])
 		fout.write(dadi_row + "\n")
 
+
+
+def create_header(pop_ids):
+
+	pop_values = ['Tajimas_D','W_theta','pi','Seg_Sites']
+
+	final_header = ['chrm', 'start','stop','Fst']
+	for count, pop in enumerate(pop_ids):
+		final_header += [pop+ "." + i for i in pop_values]
+
+	return final_header
+
+
+def sliding_window_dadi(args):
+
+	# Using the data in the VCF header generate all slices
+	slices = generate_slices(args)
+
+	# Open output file
+	fout = open(args.output,'w')
+
+
+	for key_count,  key in enumerate(slices.keys()):
+
+		#if key_count == 2: break
+
+		for count, s in enumerate(slices[key]):
+
+			args.region = ['1'] + list(s)
+
+			# Setup Pairwise Dadi
+			dd, pop_ids = make_dadi_fs(args)
+			projection_size = 10
+			pairwise_fs  = dadi.Spectrum.from_data_dict(dd, pop_ids, [projection_size]*2)
+
+			# write output header
+			if count == 0: fout.write(','.join(create_header(pop_ids)) + "\n")
+
+			# create final line, add Fst info
+			final_line = args.region
+			final_line += [pairwise_fs.Fst()]
+
+			# Add in population level stats
+			for pop in pop_ids:
+				fs = dadi.Spectrum.from_data_dict(dd, [pop], [projection_size])
+				final_line += [fs.Tajima_D(), fs.Watterson_theta(), fs.pi(), fs.S()]
+
+			# write output
+			final_line = [str(i) for i in final_line]
+			fout.write(','.join(final_line) + "\n")
+	fout.close()
+
+
 if __name__ == '__main__':
 	args = get_args()
-	main(args)
+	sliding_window_dadi(args)
+
+
+
 
 
