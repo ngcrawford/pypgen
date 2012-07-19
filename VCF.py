@@ -1,5 +1,6 @@
 import gzip
 import pysam
+from random import choice
 from collections import OrderedDict
 
 class VCF(object):
@@ -86,7 +87,7 @@ class VCF(object):
 
         if self.sample_format == None:
             self.sample_format = vcf_line_dict["FORMAT"].split(":")
-            # self.sample_format_dict = dict([(item,None) for item in self.sample_format])      
+            self.sample_format_dict = dict([(item,None) for item in self.sample_format])      
      
         for count, item in enumerate(vcf_line_dict):
             
@@ -224,20 +225,16 @@ class VCF(object):
     def slice_vcf(self, tabix_filename, pops, chrm, start=None, stop=None):
 
         tabixfile = pysam.Tabixfile(tabix_filename)
-        try:
-            chunk = tabixfile.fetch(reference=chrm, start=start, end=stop)
-        except:
-            return None 
+        chunk = tabixfile.fetch(reference=chrm, start=start, end=stop)
+        
+        pop_ids = self.populations.keys()
+        lines = []
 
-        else:           
-            pop_ids = self.populations.keys()
-            lines = []
+        for line in chunk:
+            line =  self.parse_vcf_line(line)
+            lines.append(line.copy())
 
-            for line in chunk:
-                line =  self.parse_vcf_line(line)
-                lines.append(line.copy())
-
-            return lines
+        return lines
 
 
     def calc_MAF(self, gt_likelihoods):
@@ -258,11 +255,8 @@ class VCF(object):
                 line_parts[-1] = int(line_parts[-1].strip("length="))
                 chrm_len_pairs.append(line_parts)
 
-            if line.startswith("#CHROM"): break
-
         vcf_file.close()
         self.chrm2length =  dict(chrm_len_pairs)
-
 
     def set_header(self, vcf_path):
         if vcf_path.endswith('gz'):
@@ -273,7 +267,68 @@ class VCF(object):
             if line.startswith("#CHROM"):
                 self.header = line.strip("#").strip().split()
                 self.__header_dict__ = OrderedDict([(item,None) for item in self.header])
-                break
 
         vcf_file.close()
+    def process_GT(self, snp_call):
+        """Given GT string convert to allele counts.
+
+            e.g., '1/1' becomes (0,2)
+                  '0/0' becomes (2,0)  
+                  '0/1' becomes (1,1)                 
+
+            To Do: Does not propperly handle multiallelic GTs
+        """
+
+        if snp_call == "0/0":
+            return (2,0)
+        
+        elif snp_call == "1/1":
+            return (0,2)
+        
+        elif snp_call == '1/0' or \
+               snp_call == '0/1':
+            return (1,1)
+        
+        # skip multiallelic sites
+        else:
+            return (0,0)
+
+    def get_major_allele(self, vcf_line, vcf):
+        """Choose major allele from VCF line based on genotype counts."""
+
+        samples = vcf.header[9:]
+        GT_counts = (self.process_GT(vcf_line[k]['GT']) for k in samples if vcf_line[k] != None)
+
+        ref_count = sum(( gt[0] for gt in GT_counts))
+        alt_count = sum(( gt[1] for gt in GT_counts))
+        
+        if alt_count > ref_count:
+            return vcf_line['ALT']
+        
+        elif alt_count == ref_count:
+            return choice((vcf_line['ALT'],vcf_line['REF']))
+        
+        else:
+            return vcf_line['REF']
+
+    def sequence_between_SNPS(self, fasta_handle, chrm, start, stop):
+        """Returns sequence between SNPs. Requires an opened pysam faidxed fasta."""
+        if start == None and stop == None:
+            print 'here'
+            return None
+
+        elif start == None and stop != None:
+            start = 0
+            stop = int(stop) - 1
+            seq = fasta_handle.fetch(chrm,start, stop)
+            return seq
+  
+        else:
+            start = int(start) + 1
+            stop = int(stop) - 1
+            seq = fasta_handle.fetch(chrm,start, stop)
+            return seq
+
+
+
 
