@@ -324,8 +324,6 @@ def main(args):
 		dadi_row = " ".join([str(item) for item in dadi_row])
 		fout.write(dadi_row + "\n")
 
-
-
 def create_header(pop_ids):
 
 	pop_values = ['Tajimas_D','W_theta','pi','Seg_Sites']
@@ -339,10 +337,8 @@ def create_header(pop_ids):
 
 def sliding_window_dadi(args):
 
-	print args
 	# Using the data in the VCF header generate all slices
 	slices = generate_slices(args)
-	print args.region
 	# Open output file
 	fout = open(args.output,'w')
 
@@ -361,7 +357,6 @@ def sliding_window_dadi(args):
 			region = [chrm] + list(s)
 
 			# Setup Pairwise Dadi
-
 			dadi_data = make_dadi_fs(args, region)
 			if dadi_data == None: continue # skip empty calls
 
