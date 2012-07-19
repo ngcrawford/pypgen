@@ -42,7 +42,7 @@ def get_args():
 						help='Names of populations and samples. The format is: "PopName:sample1,sample2,sample3,etc..."')
 
 	parser.add_argument('-L','--region',default=None, type=str,
-						help='Chrm:start-stop')
+						help='chrm:start-stop')
 
 	parser.add_argument('-w', '--window-size', type=int,
 						help='The size of the windows')
@@ -60,11 +60,12 @@ def get_args():
 
 	args.populations = populations_dict
 
+	print args.region
 	if ":" in args.region == True:
 		chrm = [args.region.split(":")[0]]
 		start_stop = [int(item) for item in args.region.split(":")[1].split("-")]
 		args.region = chrm + start_stop
-	else:
+	if ":" in args.region == False:
 		args.region = [args.region]
 
 	return args
@@ -329,9 +330,10 @@ def create_header(pop_ids):
 
 def sliding_window_dadi(args):
 
+	print args
 	# Using the data in the VCF header generate all slices
 	slices = generate_slices(args)
-
+	print args.region
 	# Open output file
 	fout = open(args.output,'w')
 
@@ -341,7 +343,7 @@ def sliding_window_dadi(args):
 		if args.region != None:
 			chrm = args.region[0]
 			#if key_count == 2: break
-			print args.region
+			
 
 		for count, s in enumerate(slices[chrm]):
 
