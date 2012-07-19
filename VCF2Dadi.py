@@ -58,17 +58,14 @@ def get_args():
 
 	args.populations = populations_dict
 
-
-	if ":" in args.region == True:
+	if len(args.region.split(":")) == 2 and args.region != None:
 		chrm = [args.region.split(":")[0]]
 		start_stop = [int(item) for item in args.region.split(":")[1].split("-")]
 		args.region = chrm + start_stop
 
-	if ":" in args.region == False:
+	else:
 		args.region = [args.region]
 
-	if args.region == None:
-		args.region = [args.region]
 
 	return args
 
@@ -336,8 +333,11 @@ def create_header(pop_ids):
 def sliding_window_dadi(args):
 
 	# Using the data in the VCF header generate all slices
+	print 'Generating Slices...'
 	slices = generate_slices(args)
+	
 	# Open output file
+	print 'Processing Slices...'
 	fout = open(args.output,'w')
 
 	for key_count, chrm in enumerate(slices.keys()):
@@ -345,7 +345,7 @@ def sliding_window_dadi(args):
 		if args.region != [None]:
 			chrm = args.region[0]
 			#if key_count == 2: break
-
+		
 		for count, s in enumerate(slices[chrm]):
 
 			# Break out of loop if loop proceeds beyond
@@ -379,7 +379,7 @@ def sliding_window_dadi(args):
 			fout.write(','.join(final_line) + "\n")
 
 		# Don't process any more keys than necessary
-		print 'Processed {1} slices from {0}'.format(chrm, len(slices[chrm]))
+		print 'Processed {0} of {1} slices from contig {2}'.format(count, len(slices[chrm]), chrm)
 		if args.region != [None]: break
 
 	fout.close()
