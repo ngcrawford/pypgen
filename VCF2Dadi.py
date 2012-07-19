@@ -58,10 +58,11 @@ def get_args():
 
 	args.populations = populations_dict
 
-	if len(args.region.split(":")) == 2 and args.region != None:
-		chrm = [args.region.split(":")[0]]
-		start_stop = [int(item) for item in args.region.split(":")[1].split("-")]
-		args.region = chrm + start_stop
+	if args.region != None:
+		if len(args.region.split(":")) == 2:
+			chrm = [args.region.split(":")[0]]
+			start_stop = [int(item) for item in args.region.split(":")[1].split("-")]
+			args.region = chrm + start_stop
 
 	else:
 		args.region = [args.region]
@@ -379,7 +380,7 @@ def sliding_window_dadi(args):
 			fout.write(','.join(final_line) + "\n")
 
 		# Don't process any more keys than necessary
-		print 'Processed {0} of {1} slices from contig {2}'.format(count, len(slices[chrm]), chrm)
+		print 'Processed {0} of {1} slices from contig {2}'.format(count+1, len(slices[chrm]), chrm)
 		if args.region != [None]: break
 
 	fout.close()
