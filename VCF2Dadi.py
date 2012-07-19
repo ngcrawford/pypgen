@@ -60,12 +60,16 @@ def get_args():
 
 	args.populations = populations_dict
 
-	print args.region
+
 	if ":" in args.region == True:
 		chrm = [args.region.split(":")[0]]
 		start_stop = [int(item) for item in args.region.split(":")[1].split("-")]
 		args.region = chrm + start_stop
+
 	if ":" in args.region == False:
+		args.region = [args.region]
+
+	if args.region == None:
 		args.region = [args.region]
 
 	return args
@@ -169,51 +173,55 @@ def make_dadi_fs(args, region):
 
 	# Get slice and setup output dictionaries
 	chunk = vcf.slice_vcf(args.input, args.populations, *region)
-	g = count_alleles(chunk, args.populations)
+	if chunk == None:
+		return None
 
-	final_dadi = {}
-	population_level_dadis = dict.fromkeys(pop_ids,{})
+	else:
+		g = count_alleles(chunk, args.populations)
 
-	for row_count, row in enumerate(g):
+		final_dadi = {}
+		population_level_dadis = dict.fromkeys(pop_ids,{})
 
-		raw_calls = chunk[row_count] 
-		row['outgroups'] = {'ALT': 0, 'REF': 0} # set empty outgroup
+		for row_count, row in enumerate(g):
 
-		# To Do: Need to create a function to fill outgroup if one is defined.
-		# The heliconius dataset, for example, has this.
+			raw_calls = chunk[row_count] 
+			row['outgroups'] = {'ALT': 0, 'REF': 0} # set empty outgroup
 
-		if check_outgroup(row) == False: continue # skip outgroup not fixed at one value
-		if len(raw_calls['REF']) > 1 or len(raw_calls["ALT"]) > 1: continue # skip multi allelic sites
+			# To Do: Need to create a function to fill outgroup if one is defined.
+			# The heliconius dataset, for example, has this.
+
+			if check_outgroup(row) == False: continue # skip outgroup not fixed at one value
+			if len(raw_calls['REF']) > 1 or len(raw_calls["ALT"]) > 1: continue # skip multi allelic sites
+			
+			# CALL BASE FOR OUTGROUP
+			outgroup_allele = get_outgroup_base(row, raw_calls)
+
+			# CALL MAJOR ALLELE (BASE) FOR INGROUP
+			major_allele = get_ingroup_major_allele(row, raw_calls, outgroup_allele)
+
+			# POLORIZE REF AND ALT FOR INGROUP
+			if major_allele != raw_calls['REF']:
+				ref, alt = ('ALT','REF')
+			else:
+				ref, alt = ('REF','ALT')
+
+
+			calls = {}
+			for count, pop in enumerate(pop_ids):
+				calls[pop] = (row[pop][ref], row[pop][alt])
+
+			row_id = "{0}_{1}".format(raw_calls['CHROM'],raw_calls['POS'])
 		
-		# CALL BASE FOR OUTGROUP
-		outgroup_allele = get_outgroup_base(row, raw_calls)
+			dadi_site = {'calls': calls,
+				   'context': make_triplet(major_allele),
+				   'outgroup_context': make_triplet(outgroup_allele),
+				   'outgroup_allele': outgroup_allele,
+				   'segregating': (raw_calls[ref], raw_calls[alt])
+				   }
 
-		# CALL MAJOR ALLELE (BASE) FOR INGROUP
-		major_allele = get_ingroup_major_allele(row, raw_calls, outgroup_allele)
+			final_dadi[row_id] = dadi_site
 
-		# POLORIZE REF AND ALT FOR INGROUP
-		if major_allele != raw_calls['REF']:
-			ref, alt = ('ALT','REF')
-		else:
-			ref, alt = ('REF','ALT')
-
-
-		calls = {}
-		for count, pop in enumerate(pop_ids):
-			calls[pop] = (row[pop][ref], row[pop][alt])
-
-		row_id = "{0}_{1}".format(raw_calls['CHROM'],raw_calls['POS'])
-	
-		dadi_site = {'calls': calls,
-			   'context': make_triplet(major_allele),
-			   'outgroup_context': make_triplet(outgroup_allele),
-			   'outgroup_allele': outgroup_allele,
-			   'segregating': (raw_calls[ref], raw_calls[alt])
-			   }
-
-		final_dadi[row_id] = dadi_site
-
-	return (final_dadi, pop_ids)
+		return (final_dadi, pop_ids)
 
 def generate_slices(args):
 
@@ -224,6 +232,7 @@ def generate_slices(args):
 	chrm_2_windows = vcf.chrm2length.fromkeys(vcf.chrm2length.keys(),None)
 	
 	for count, chrm in enumerate(vcf.chrm2length.keys()):
+
 		length = vcf.chrm2length[chrm]
 		window_size = args.window_size
 		overlap = args.overlap
@@ -337,24 +346,26 @@ def sliding_window_dadi(args):
 	# Open output file
 	fout = open(args.output,'w')
 
+	for key_count, chrm in enumerate(slices.keys()):
 
-	for key_count, key in enumerate(slices.keys()):
-
-		if args.region != None:
+		if args.region != [None]:
 			chrm = args.region[0]
 			#if key_count == 2: break
-			
 
 		for count, s in enumerate(slices[chrm]):
 
 			# Break out of loop if loop proceeds beyond
 			#   defined region (-L=1:1-5000 = 5000)
-			if s[-1] > args.region[-1]: break
+			if s[-1] > args.region[-1] and args.region[-1] != None: break
 
 			region = [chrm] + list(s)
 
 			# Setup Pairwise Dadi
-			dd, pop_ids = make_dadi_fs(args, region)
+
+			dadi_data = make_dadi_fs(args, region)
+			if dadi_data == None: continue # skip empty calls
+
+			dd, pop_ids = dadi_data
 			projection_size = 10
 			pairwise_fs  = dadi.Spectrum.from_data_dict(dd, pop_ids, [projection_size]*2)
 
@@ -375,14 +386,13 @@ def sliding_window_dadi(args):
 			fout.write(','.join(final_line) + "\n")
 
 		# Don't process any more keys than necessary
-		if args.region != None: break
+		if args.region != [None]: break
 
 	fout.close()
 
 
 if __name__ == '__main__':
 	args = get_args()
-
 	sliding_window_dadi(args)
 
 

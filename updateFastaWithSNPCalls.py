@@ -1,3 +1,4 @@
+import sys
 import VCF
 import gzip
 import pysam
@@ -20,7 +21,7 @@ vcf = VCF.VCF()
 
 input_vcf = "/usr3/graduate/ngcrawfo/genomics/bulk-seg-anoMar/vcf/CAP_MAR.di_allelic.stampy.vcf.gz"
 input_vcf = gzip.open(input_vcf,'rb')
-modified_fasta = open('CAP_MAR.50thousand.modified.fa','w')
+modified_fasta = open('/usr3/graduate/ngcrawfo/genomics/bulk-seg-anoMar/ref/anoMar.v0.0.1.fa','w')
 
 # SETUP COUNTERS
 previous_base = {'CHROM':None,'POS':None,'SEQ':None}
