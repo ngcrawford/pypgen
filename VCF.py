@@ -224,16 +224,20 @@ class VCF(object):
     def slice_vcf(self, tabix_filename, pops, chrm, start=None, stop=None):
 
         tabixfile = pysam.Tabixfile(tabix_filename)
-        chunk = tabixfile.fetch(reference=chrm, start=start, end=stop)
-        
-        pop_ids = self.populations.keys()
-        lines = []
+        try:
+            chunk = tabixfile.fetch(reference=chrm, start=start, end=stop)
+        except:
+            return None 
 
-        for line in chunk:
-            line =  self.parse_vcf_line(line)
-            lines.append(line.copy())
+        else:           
+            pop_ids = self.populations.keys()
+            lines = []
 
-        return lines
+            for line in chunk:
+                line =  self.parse_vcf_line(line)
+                lines.append(line.copy())
+
+            return lines
 
 
     def calc_MAF(self, gt_likelihoods):
@@ -254,9 +258,10 @@ class VCF(object):
                 line_parts[-1] = int(line_parts[-1].strip("length="))
                 chrm_len_pairs.append(line_parts)
 
+            if line.startswith("#CHROM"): break
+
         vcf_file.close()
         self.chrm2length =  dict(chrm_len_pairs)
-
 
 
     def set_header(self, vcf_path):
@@ -268,5 +273,7 @@ class VCF(object):
             if line.startswith("#CHROM"):
                 self.header = line.strip("#").strip().split()
                 self.__header_dict__ = OrderedDict([(item,None) for item in self.header])
+                break
 
         vcf_file.close()
+
