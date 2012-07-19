@@ -222,16 +222,19 @@ class VCF(object):
         return sample_pop
 
 
-    def slice_vcf(self, tabix_filename, pops, chrm, start=None, stop=None):
+    def slice_vcf(self, tabix_filename, chrm, start=None, stop=None):
 
         tabixfile = pysam.Tabixfile(tabix_filename)
-        chunk = tabixfile.fetch(reference=chrm, start=start, end=stop)
-        
-        pop_ids = self.populations.keys()
-        lines = []
+        try:
+            chunk = tabixfile.fetch(reference=chrm, start=start, end=stop)
+        # pysam throws exception there are no SNPs in the range given.
+        # this correction makes sure that some empty data is returned instead
+        except:
+            return []
 
+        lines = []
         for line in chunk:
-            line =  self.parse_vcf_line(line)
+            line = self.parse_vcf_line(line)
             lines.append(line.copy())
 
         return lines
@@ -254,7 +257,8 @@ class VCF(object):
                 line_parts = line.strip("##contig=<ID=").strip(">\n").split(",")
                 line_parts[-1] = int(line_parts[-1].strip("length="))
                 chrm_len_pairs.append(line_parts)
-
+            if line.startswith("#CHROM"):
+                break
         vcf_file.close()
         self.chrm2length =  dict(chrm_len_pairs)
 
@@ -267,6 +271,7 @@ class VCF(object):
             if line.startswith("#CHROM"):
                 self.header = line.strip("#").strip().split()
                 self.__header_dict__ = OrderedDict([(item,None) for item in self.header])
+                break
 
         vcf_file.close()
     def process_GT(self, snp_call):
