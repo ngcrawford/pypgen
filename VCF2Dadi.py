@@ -18,11 +18,9 @@ python VCF2Dadi.py \
 outgroups:h665,i02-210 \
 melpo:m523,m524,m525,m589,m675,m676,m682,m683,m687,m689 \
 pachi:p516,p517,p518,p519,p520,p591,p596,p690,p694,p696 
-
-
 """
 
-
+import sys
 import VCF
 import dadi
 import argparse
@@ -172,7 +170,7 @@ def make_dadi_fs(args, region):
 	pop_ids = args.populations.keys()
 
 	# Get slice and setup output dictionaries
-	chunk = vcf.slice_vcf(args.input, args.populations, *region)
+	chunk = vcf.slice_vcf(args.input, *region)
 	if chunk == None:
 		return None
 
@@ -381,13 +379,25 @@ def sliding_window_dadi(args):
 			fout.write(','.join(final_line) + "\n")
 
 		# Don't process any more keys than necessary
+		print 'Processed {1} slices from {0}'.format(chrm, len(slices[chrm]))
 		if args.region != [None]: break
 
 	fout.close()
 
 
+# def test_slices(args):
+# 	vcf = VCF.VCF()
+# 	vcf.set_header(args.input)
+# 	print 'testing slices'
+# 	slices = generate_slices(args)
+# 	input_file = "/usr3/graduate/ngcrawfo/genomics/bulk-seg-anoMar/vcf/CAP_MAR.di_allelic.stampy.vcf.gz"
+# 	for chrm in slices.keys():
+# 		print chrm, len(vcf.slice_vcf(input_file, chrm, start=1, stop=2500))
+
+
 if __name__ == '__main__':
 	args = get_args()
+	#test_slices(args)
 	sliding_window_dadi(args)
 
 
