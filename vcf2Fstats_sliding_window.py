@@ -69,8 +69,6 @@ def parse_vcf_line(header_dict, line):
         vcf_line_dict[item] = line_parts[count]
 
     sample_format = vcf_line_dict["FORMAT"].split(":")
-    
-
  
     for count, item in enumerate(vcf_line_dict):
         

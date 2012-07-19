@@ -323,6 +323,9 @@ class VCF(object):
             seq = fasta_handle.fetch(chrm,start, stop)
             return seq
   
+        elif int(stop) - int(start) == 1:
+            return ''
+        
         else:
             start = int(start) + 1
             stop = int(stop) - 1
