@@ -13,11 +13,12 @@ The author may be contacted at ngcrawford@gmail.com
 python VCF2Dadi.py \
 -i test_data/butterfly.vcf.gz \
 -o test_data/butterfly.dadi.input.txt \
--l Chr01:500-1000 \
+-L 1:500-1000 \
+-w 5000 \
+-overlap 0 \
 -p cydno:c511,c512,c513,c514,c515,c563,c614,c630,c639,c640 \
 outgroups:h665,i02-210 \
-melpo:m523,m524,m525,m589,m675,m676,m682,m683,m687,m689 \
-pachi:p516,p517,p518,p519,p520,p591,p596,p690,p694,p696 
+melpo:m523,m524,m525,m589,m675,m676,m682,m683,m687,m689 
 """
 
 import sys
@@ -39,13 +40,13 @@ def get_args():
 	parser.add_argument('-p','--populations', nargs='+',
 						help='Names of populations and samples. The format is: "PopName:sample1,sample2,sample3,etc..."')
 
-	parser.add_argument('-L','--region',default=None, type=str,
+	parser.add_argument('-L','--region', default=None, type=str,
 						help='chrm:start-stop')
 
 	parser.add_argument('-w', '--window-size', type=int,
 						help='The size of the windows')
 
-	parser.add_argument('-overlap', type=int,
+	parser.add_argument('-overlap', type=int, default=0,
 						help='The number of base pairs each window overlaps the previous')
 
 	args = parser.parse_args()
@@ -244,8 +245,12 @@ def generate_slices(args):
 		if (length % window_size) <= overlap:
 			start = (length % window_size)/2
 			stop = length - overlap*2
-				
-		starts = range(start, stop, overlap)
+	
+		if overlap == 0:
+			starts = xrange(start, stop, window_size)
+		else:
+			starts = xrange(start, stop, overlap)
+		
 		stops = [i+window_size for i in starts]
 		windows = zip(starts, stops)
 		
@@ -340,6 +345,9 @@ def sliding_window_dadi(args):
 	print 'Processing Slices...'
 	fout = open(args.output,'w')
 
+	# Write output header
+	fout.write(','.join(create_header(pop_ids)) + "\n")
+
 	for key_count, chrm in enumerate(slices.keys()):
 
 		if args.region != [None]:
@@ -362,9 +370,6 @@ def sliding_window_dadi(args):
 			projection_size = 10
 			pairwise_fs  = dadi.Spectrum.from_data_dict(dd, pop_ids, [projection_size]*2)
 
-			# Write output header
-			if count == 0: fout.write(','.join(create_header(pop_ids)) + "\n")
-
 			# Create final line, add Fst info
 			final_line = region
 			final_line += [pairwise_fs.Fst()]
@@ -385,20 +390,62 @@ def sliding_window_dadi(args):
 	fout.close()
 
 
-# def test_slices(args):
-# 	vcf = VCF.VCF()
-# 	vcf.set_header(args.input)
-# 	print 'testing slices'
-# 	slices = generate_slices(args)
-# 	input_file = "/usr3/graduate/ngcrawfo/genomics/bulk-seg-anoMar/vcf/CAP_MAR.di_allelic.stampy.vcf.gz"
-# 	for chrm in slices.keys():
-# 		print chrm, len(vcf.slice_vcf(input_file, chrm, start=1, stop=2500))
+
+def chunk_processor():
+	if args.region != [None]:
+	chrm = args.region[0]
+	#if key_count == 2: break
+	
+	for count, s in enumerate(slices[chrm]):
+
+		# Break out of loop if loop proceeds beyond
+		#   defined region (-L=1:1-5000 = 5000)
+		if s[-1] > args.region[-1] and args.region[-1] != None: break
+
+		region = [chrm] + list(s)
+
+		# Setup Pairwise Dadi
+		dadi_data = make_dadi_fs(args, region)
+		if dadi_data == None: continue # skip empty calls
+
+		dd, pop_ids = dadi_data
+		projection_size = 10
+		pairwise_fs  = dadi.Spectrum.from_data_dict(dd, pop_ids, [projection_size]*2)
+
+		# Create final line, add Fst info
+		final_line = region
+		final_line += [pairwise_fs.Fst()]
+
+		# Add in population level stats
+		for pop in pop_ids:
+			fs = dadi.Spectrum.from_data_dict(dd, [pop], [projection_size])
+			final_line += [fs.Tajima_D(), fs.Watterson_theta(), fs.pi(), fs.S()]
+
+
+
+def test_slices(args):
+	vcf = VCF.VCF()
+	vcf.set_header(args.input)
+	print 'testing slices'
+	slices = generate_slices(args)
+	#input_file = "/usr3/graduate/ngcrawfo/genomics/bulk-seg-anoMar/vcf/CAP_MAR.di_allelic.stampy.vcf.gz"
+	for count, chrm in enumerate(slices.keys()):
+
+		print chrm, slices[chrm][:4]
+
+
+		s = vcf.slice_vcf(args.input, chrm, start=5000, stop=25000)
+		print chrm, len(s) 
+		if count > 10: break
+
+
+
 
 
 if __name__ == '__main__':
 	args = get_args()
-	#test_slices(args)
-	sliding_window_dadi(args)
+	test_slices(args)
+	#sliding_window_dadi(args)
 
 
 
