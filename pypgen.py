@@ -32,8 +32,6 @@ from pylab import *
 import multiprocessing
 from functools import partial
 
-
-
 def get_args():
     """Parse sys.argv"""
     parser = argparse.ArgumentParser()
@@ -41,7 +39,6 @@ def get_args():
         help='The input file. Either genepop or arlequin formated.')
     args = parser.parse_args()
     return args
-
 
 class population(object):
     """docstring for population"""
@@ -748,6 +745,7 @@ class MonteCarlo(object):
                 print p_value
         
         print obs
+        return obs
         # store = pandas.HDFStore('store.h5')
         # store['final'] = final
         
@@ -1145,8 +1143,8 @@ if __name__ == '__main__':
     pops = parse_genepop(lines)
     MtC = MonteCarlo()
     estimator = "G_prime_st_est"
-    sim_data = MtC.simulate(demes, estimator=estimator, replicates=50)
-    MtC.p_values(sim_data, demes, estimator=estimator)
+    sim_data = MtC.simulate(demes, estimator=estimator, replicates=1000)
+    results = MtC.p_values(sim_data, demes, estimator=estimator)
     
     
     
