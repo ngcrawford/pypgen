@@ -24,9 +24,9 @@ import re
 import csv
 import sys
 import copy
+import pandas
 import unittest
 import argparse
-import pandas
 from la import *
 from pylab import *
 import multiprocessing
@@ -377,6 +377,7 @@ class populations(list):
         n = self.n()
         allele_freqs = self.__allele_freqs_3D_larry__()
         Hj = 1-(allele_freqs.power(2).sum(axis=1))
+        print Hj
         Hs_prime_est = (1/n)*(Hj.sum(axis=0))
         return Hs_prime_est
     
@@ -517,7 +518,8 @@ class populations(list):
         multilocus_Gst_est = (Ht_est_mean-Hs_est_mean)/Ht_est_mean
         multilocus_G_prime_st = (multilocus_Gst_est*(n-1.0+Hs_est_mean))/\
                                     ((n-1.0)*(1.0-Hs_est_mean))
-        multilocus_G_double_prime_st_est = n*(Ht_est_mean-Hs_est_mean)/((n*Ht_est_mean-Hs_est_mean)*(1.0-Hs_est_mean))
+        multilocus_G_double_prime_st_est = n*(Ht_est_mean-Hs_est_mean)\
+                                        /((n*Ht_est_mean-Hs_est_mean)*(1.0-Hs_est_mean))
         multilocus_D_est = self.harmonic_mean_chao(((Ht_est-Hs_est)/(1.0-Hs_est))*(n/(n-1)))
         
         multilocus_estimators_array = larry(array([multilocus_Gst_est,multilocus_G_prime_st,multilocus_G_double_prime_st_est,multilocus_D_est]),
@@ -1134,22 +1136,19 @@ class MonteCarloTests(unittest.TestCase):
 
 if __name__ == '__main__':
     
-    args = get_args()
-    fin = open(args.input_file, 'rU')
-    lines = fin.readlines()
-    demes = parse_genepop(lines)
-    fin.close()
+    # args = get_args()
+    # fin = open(args.input_file, 'rU')
+    # lines = fin.readlines()
+    # demes = parse_genepop(lines)
+    # fin.close()
     
     pops = parse_genepop(lines)
     MtC = MonteCarlo()
     estimator = "G_prime_st_est"
     sim_data = MtC.simulate(demes, estimator=estimator, replicates=1000)
     results = MtC.p_values(sim_data, demes, estimator=estimator)
-    
-    
-    
 
-
+    
     # new_pair = populations()
     # new_pair.append(pops.pops[4])
     # new_pair.append(pops.pops[-1])
@@ -1186,10 +1185,10 @@ if __name__ == '__main__':
     # suite = unittest.TestLoader().loadTestsFromTestCase(InputFileTest)
     # unittest.TextTestRunner(verbosity=5).run(suite)
     
-    # suite = unittest.TestLoader().loadTestsFromTestCase(PopulationTests)
-    # unittest.TextTestRunner(verbosity=1).run(suite)
-    # suite = unittest.TestLoader().loadTestsFromTestCase(PopulationsTests)
-    # unittest.TextTestRunner(verbosity=1).run(suite)
+    suite = unittest.TestLoader().loadTestsFromTestCase(PopulationTests)
+    unittest.TextTestRunner(verbosity=1).run(suite)
+    suite = unittest.TestLoader().loadTestsFromTestCase(PopulationsTests)
+    unittest.TextTestRunner(verbosity=1).run(suite)
 
     # suite = unittest.TestLoader().loadTestsFromTestCase(MonteCarloTests)
     # unittest.TextTestRunner(verbosity=1).run(suite)

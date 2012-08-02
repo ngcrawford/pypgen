@@ -1,2 +1,14 @@
 *working
 *.h5
+*.sync
+*.csv
+*.out
+*.pyc
+*.e*
+*.o*
+48-AnoMars*
+*.gz
+*.tbi
+*.ipynb
+*.fa
+*dadi.txt
