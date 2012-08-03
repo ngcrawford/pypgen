@@ -263,14 +263,17 @@ class VCF(object):
                 chrm_len_pairs.append(line_parts)
             if line.startswith("#CHROM"):
                 break
+        
         vcf_file.close()
         self.chrm2length =  dict(chrm_len_pairs)
 
     def set_header(self, vcf_path):
         if vcf_path.endswith('gz'):
             vcf_file = gzip.open(vcf_path, 'rb')
+        
         else:
             vcf_file = open(vcf_path,'rU')
+        
         for line in vcf_file:
             if line.startswith("#CHROM"):
                 self.header = line.strip("#").strip().split()
@@ -451,7 +454,7 @@ class VCF(object):
         return "-{0}-".format(base) 
 
     def count_alleles_in_vcf(self, vcf_slice):
-        """"Generator fuction that returns rows of allele counts line by line of a given VCF."""
+        """"Fuction that returns rows of allele counts line by line of a given VCF."""
 
         # To Do: Add code to skip header. Currently assumes sliced vcf. 
 
@@ -518,9 +521,13 @@ class VCF(object):
 
     def generate_slices(self, args):
 
-        self.set_chrms(args.input)
-        chrm_2_windows = self.chrm2length.fromkeys(self.chrm2length.keys(),None)
+        if args.region != [None]:
+            self.chrm2length = {args.region[0]:args.region[-1]}
+        else:
+            self.set_chrms(args.input)
         
+        chrm_2_windows = self.chrm2length.fromkeys(self.chrm2length.keys(),None)
+
         for count, chrm in enumerate(self.chrm2length.keys()):
 
             length = self.chrm2length[chrm]
@@ -553,6 +560,11 @@ class VCF(object):
         return chrm_2_windows
 
 
+    def slice_2_allele_counts(self, tabix_filename, chrm, start=None, stop=None):
+        vcf_slice = self.slice_vcf( tabix_filename, chrm, start, stop)
+        processed_slice = self.count_alleles_in_vcf( vcf_slice)
+        return processed_slice
+
     def make_dadi_fs( self, vcf_slice,):
 
         if vcf_slice == [] or vcf_slice == None:
@@ -561,9 +573,13 @@ class VCF(object):
         else:
 
             final_dadi = {}
+            
             for row_count, row in enumerate(vcf_slice):
+                
                 if row == None: continue
+                
                 calls = {}
+                
                 for count, pop in enumerate(self.populations.keys()):
                     if pop == 'outgroups': continue
                     calls[pop] = (row[pop]['REF'], row[pop]['ALT'])

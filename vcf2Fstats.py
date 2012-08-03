@@ -52,6 +52,12 @@ def get_args():
     parser.add_argument('-overlap', type=int, default=0,
                         help='The number of base pairs each window overlaps the previous')
 
+    parser.add_argument('-n', '--processors', type=int, default=0,
+                        help='The number of processors to use.')
+
+    parser.add_argument('--projection-size', type=int, default=10,
+                        help='Number of alleles dadi project the data down to.')
+
     args = parser.parse_args()
 
     populations_dict  = {}
@@ -112,37 +118,59 @@ def process_vcf_slices(slices, vcf):
         if s != []:
             yield tuple([vcf, vcf.count_alleles_in_vcf.__name__] + [(s)])
 
+def slices_2_calls(slices, vcf, args):
+    for ccount, chrm in enumerate(slices.keys()):
+        
+        if slices[chrm] == None: 
+            print 'skipping' ,chrm
+            continue
+        
+        for scount, s in enumerate(slices[chrm]):
+            yield tuple([vcf, vcf.slice_2_allele_counts.__name__, args.input, chrm] + list(s))
 
-def calc_fstats_with_dadi():
+
+
+def calc_fstats_with_dadi(args):
     """Takes a VCF file and calculates """
 
     vcf = VCF.VCF()
+    print 'Setting header...'
     vcf.set_header(args.input)
     vcf.populations = args.populations
-    slices = vcf.generate_slices(args)
-    pool = multiprocessing.Pool(2)
-
-    sliced_vcf = itertools.imap(target, make_vcf_slices(slices, vcf, args))
-
-    chunksize = 1000000 * args.window_size # if 1 snps per kb then this works out to ~ 
-    processed_vcf = pool.imap(target, process_vcf_slices(sliced_vcf, vcf))
+    pool = multiprocessing.Pool(args.processors)
     
+    print 'Generating slices...'
+    slices = vcf.generate_slices(args)
+        
+    # Creating output
     fout = open(args.output,'w')
     header = ' '.join(create_Fstats_header(vcf.populations)) + '\n'
     fout.write(header)
 
-    for count, s in enumerate(processed_vcf):
-        region = s[0]
-        region = [region['CHROM'], region['POS']]
+    z = slices_2_calls(slices, vcf, args)
+
+    current_chrm = None
+    for count, s in enumerate(pool.imap(target, slices_2_calls(slices, vcf, args), chunksize=1)):
+
+        s = [i for i in s if i != None]
+        region = [s[0]['CHROM'], s[0]['POS']]
 
         dd = vcf.make_dadi_fs(s)
         
+        if current_chrm == None or current_chrm != s[0]['CHROM']:
+            print 'Processing:', s[0]['CHROM']
+            current_chrm = s[0]['CHROM']
+
         if dd == None: continue # skip empty calls
         
         pop_ids = vcf.populations.keys()
         pop_ids.remove('outgroups')
         projection_size = 10
-        pairwise_fs  = dadi.Spectrum.from_data_dict(dd, pop_ids, [projection_size]*2)
+        pairwise_fs  = dadi.Spectrum.from_data_dict(dd, pop_ids, [projection_size]*len(pop_ids))
+        try:
+            pairwise_fs  = dadi.Spectrum.from_data_dict(dd, pop_ids, [projection_size]*len(pop_ids))
+        except:
+            continue
 
         # Create final line, add Fst info
         final_line = region
@@ -158,10 +186,11 @@ def calc_fstats_with_dadi():
         fout.write(' '.join(final_line) + "\n")
 
     fout.close()
-        
+   
+
 if __name__ == '__main__':
     args = get_args()
-    calc_fstats_with_dadi()
+    calc_fstats_with_dadi(args)
 
 
 
