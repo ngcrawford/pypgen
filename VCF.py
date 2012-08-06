@@ -581,4 +581,17 @@ class VCF(object):
 
 
 
+    def SNPwise_fstats(self, vcf, vcf_slice):
+
+        #vcf, vcf_slice = vcf_slice
+        results = []
+        for vcf_line in vcf_slice:
+            allele_counts = vcf.count_alleles(vcf_line, polarize=True)
+            try:
+                results.append(vcf.calc_fstats(allele_counts))
+            except:
+                continue
+
+        return results
+
 
