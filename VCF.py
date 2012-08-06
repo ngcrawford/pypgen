@@ -1,8 +1,11 @@
 
 import gzip
+import dadi
 import pysam
 from copy import copy
 from random import choice
+from fstats import fstats
+from itertools import combinations
 from collections import OrderedDict
 
 class VCF(object):
@@ -168,6 +171,9 @@ class VCF(object):
                 values_dict = dict(zip(['Hs_est', 'Ht_est', 'Gst_est', \
                                         'G_prime_st_est', 'G_double_prime_st_est', 'D_est'],values))
 
+                values_dict['CHROM'] = allele_counts["CHROM"]
+                values_dict['POS'] = allele_counts["POS"]
+
                 pairwise_results[population_pair] = values_dict
 
         return pairwise_results
@@ -263,6 +269,7 @@ class VCF(object):
                 break
 
         vcf_file.close()
+
     def process_genotype(self, snp_call):
         """Given GT string convert to allele counts.
 
@@ -331,7 +338,10 @@ class VCF(object):
             return seq
 
     def polarize_allele_counts(self, allele_counts, vcf_line):
-        """For set of allele counts use outgroup"""
+        """For a set of allele counts use outgroup to determine REF and ALT alleles.
+
+        The outgroup is required to be fixed at one allele. SNPS with variable outgroups are ignored.
+        """
 
         # To Do: Check that outgroup is defined. Throw exception if is isn't. 
 
@@ -340,29 +350,30 @@ class VCF(object):
             return None 
 
         # skip multi-allelic sites
-        if len(vcf_line['REF']) > 1 or len(vcf_line["ALT"]) > 1:
+        elif len(vcf_line['REF']) > 1 or len(vcf_line["ALT"]) > 1:
             return None                         
 
-        # CALL BASE FOR OUTGROUP
-        outgroup_allele = self.get_outgroup_base(allele_counts, vcf_line)
-        
-        # CALL MAJOR ALLELE (BASE) FOR INGROUP
-        major_allele = self.get_ingroup_major_allele(allele_counts, vcf_line, outgroup_allele)
-
-        # POLORIZE REF AND ALT FOR INGROUP
-        if major_allele != vcf_line['REF']:
-            ref, alt = ('ALT','REF')
         else:
-            ref, alt = ('REF','ALT')
+            # CALL BASE FOR OUTGROUP
+            outgroup_allele = self.get_outgroup_base(allele_counts, vcf_line)
+            
+            # CALL MAJOR ALLELE (BASE) FOR INGROUP
+            major_allele = self.get_ingroup_major_allele(allele_counts, vcf_line, outgroup_allele)
 
-        polarized_calls = {"CHROM":vcf_line['CHROM'], 'POS':vcf_line['POS'], \
-                           'MAJOR_ALLELE':major_allele, 'OUTGROUP_ALLELE':outgroup_allele, \
-                           'REF':vcf_line['REF'], 'ALT':vcf_line["ALT"]}
+            # POLORIZE REF AND ALT FOR INGROUP
+            if major_allele != vcf_line['REF']:
+                ref, alt = ('ALT','REF')
+            else:
+                ref, alt = ('REF','ALT')
 
-        for count, pop in enumerate(self.populations.keys()):
-            polarized_calls[pop] = {'REF':allele_counts[pop][ref], 'ALT':allele_counts[pop][alt]}
+            polarized_calls = {"CHROM":vcf_line['CHROM'], 'POS':vcf_line['POS'], \
+                               'MAJOR_ALLELE':major_allele, 'OUTGROUP_ALLELE':outgroup_allele, \
+                               'REF':vcf_line['REF'], 'ALT':vcf_line["ALT"]}
 
-        return polarized_calls
+            for count, pop in enumerate(self.populations.keys()):
+                polarized_calls[pop] = {'REF':allele_counts[pop][ref], 'ALT':allele_counts[pop][alt]}
+
+            return polarized_calls
 
 
     def count_alleles(self, vcf_line, polarize=False):
@@ -392,11 +403,16 @@ class VCF(object):
 
     def check_outgroup(self, row):
         outgroup = row["outgroups"]
-        counts = set([value for value in outgroup.values() if value != 0])
-        if len(counts) > 1:
-            return False
-        else:
+
+        if outgroup['ALT'] == 0 and outgroup['REF'] > 0:
             return True
+
+        elif outgroup['REF'] == 0 and outgroup['ALT'] > 0:
+            return True
+
+        else:
+            return False
+
 
     def get_outgroup_base(self, row, raw_calls):
         pops = self.populations.keys()
@@ -575,7 +591,6 @@ class VCF(object):
                 if row == None: continue
                 
                 calls = {}
-                
                 for count, pop in enumerate(self.populations.keys()):
                     if pop == 'outgroups': continue
                     calls[pop] = (row[pop]['REF'], row[pop]['ALT'])
