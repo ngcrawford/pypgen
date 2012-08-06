@@ -105,61 +105,43 @@ class VCF(object):
 
         return vcf_line_dict
 
-    def calc_allele_counts(self, vcf_line_dict):
-
-        allele_counts = self.populations.fromkeys(self.populations.keys(),None)
-
-        for population in self.populations.keys():
-
-            allele_format_dict = {0:0,1:0,2:0,3:0,4:0}   # create dict to prevent pointer issues
-            allele_counts[population] = allele_format_dict
-
-            for sample_id in self.populations[population]:
-                
-
-                if vcf_line_dict[sample_id] != None:
-                    
-                    genotype = vcf_line_dict[sample_id]
-                    genotype = genotype["GT"].split("/")
-
-                    if genotype == [".","."]: continue
-
-                    genotype = [int(item) for item in genotype]
-                    
-                    for allele in genotype:
-                        allele_counts[population][allele] += 1 
-        
-        return allele_counts
-
    
     def calc_fstats(self, allele_counts):
 
+        import numpy as np
         #test_pair = {'So_Riviere_Goyaves': np.array([ 0.0, 1.0, 0.0, 0.0]), 'Plage_de_Viard': np.array([ 1.0, 0.0, 0.0, 0.0]),}
         
         # CALCULATE ALLELE FREQUENCIES
         allele_freqs_dict = self.populations.fromkeys(self.populations.keys(),None)
-        for population in allele_counts.keys():
-            counts =  allele_counts[population].values()
-            freqs =  counts/np.sum(counts,dtype=float)
-            allele_freqs_dict[population] = freqs
-
+        for pop in self.populations:
+            counts =  allele_counts[pop].values()
+            freqs =  counts/np.sum(counts, dtype=float)
+            allele_freqs_dict[pop] = freqs
+        
         allele_freqs = allele_freqs_dict.values()
 
         # CACULATE PAIRWISE F-STATISTICS
         pairwise_results = {}
-        for population_pair in combinations(self.populations.keys(),2):
+
+        pops_no_outgroup =  self.populations.keys()
+        pops_no_outgroup.remove('outgroups')
+
+        for population_pair in combinations(pops_no_outgroup,2):
             
             pop1, pop2 =  population_pair
             Ns = [sum(allele_counts[pop].values()) for pop in [pop1, pop2]]
+
 
             if 0 in Ns: 
                 values = [np.nan, np.nan, np.nan, np.nan, np.nan, np.nan]
                 values_dict = dict(zip(['Hs_est', 'Ht_est', 'Gst_est', 'G_prime_st_est', 'G_double_prime_st_est', 'D_est'],values))
                 pairwise_results[population_pair] = values_dict
+                values_dict['CHROM'] = allele_counts["CHROM"]
+                values_dict['POS'] = allele_counts["POS"]
                 continue
             
             else:
-
+ 
                 pop1 = allele_freqs_dict[pop1]
                 pop2 = allele_freqs_dict[pop2]
                 allele_freqs = [pop1, pop2]
