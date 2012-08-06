@@ -131,8 +131,6 @@ def slices_2_calls(slices, vcf, args):
         for scount, s in enumerate(slices[chrm]):
             yield tuple([vcf, vcf.slice_2_allele_counts.__name__, args.input, chrm] + list(s))
 
-
-
 def calc_fstats_with_dadi(args):
     """Takes a VCF file and calculates """
 
@@ -149,8 +147,6 @@ def calc_fstats_with_dadi(args):
     fout = open(args.output,'w')
     header = ' '.join(create_Fstats_header(vcf.populations)) + '\n'
     fout.write(header)
-
-    z = slices_2_calls(slices, vcf, args)
 
     current_chrm = None
     for count, s in enumerate(pool.imap(target, slices_2_calls(slices, vcf, args), chunksize=1)):
@@ -190,6 +186,34 @@ def calc_fstats_with_dadi(args):
 
     fout.close()
    
+
+def slices_list_generator(args):
+    slices = vcf.generate_slices(args)
+
+    pop_ids = args.populations.keys()
+    pop_ids.remove('outgroups')
+
+    projection_size = 10
+    vcf_slices = []
+
+    for ccount, chrm in enumerate(slices.keys()):
+
+        if slices[chrm] == None: 
+            print 'skipping', chrm
+            continue
+
+        for scount, s in enumerate(slices[chrm]):
+            cmds = [args.input, chrm] + list(s)   
+            vcf_slices.append(vcf.slice_vcf(*cmds))
+
+            if len(vcf_slices) % 2 == 0:
+
+                print [vcf.vcf_slice_2_fstats(s, projection_size = 10) for s in vcf_slices]
+                vcf_slices = []
+
+    print [vcf.vcf_slice_2_fstats(s, projection_size = 10) for s in vcf_slices]
+
+
 
 def create_equal_sized_spaced_chunks(args, chunksize = 100):
     """ Calculates SNPwise Fstats."""
