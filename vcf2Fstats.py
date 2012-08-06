@@ -191,9 +191,86 @@ def calc_fstats_with_dadi(args):
     fout.close()
    
 
+def create_equal_sized_spaced_chunks(args, chunksize = 100):
+    """ Calculates SNPwise Fstats."""
+
+    # setup VCF
+    vcf = VCF.VCF()
+    vcf.set_header(args.input)
+    vcf.set_chrms(args.input)
+    vcf.populations = args.populations
+
+    # parse chrms
+    for ccount, chrm in enumerate(vcf.chrm2length.keys()):
+        if chrm != 'Chr01': continue
+
+        # create tabix input
+        chrm_length = vcf.chrm2length[chrm]
+        chunks = zip(range(1,chrm_length,chunksize),range(chunksize,chrm_length,chunksize))
+        chunks = [(args.input, chrm, start, stop) for start, stop in chunks] 
+
+        # make sure last little bit is included    
+        last_chunk = (args.input, chrm, chunks[-1][-1] +1, chrm_length)         
+        chunks.append(last_chunk)
+        
+        # get vcf lines for each chunk
+        for scount, chunk in enumerate(chunks):
+            # if scount > 10: break
+            yield (vcf, vcf.slice_vcf(*chunk))
+
+
+def multiprocessed_SNPwise_fstats(slices, vcf, args):
+    """T"""
+    for ccount, s in enumerate(slices):
+        s = list(s)
+        s.insert(0, vcf)
+        s.insert(1, vcf.SNPwise_fstats.__name__)
+        yield s
+
+
+def slices_2_calls(slices, vcf, args):
+    for ccount, chrm in enumerate(slices.keys()):
+        
+        if slices[chrm] == None: 
+            print 'skipping', chrm
+            continue
+        
+        for scount, s in enumerate(slices[chrm]):
+            yield tuple([vcf, vcf.slice_2_allele_counts.__name__, args.input, chrm] + list(s))
+
+def SNPs(args):
+    vcf = VCF.VCF()
+    print 'Setting header...'
+    vcf.set_header(args.input)
+    
+    pool = multiprocessing.Pool(args.processors)
+    slices = create_equal_sized_spaced_chunks(args, chunksize = 100)
+
+    outfiles = None
+    header = ['CHROM', 'POS', 'Hs_est', 'Ht_est', 'G_double_prime_st_est', 'G_prime_st_est', 'Gst_est', 'D_est']
+    for count, chunk in enumerate(pool.imap(target, multiprocessed_SNPwise_fstats(slices, vcf, args), chunksize=1)):
+        if len(chunk) > 0:
+
+            for i in chunk:
+                if outfiles == None and i != None and len(chunk) > 0:
+
+                    outfiles = dict([(pair, open('%s_%s.fstats.txt' % pair,'w')) for pair in i.keys()])
+                    write_headers = [outfiles[pair].write("\t".join(header) + "\n") for pair in outfiles.keys()]
+
+                for pair in i.keys():
+                    print i[pair]
+                    outfiles[pair].write('\t'.join([str(i[pair][h]) for h in header]) + "\n")
+
+
+                # print i
+                # if count > 50: break
+
+
 if __name__ == '__main__':
     args = get_args()
-    calc_fstats_with_dadi(args)
+    SNPs(args)
+
+
 
 
 
