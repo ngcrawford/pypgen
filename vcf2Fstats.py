@@ -10,15 +10,18 @@ Copyright (c) 2012
 The author may be contacted at ngcrawford@gmail.com
 
 
-python VCF2Dadi.py \
+python vcf2Fstats.py \
 -i test_data/butterfly.vcf.gz \
 -o test_data/butterfly.dadi.input.txt \
--L 1:500-1000 \
--w 5000 \
+-L Chr01:0-5000 \
+-w 500 \
 -overlap 0 \
+-n 3 \
 -p cydno:c511,c512,c513,c514,c515,c563,c614,c630,c639,c640 \
 outgroups:h665,i02-210 \
-melpo:m523,m524,m525,m589,m675,m676,m682,m683,m687,m689 
+melpo:m523,m524,m525,m589,m675,m676,m682,m683,m687,m689 \
+pachi:p516,p517,p518,p519,p520,p591,p596,p690,p694,p696
+
 """
 
 import sys
