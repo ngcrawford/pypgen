@@ -1,5 +1,7 @@
+
 import gzip
 import pysam
+from copy import copy
 from random import choice
 from collections import OrderedDict
 
@@ -225,19 +227,21 @@ class VCF(object):
     def slice_vcf(self, tabix_filename, chrm, start=None, stop=None):
 
         tabixfile = pysam.Tabixfile(tabix_filename)
+        results = None
+        # pysam throws exception when there are no SNPs in the range given.
+        # this correction makes sure that some empty data is returned instead
         try:
             chunk = tabixfile.fetch(reference=chrm, start=start, end=stop)
-        # pysam throws exception there are no SNPs in the range given.
-        # this correction makes sure that some empty data is returned instead
         except:
-            return []
+            results = []
 
-        lines = []
-        for line in chunk:
-            line = self.parse_vcf_line(line)
-            lines.append(line.copy())
+        if results != []:
+            results = []
+            for line in chunk:
+                line = self.parse_vcf_line(line)
+                results.append(line.copy())
 
-        return lines
+        return results
 
 
     def calc_MAF(self, gt_likelihoods):
@@ -259,14 +263,17 @@ class VCF(object):
                 chrm_len_pairs.append(line_parts)
             if line.startswith("#CHROM"):
                 break
+        
         vcf_file.close()
         self.chrm2length =  dict(chrm_len_pairs)
 
     def set_header(self, vcf_path):
         if vcf_path.endswith('gz'):
             vcf_file = gzip.open(vcf_path, 'rb')
+        
         else:
             vcf_file = open(vcf_path,'rU')
+        
         for line in vcf_file:
             if line.startswith("#CHROM"):
                 self.header = line.strip("#").strip().split()
@@ -274,14 +281,14 @@ class VCF(object):
                 break
 
         vcf_file.close()
-    def process_GT(self, snp_call):
+    def process_genotype(self, snp_call):
         """Given GT string convert to allele counts.
 
             e.g., '1/1' becomes (0,2)
                   '0/0' becomes (2,0)  
                   '0/1' becomes (1,1)                 
 
-            To Do: Does not propperly handle multiallelic GTs
+            To Do: Properly handle multiallelic GTs
         """
 
         if snp_call == "0/0":
@@ -298,11 +305,12 @@ class VCF(object):
         else:
             return (0,0)
 
-    def get_major_allele(self, vcf_line, vcf):
+
+    def get_major_allele(self, vcf_line):
         """Choose major allele from VCF line based on genotype counts."""
 
-        samples = vcf.header[9:]
-        GT_counts = (self.process_GT(vcf_line[k]['GT']) for k in samples if vcf_line[k] != None)
+        samples = self.header[9:]
+        GT_counts = (self.process_genotype(vcf_line[k]['GT']) for k in samples if vcf_line[k] != None)
 
         ref_count = sum(( gt[0] for gt in GT_counts))
         alt_count = sum(( gt[1] for gt in GT_counts))
@@ -319,7 +327,6 @@ class VCF(object):
     def sequence_between_SNPS(self, fasta_handle, chrm, start, stop):
         """Returns sequence between SNPs. Requires an opened pysam faidxed fasta."""
         if start == None and stop == None:
-            print 'here'
             return None
 
         elif start == None and stop != None:
@@ -340,6 +347,255 @@ class VCF(object):
             stop = int(stop) - 1
             seq = fasta_handle.fetch(chrm,start, stop)
             return seq
+
+    def polarize_allele_counts(self, allele_counts, vcf_line):
+        """For set of allele counts use outgroup"""
+
+        # To Do: Check that outgroup is defined. Throw exception if is isn't. 
+
+        # skip outgroup not fixed at one value
+        if self.check_outgroup(allele_counts) == False:
+            return None 
+
+        # skip multi-allelic sites
+        if len(vcf_line['REF']) > 1 or len(vcf_line["ALT"]) > 1:
+            return None                         
+
+        # CALL BASE FOR OUTGROUP
+        outgroup_allele = self.get_outgroup_base(allele_counts, vcf_line)
+        
+        # CALL MAJOR ALLELE (BASE) FOR INGROUP
+        major_allele = self.get_ingroup_major_allele(allele_counts, vcf_line, outgroup_allele)
+
+        # POLORIZE REF AND ALT FOR INGROUP
+        if major_allele != vcf_line['REF']:
+            ref, alt = ('ALT','REF')
+        else:
+            ref, alt = ('REF','ALT')
+
+        polarized_calls = {"CHROM":vcf_line['CHROM'], 'POS':vcf_line['POS'], \
+                           'MAJOR_ALLELE':major_allele, 'OUTGROUP_ALLELE':outgroup_allele, \
+                           'REF':vcf_line['REF'], 'ALT':vcf_line["ALT"]}
+
+        for count, pop in enumerate(self.populations.keys()):
+            polarized_calls[pop] = {'REF':allele_counts[pop][ref], 'ALT':allele_counts[pop][alt]}
+
+        return polarized_calls
+
+
+    def count_alleles(self, vcf_line, polarize=False):
+        """"Given a vcf file summarize allele counts per population."""
+
+        allele_counts = {"CHROM":vcf_line['CHROM'], 'POS':vcf_line['POS']}
+
+   
+        for pop in self.populations.keys():
+            
+            alleles = {'REF':0, 'ALT':0}
+            
+            for sample in self.populations[pop]:
+                if vcf_line[sample] != None:
+                    ref, alt = self.process_genotype(vcf_line[sample]['GT'])
+                    alleles['REF'] += ref
+                    alleles['ALT'] += alt
+            
+            allele_counts[pop] =  alleles.copy()
+
+        if polarize == True:
+            return self.polarize_allele_counts(allele_counts, vcf_line)
+
+        else:
+            return allele_counts
+                
+
+    def check_outgroup(self, row):
+        outgroup = row["outgroups"]
+        counts = set([value for value in outgroup.values() if value != 0])
+        if len(counts) > 1:
+            return False
+        else:
+            return True
+
+    def get_outgroup_base(self, row, raw_calls):
+        pops = self.populations.keys()
+
+        if row["outgroups"]['REF'] > row["outgroups"]['ALT']:
+            outgroup_base = raw_calls['REF']
+        
+        elif sum(row['outgroups'].values()) == 0 : # e.g, == {'ALT': 0, 'REF': 0}
+            ref = sum([row[pop]['REF'] for pop in pops])
+            alt = sum([row[pop]['ALT'] for pop in pops])
+            
+            if ref > alt:
+                outgroup_base = raw_calls['REF']
+            else: 
+                outgroup_base = raw_calls['ALT']
+        
+        else:
+            outgroup_base = raw_calls['ALT']    
+        
+        return outgroup_base
+
+    def get_ingroup_major_allele(self, row, raw_calls, outgroup_allele):
+    
+        pops = self.populations.keys()
+        pops.remove('outgroups')
+
+        ref_sum = sum([row[pop]['REF'] for pop in pops])
+        alt_sum = sum([row[pop]['ALT'] for pop in pops])
+
+        if ref_sum < alt_sum:
+            return raw_calls['ALT']
+
+        else:
+            return raw_calls['REF']
+
+    def make_triplet(self, base):
+        return "-{0}-".format(base) 
+
+    def count_alleles_in_vcf(self, vcf_slice):
+        """"Fuction that returns rows of allele counts line by line of a given VCF."""
+
+        # To Do: Add code to skip header. Currently assumes sliced vcf. 
+
+        if vcf_slice == [] or vcf_slice == None:
+            return None
+
+        else:
+            return [self.count_alleles(vcf_line, polarize=True) for vcf_line in vcf_slice]
+
+    def sliding_window_dadi(self, args):
+
+        # Using the data in the VCF header generate all slices
+        print 'Generating Slices...'
+        slices = generate_slices(args)
+        
+        # Open output file
+        print 'Processing Slices...'
+        fout = open(args.output,'w')
+
+        # Write output header
+        fout.write(','.join(create_header(pop_ids)) + "\n")
+
+        for key_count, chrm in enumerate(slices.keys()):
+
+            if args.region != [None]:
+                chrm = args.region[0]
+                #if key_count == 2: break
+            
+            for count, s in enumerate(slices[chrm]):
+
+                # Break out of loop if loop proceeds beyond
+                #   defined region (-L=1:1-5000 = 5000)
+                if s[-1] > args.region[-1] and args.region[-1] != None: break
+
+                region = [chrm] + list(s)
+
+                # Setup Pairwise Dadi
+                dadi_data = make_dadi_fs(args, region)
+                if dadi_data == None: continue # skip empty calls
+
+                dd, pop_ids = dadi_data
+                projection_size = 10
+                pairwise_fs  = dadi.Spectrum.from_data_dict(dd, pop_ids, [projection_size]*2)
+
+                # Create final line, add Fst info
+                final_line = region
+                final_line += [pairwise_fs.Fst()]
+
+                # Add in population level stats
+                for pop in pop_ids:
+                    fs = dadi.Spectrum.from_data_dict(dd, [pop], [projection_size])
+                    final_line += [fs.Tajima_D(), fs.Watterson_theta(), fs.pi(), fs.S()]
+
+                # write output
+                final_line = [str(i) for i in final_line]
+                fout.write(','.join(final_line) + "\n")
+
+            # Don't process any more keys than necessary
+            print 'Processed {0} of {1} slices from contig {2}'.format(count+1, len(slices[chrm]), chrm)
+            if args.region != [None]: break
+
+        fout.close()
+
+
+    def generate_slices(self, args):
+
+        if args.region != [None]:
+            self.chrm2length = {args.region[0]:args.region[-1]}
+        else:
+            self.set_chrms(args.input)
+        
+        chrm_2_windows = self.chrm2length.fromkeys(self.chrm2length.keys(),None)
+
+        for count, chrm in enumerate(self.chrm2length.keys()):
+
+            length = self.chrm2length[chrm]
+            window_size = args.window_size
+            overlap = args.overlap
+
+            # Skip contigs that are to short
+            if length <= window_size: continue
+            
+            # Fit windows into remaining space
+            if (length % window_size) > overlap:
+                start = (length % window_size)/2
+                stop = (length - window_size) - overlap/2
+
+            # Prevent windows from invading remaining space 
+            if (length % window_size) <= overlap:
+                start = (length % window_size)/2
+                stop = length - overlap*2
+        
+            if overlap == 0:
+                starts = xrange(start, stop, window_size)
+            else:
+                starts = xrange(start, stop, overlap)
+            
+            stops = [i+window_size for i in starts]
+            windows = zip(starts, stops)
+            
+            chrm_2_windows[chrm] = windows
+
+        return chrm_2_windows
+
+
+    def slice_2_allele_counts(self, tabix_filename, chrm, start=None, stop=None):
+        vcf_slice = self.slice_vcf( tabix_filename, chrm, start, stop)
+        processed_slice = self.count_alleles_in_vcf( vcf_slice)
+        return processed_slice
+
+    def make_dadi_fs( self, vcf_slice,):
+
+        if vcf_slice == [] or vcf_slice == None:
+            return None
+
+        else:
+
+            final_dadi = {}
+            
+            for row_count, row in enumerate(vcf_slice):
+                
+                if row == None: continue
+                
+                calls = {}
+                
+                for count, pop in enumerate(self.populations.keys()):
+                    if pop == 'outgroups': continue
+                    calls[pop] = (row[pop]['REF'], row[pop]['ALT'])
+
+                row_id = "{0}_{1}".format(row['CHROM'],row['POS'])
+            
+                dadi_site = {'calls': calls,
+                       'context': self.make_triplet(row['MAJOR_ALLELE']),
+                       'outgroup_context': self.make_triplet(row['OUTGROUP_ALLELE']),
+                       'outgroup_allele': row['OUTGROUP_ALLELE'],
+                       'segregating': (row['REF'], row['ALT'])
+                       }
+
+                final_dadi[row_id] = dadi_site
+
+            return final_dadi
 
 
 

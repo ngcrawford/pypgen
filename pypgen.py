@@ -40,7 +40,6 @@ def get_args():
     args = parser.parse_args()
     return args
 
-
 class population(object):
     """docstring for population"""
     def __init__(self, genotypes, name=None, loci=None, individuals=None,\
@@ -748,6 +747,7 @@ class MonteCarlo(object):
                 print p_value
         
         print obs
+        return obs
         # store = pandas.HDFStore('store.h5')
         # store['final'] = final
         
@@ -1142,16 +1142,13 @@ if __name__ == '__main__':
     # demes = parse_genepop(lines)
     # fin.close()
     
-    # pops = parse_genepop(lines)
-    # MtC = MonteCarlo()
-    # estimator = "G_prime_st_est"
-    # sim_data = MtC.simulate(demes, estimator=estimator, replicates=50)
-    # MtC.p_values(sim_data, demes, estimator=estimator)
-    
-    
-    
+    pops = parse_genepop(lines)
+    MtC = MonteCarlo()
+    estimator = "G_prime_st_est"
+    sim_data = MtC.simulate(demes, estimator=estimator, replicates=1000)
+    results = MtC.p_values(sim_data, demes, estimator=estimator)
 
-
+    
     # new_pair = populations()
     # new_pair.append(pops.pops[4])
     # new_pair.append(pops.pops[-1])
