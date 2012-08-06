@@ -347,6 +347,10 @@ def sliding_window_dadi(args):
 			chrm = args.region[0]
 			#if key_count == 2: break
 		
+		if slices[chrm] == None:
+			print "Skipped:", chrm, ' - no slices'
+			continue
+
 		for count, s in enumerate(slices[chrm]):
 
 			# Break out of loop if loop proceeds beyond
