@@ -547,6 +547,20 @@ class VCF(object):
         processed_slice = self.count_alleles_in_vcf( vcf_slice)
         return processed_slice
 
+
+    def vcf_slice_2_fstats(self, vcf_slice, projection_size = 10):
+
+        pop_ids = self.populations.keys()
+        pop_ids.remove('outgroups')
+
+        processed_slice = self.count_alleles_in_vcf(vcf_slice)
+        print self.calc_fstats(processed_slice)
+        # calc_fstats
+        #dd = self.make_dadi_fs(processed_slice)
+        #fs = dadi.Spectrum.from_data_dict(dd, pop_ids, [projection_size]*len(pop_ids))
+        #return fs.Fst()
+
+
     def make_dadi_fs( self, vcf_slice,):
 
         if vcf_slice == [] or vcf_slice == None:
