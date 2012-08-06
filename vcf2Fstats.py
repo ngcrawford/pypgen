@@ -268,7 +268,7 @@ def SNPs(args):
     vcf.set_header(args.input)
     
     pool = multiprocessing.Pool(args.processors)
-    slices = create_equal_sized_spaced_chunks(args, chunksize = 100)
+    slices = create_equal_sized_spaced_chunks(args, chunksize = 10000)
 
     outfiles = None
     header = ['CHROM', 'POS', 'Hs_est', 'Ht_est', 'G_double_prime_st_est', 'G_prime_st_est', 'Gst_est', 'D_est']
@@ -282,12 +282,7 @@ def SNPs(args):
                     write_headers = [outfiles[pair].write("\t".join(header) + "\n") for pair in outfiles.keys()]
 
                 for pair in i.keys():
-                    print i[pair]
                     outfiles[pair].write('\t'.join([str(i[pair][h]) for h in header]) + "\n")
-
-
-                # print i
-                # if count > 50: break
 
 
 if __name__ == '__main__':
