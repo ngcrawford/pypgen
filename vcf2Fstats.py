@@ -243,10 +243,16 @@ def create_equal_sized_spaced_chunks(args, chunksize = 100):
 
     # parse chrms
     for ccount, chrm in enumerate(vcf.chrm2length.keys()):
-        if chrm != 'Chr01': continue
 
         # create tabix input
         chrm_length = vcf.chrm2length[chrm]
+
+        # don't slice chrms/contigs smaller than the chunksize
+        if chrm_length <= chunksize:
+           chunks = [(args.input, chrm, 1, chrm_length)]
+           yield (vcf, vcf.slice_vcf(*chunk))
+           continue
+
         chunks = zip(range(1,chrm_length,chunksize),range(chunksize,chrm_length,chunksize))
         chunks = [(args.input, chrm, start, stop) for start, stop in chunks] 
 
