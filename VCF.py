@@ -25,14 +25,14 @@ class VCF(object):
         self.window_size = None
         self.chrm2length = None
 
-    def parse_individual_snps(self, vcf, fout, stat_id):
+    def parse_individual_snps(self, vcf ):
 
-        vcf = open(vcf,'rU')
-        
-        if fout == None:
-            fout = sys.stdout
+        if vcf.endswith(".gz") == True:
+            vcf = gzip.open(vcf,'rb')
+
         else:
-            fout = open(fout,'w')
+            vcf = open(vcf,'rU')
+        
 
         # SETUP NAMED TUPLE TO STORE INFO FROM A SINGLE BASE
         field_labels = []
@@ -55,20 +55,9 @@ class VCF(object):
             # START PROCESSING ALIGNED BASES
             if line_count > 0:
                 vcf_line_dict = self.parse_vcf_line(line)
-  
-                allele_counts = self.calc_allele_counts(vcf_line_dict)
-                f_statistics = self.calc_fstats(allele_counts)
-                info = self.parse_info(vcf_line_dict["INFO"])
-                formated_data, header = self.__write_to_outfiles__(vcf_line_dict["CHROM"],\
-                                    vcf_line_dict["POS"],info["DP"], stat_id, f_statistics)
+                yield vcf_line_dict
 
-                if line_count == 1:
-                    fout.write(header+"\n")
-                    fout.write(formated_data+"\n")
-                else:
-                    fout.write(formated_data+"\n")
-
-            if line_count >= 0:
+            if line_count >=0:
                 line_count += 1
 
     def parse_info(self,info_field):
@@ -111,6 +100,7 @@ class VCF(object):
    
     def calc_fstats(self, allele_counts):
 
+        print allele_counts
         import numpy as np
         #test_pair = {'So_Riviere_Goyaves': np.array([ 0.0, 1.0, 0.0, 0.0]), 'Plage_de_Viard': np.array([ 1.0, 0.0, 0.0, 0.0]),}
         
@@ -127,13 +117,13 @@ class VCF(object):
         pairwise_results = {}
 
         pops_no_outgroup =  self.populations.keys()
-        pops_no_outgroup.remove('outgroups')
+        if 'outgroups' in pops_no_outgroup:
+           pops_no_outgroup.remove('outgroups')
 
         for population_pair in combinations(pops_no_outgroup,2):
             
             pop1, pop2 =  population_pair
             Ns = [sum(allele_counts[pop].values()) for pop in [pop1, pop2]]
-
 
             if 0 in Ns: 
                 values = [np.nan, np.nan, np.nan, np.nan, np.nan, np.nan]
@@ -615,7 +605,7 @@ class VCF(object):
         #vcf, vcf_slice = vcf_slice
         results = []
         for vcf_line in vcf_slice:
-            allele_counts = vcf.count_alleles(vcf_line, polarize=True)
+            allele_counts = vcf.count_alleles(vcf_line, polarize=False)
             try:
                 results.append(vcf.calc_fstats(allele_counts))
             except:
