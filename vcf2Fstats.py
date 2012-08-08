@@ -279,20 +279,26 @@ def slices_2_calls(slices, vcf, args):
         for scount, s in enumerate(slices[chrm]):
             yield tuple([vcf, vcf.slice_2_allele_counts.__name__, args.input, chrm] + list(s))
 
-def SNPs(args):
+def high_density_SNPs(args):
     vcf = VCF.VCF()
     print 'Setting header...'
     vcf.set_header(args.input)
     
     pool = multiprocessing.Pool(args.processors)
+    print 'Creating slices for processing...'
     slices = create_equal_sized_spaced_chunks(args, chunksize = 10000)
 
     outfiles = None
     header = ['CHROM', 'POS', 'Hs_est', 'Ht_est', 'G_double_prime_st_est', 'G_prime_st_est', 'Gst_est', 'D_est']
-    for count, chunk in enumerate(pool.imap(target, multiprocessed_SNPwise_fstats(slices, vcf, args), chunksize=1)):
+
+    print 'Calculating statistics...'
+    for count, chunk in enumerate(pool.imap(target, multiprocessed_SNPwise_fstats(slices, vcf, args))):
+        
         if len(chunk) > 0:
+            print 'Processed chunk %s, %s' % (count, chunk[0])
 
             for i in chunk:
+
                 if outfiles == None and i != None and len(chunk) > 0:
 
                     outfiles = dict([(pair, open('%s_%s.fstats.txt' % pair,'w')) for pair in i.keys()])
