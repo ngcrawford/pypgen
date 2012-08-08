@@ -308,9 +308,33 @@ def high_density_SNPs(args):
                     outfiles[pair].write('\t'.join([str(i[pair][h]) for h in header]) + "\n")
 
 
+def low_density_SNPs(args):
+    vcf = VCF.VCF()
+    print 'Setting header...'
+    vcf.set_header(args.input)
+    vcf.populations = args.populations
+
+    results = []
+    header = ['CHROM', 'POS', 'Hs_est', 'Ht_est', 'G_double_prime_st_est', 'G_prime_st_est', 'Gst_est', 'D_est']
+    for count, vcf_line in enumerate((vcf.parse_individual_snps(args.input))):
+
+        if count % 1000 == 0:
+            print count
+            
+        allele_counts = vcf.count_alleles(vcf_line, polarize=False)
+        fstats = vcf.calc_fstats(allele_counts)
+
+        if count == 0:
+
+            outfiles = dict([(pair, open('%s_%s.fstats.txt' % pair,'w')) for pair in fstats.keys()])
+            write_headers = [outfiles[pair].write("\t".join(header) + "\n") for pair in outfiles.keys()]
+
+        for pair in fstats.keys():
+            outfiles[pair].write('\t'.join([str(fstats[pair][h]) for h in header]) + "\n")
+
 if __name__ == '__main__':
     args = get_args()
-    SNPs(args)
+    low_density_SNPs(args)
 
 
 
