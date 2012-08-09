@@ -327,6 +327,29 @@ def high_density_SNPs(args):
                     outfiles[pair].write('\t'.join([str(i[pair][h]) for h in header]) + "\n")
 
 
+def popwise_samples_with_data(vcf_line):
+    
+    """For Given VCF line return a dictionary of population IDs and then number
+       of samples that have called genotypes."""
+    
+    sample_counts = dict.fromkeys(vcf.populations,0)
+    for pop, samples in vcf.populations.iteritems():
+        for s in samples:
+            if vcf_line[s] != None:
+
+                sample_counts[pop] += 1
+    
+    return sample_counts
+
+def filter_on_samples_per_population(vcf_line, min_samples=5):
+    counts_dict = popwise_samples_with_data(vcf_line)
+    acceptable_counts = [count for count in counts_dict.values() if count >= min_samples]
+    if len(acceptable_counts) != 0:
+        return True
+    else:
+        return False
+
+
 def low_density_SNPs(args):
     vcf = VCF.VCF()
     print 'Setting header...'
