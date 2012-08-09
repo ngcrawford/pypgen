@@ -71,6 +71,8 @@ class VCF(object):
 
         # TO DO: rewrite
         # This is very unsophisticated and insecure!
+
+
         col, exp, value = filter_string.split(' ')
         exp = "vcf_line[%s] %s %s" % (col, exp, value )
 
