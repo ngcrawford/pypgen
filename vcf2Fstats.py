@@ -75,6 +75,9 @@ def get_args():
     parser.add_argument('-n', '--processors', type=int, default=0,
                         help='The number of processors to use.')
 
+    parser.add_argument('-f', '--filter', type=str, default=None,
+                        help='Beta: Filter string to apply to VCF lines.')
+
     parser.add_argument('--projection-size', type=int, default=10,
                         help='Number of alleles dadi project the data down to.')
 
@@ -320,12 +323,17 @@ def low_density_SNPs(args):
     vcf.set_header(args.input)
     vcf.populations = args.populations
 
+    # setup stout to be unbuffered.
+    sys.stdout = os.fdopen(sys.stdout.fileno(), 'w', 0) 
+
     results = []
     header = ['CHROM', 'POS', 'Hs_est', 'Ht_est', 'G_double_prime_st_est', 'G_prime_st_est', 'Gst_est', 'D_est']
     for count, vcf_line in enumerate((vcf.parse_individual_snps(args.input))):
+        if vcf.filter_vcf_line("'FILTER' == 'PASS'", vcf_line) == False: continue
 
-        if count % 1000 == 0:
-            print count
+        if count % 10000 == 0:
+            sys.stdout.write("%s lines processed, currently at %s:%s \n" % (count, vcf_line['CHROM'], vcf_line["POS"]))
+            sys.stdout.flush()
             
         allele_counts = vcf.count_alleles(vcf_line, polarize=False)
         fstats = vcf.calc_fstats(allele_counts)

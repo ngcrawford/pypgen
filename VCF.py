@@ -60,6 +60,24 @@ class VCF(object):
             if line_count >=0:
                 line_count += 1
 
+    def filter_vcf_line(self, filter_string, vcf_line):
+        """Apply filter to VCF. If VCF passes filter returns True.
+
+            Example filter string: "QUAL > 500"
+
+            Should work with JEXL expressions used in GATK. But, I 
+            should think about the best, most pythonic, way to do this.
+        """
+
+        # TO DO: rewrite
+        # This is very unsophisticated and insecure!
+        col, exp, value = filter_string.split(' ')
+        exp = "vcf_line[%s] %s %s" % (col, exp, value )
+
+        return eval(exp)
+
+
+
     def parse_info(self,info_field):
         
         info = []
@@ -100,7 +118,6 @@ class VCF(object):
    
     def calc_fstats(self, allele_counts):
 
-        print allele_counts
         import numpy as np
         #test_pair = {'So_Riviere_Goyaves': np.array([ 0.0, 1.0, 0.0, 0.0]), 'Plage_de_Viard': np.array([ 1.0, 0.0, 0.0, 0.0]),}
         
