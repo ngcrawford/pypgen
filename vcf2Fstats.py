@@ -41,6 +41,7 @@ STM:CEJ028,CEJ029,CEJ030,CEJ031,CEJ032,CEJ033,CEJ034
 
 """
 
+import os
 import sys
 import VCF
 import dadi
@@ -357,12 +358,20 @@ def low_density_SNPs(args):
     vcf.populations = args.populations
 
     # setup stout to be unbuffered.
-    sys.stdout = os.fdopen(sys.stdout.fileno(), 'w', 0) 
+    sys.stdout=Unbuffered(sys.stdout)
 
     results = []
     header = ['CHROM', 'POS', 'Hs_est', 'Ht_est', 'G_double_prime_st_est', 'G_prime_st_est', 'Gst_est', 'D_est']
     for count, vcf_line in enumerate((vcf.parse_individual_snps(args.input))):
+        
+        if count == 0:
+            allele_counts = vcf.count_alleles(vcf_line, polarize=False)
+            fstats = vcf.calc_fstats(allele_counts)
+            outfiles = dict([(pair, open('%s_%s.fstats.txt' % pair,'w')) for pair in fstats.keys()])
+            write_headers = [outfiles[pair].write("\t".join(header) + "\n") for pair in outfiles.keys()]
+
         if vcf.filter_vcf_line("'FILTER' == 'PASS'", vcf_line) == False: continue
+        if filter_on_samples_per_population(vcf_line, min_samples=5) == False: continue
 
         if count % 10000 == 0:
             sys.stdout.write("%s lines processed, currently at %s:%s \n" % (count, vcf_line['CHROM'], vcf_line["POS"]))
@@ -371,16 +380,14 @@ def low_density_SNPs(args):
         allele_counts = vcf.count_alleles(vcf_line, polarize=False)
         fstats = vcf.calc_fstats(allele_counts)
 
-        if count == 0:
-
-            outfiles = dict([(pair, open('%s_%s.fstats.txt' % pair,'w')) for pair in fstats.keys()])
-            write_headers = [outfiles[pair].write("\t".join(header) + "\n") for pair in outfiles.keys()]
-
         for pair in fstats.keys():
             outfiles[pair].write('\t'.join([str(fstats[pair][h]) for h in header]) + "\n")
 
 if __name__ == '__main__':
+    vcf = VCF.VCF()
     args = get_args()
+    vcf.set_header(args.input)
+    vcf.populations = args.populations
     low_density_SNPs(args)
 
 
