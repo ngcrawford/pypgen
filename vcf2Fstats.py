@@ -51,16 +51,6 @@ import itertools
 import multiprocessing
 from copy import copy, deepcopy
 
-class Unbuffered:
-   def __init__(self, stream):
-       self.stream = stream
-   def write(self, data):
-       self.stream.write(data)
-       self.stream.flush()
-   def __getattr__(self, attr):
-       return getattr(self.stream, attr)
-
-
 def get_args():
     """Parse sys.argv"""
     parser = argparse.ArgumentParser()
@@ -113,6 +103,16 @@ def get_args():
 
 
     return args
+
+
+class Unbuffered:
+   def __init__(self, stream):
+       self.stream = stream
+   def write(self, data):
+       self.stream.write(data)
+       self.stream.flush()
+   def __getattr__(self, attr):
+       return getattr(self.stream, attr)
 
 
 def create_dadi_header(args):
@@ -345,7 +345,7 @@ def popwise_samples_with_data(vcf_line):
 def filter_on_samples_per_population(vcf_line, min_samples=5):
     counts_dict = popwise_samples_with_data(vcf_line)
     acceptable_counts = [count for count in counts_dict.values() if count >= min_samples]
-    if len(acceptable_counts) != 0:
+    if len(acceptable_counts) == 2:
         return True
     else:
         return False
