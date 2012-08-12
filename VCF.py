@@ -2,6 +2,7 @@
 import gzip
 import dadi
 import pysam
+import numpy as np
 from copy import copy
 from random import choice
 from fstats import fstats
@@ -79,7 +80,6 @@ class VCF(object):
         return eval(exp)
 
 
-
     def parse_info(self,info_field):
         
         info = []
@@ -120,7 +120,6 @@ class VCF(object):
    
     def calc_fstats(self, allele_counts):
 
-        import numpy as np
         #test_pair = {'So_Riviere_Goyaves': np.array([ 0.0, 1.0, 0.0, 0.0]), 'Plage_de_Viard': np.array([ 1.0, 0.0, 0.0, 0.0]),}
         
         # CALCULATE ALLELE FREQUENCIES
@@ -132,6 +131,7 @@ class VCF(object):
         
         allele_freqs = allele_freqs_dict.values()
 
+
         # CACULATE PAIRWISE F-STATISTICS
         pairwise_results = {}
 
@@ -142,6 +142,7 @@ class VCF(object):
         for population_pair in combinations(pops_no_outgroup,2):
             
             pop1, pop2 =  population_pair
+
             Ns = [sum(allele_counts[pop].values()) for pop in [pop1, pop2]]
 
             if 0 in Ns: 
@@ -156,6 +157,28 @@ class VCF(object):
  
                 pop1 = allele_freqs_dict[pop1]
                 pop2 = allele_freqs_dict[pop2]
+
+                # Skip populations fixed at particular SNPS
+                # this can happen when the reference is divergent.
+                if pop1[1] == 1.0 and pop2[1] == 1.0:
+                    values = [np.nan, np.nan, np.nan, np.nan, np.nan, np.nan]
+                    values_dict = dict(zip(['Hs_est', 'Ht_est', 'Gst_est', 'G_prime_st_est', 'G_double_prime_st_est', 'D_est'],values))
+                    pairwise_results[population_pair] = values_dict
+                    values_dict['CHROM'] = allele_counts["CHROM"]
+                    values_dict['POS'] = allele_counts["POS"]
+                    continue # skip fixed SNPs
+               
+                if pop1[0] == 1.0 and pop2[0] == 1.0:
+                    values = [np.nan, np.nan, np.nan, np.nan, np.nan, np.nan]
+                    values_dict = dict(zip(['Hs_est', 'Ht_est', 'Gst_est', 'G_prime_st_est', 'G_double_prime_st_est', 'D_est'],values))
+                    pairwise_results[population_pair] = values_dict
+                    values_dict['CHROM'] = allele_counts["CHROM"]
+                    values_dict['POS'] = allele_counts["POS"]
+                    continue # skip fixed SNPs 
+
+                print pop1, pop2
+
+
                 allele_freqs = [pop1, pop2]
 
                 n = float(len(Ns))
@@ -401,7 +424,7 @@ class VCF(object):
                     alleles['REF'] += ref
                     alleles['ALT'] += alt
             
-            allele_counts[pop] =  alleles.copy()
+            allele_counts[pop] = alleles.copy()
 
         if polarize == True:
             return self.polarize_allele_counts(allele_counts, vcf_line)
