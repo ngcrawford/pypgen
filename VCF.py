@@ -161,23 +161,10 @@ class VCF(object):
                 # Skip populations fixed at particular SNPS
                 # this can happen when the reference is divergent.
                 if pop1[1] == 1.0 and pop2[1] == 1.0:
-                    values = [np.nan, np.nan, np.nan, np.nan, np.nan, np.nan]
-                    values_dict = dict(zip(['Hs_est', 'Ht_est', 'Gst_est', 'G_prime_st_est', 'G_double_prime_st_est', 'D_est'],values))
-                    pairwise_results[population_pair] = values_dict
-                    values_dict['CHROM'] = allele_counts["CHROM"]
-                    values_dict['POS'] = allele_counts["POS"]
                     continue # skip fixed SNPs
                
                 if pop1[0] == 1.0 and pop2[0] == 1.0:
-                    values = [np.nan, np.nan, np.nan, np.nan, np.nan, np.nan]
-                    values_dict = dict(zip(['Hs_est', 'Ht_est', 'Gst_est', 'G_prime_st_est', 'G_double_prime_st_est', 'D_est'],values))
-                    pairwise_results[population_pair] = values_dict
-                    values_dict['CHROM'] = allele_counts["CHROM"]
-                    values_dict['POS'] = allele_counts["POS"]
                     continue # skip fixed SNPs 
-
-                print pop1, pop2
-
 
                 allele_freqs = [pop1, pop2]
 
@@ -200,6 +187,15 @@ class VCF(object):
                 
                 # PRINT OUTPUT
                 values = [Hs_est_, Ht_est_, Gst_est_, G_prime_st_est_, G_double_prime_st_est_, D_est_]
+
+                def replace_neg(x):
+                    if x < 0.0:
+                        return 0.0
+                    else:
+                        return x
+
+                values = [replace_neg(v) for v in values ]
+
                 values_dict = dict(zip(['Hs_est', 'Ht_est', 'Gst_est', \
                                         'G_prime_st_est', 'G_double_prime_st_est', 'D_est'],values))
 
