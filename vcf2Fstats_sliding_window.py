@@ -2,6 +2,7 @@ import os
 import sys
 import math
 import types
+import unittest
 import argparse
 import copy_reg
 import numpy as np
@@ -10,6 +11,18 @@ from fstats import fstats
 from collections import OrderedDict
 from itertools import combinations, izip_longest
 
+"""
+python vcf2Fstats_sliding_window.py \
+--cores 2 \
+-i test_data/butterfly.vcf.gz \
+-o test.vcf \
+-p cydno:c511,c512,c513,c514,c515,c563,c614,c630,c639,c640 \
+outgroups:h665,i02-210 \
+melpo:m523,m524,m525,m589,m675,m676,m682,m683,m687,m689 \
+pachi:p516,p517,p518,p519,p520,p591,p596,p690,p694,p696  \
+-f Gst_est
+
+"""
 
 
 def get_args():
@@ -38,6 +51,7 @@ def get_args():
 
     args = parser.parse_args()
 
+    # Setup population dictionary
     populations_dict  = {}
     for pop in args.populations:
         pop_name, sample_ids = pop.strip().split(":")
@@ -134,6 +148,7 @@ def calc_fstats(populations, allele_counts):
     allele_freqs_dict = populations.fromkeys(populations.keys(), None)
     for population in allele_counts.keys():
         counts =  allele_counts[population].values()
+        
         if sum(counts) == 0.0:
             freqs = [0.0] * 4
 
@@ -154,7 +169,10 @@ def calc_fstats(populations, allele_counts):
 
         if 0 in Ns: 
             values = [np.nan, np.nan, np.nan, np.nan, np.nan, np.nan]
-            values_dict = dict(zip(['Hs_est', 'Ht_est', 'Gst_est', 'G_prime_st_est', 'G_double_prime_st_est', 'D_est'],values))
+            values_dict = dict(zip(['Hs_est', 'Ht_est', 'Gst_est', 
+                                    'G_prime_st_est', 'G_double_prime_st_est', 
+                                    'D_est'],
+                                    values))
             pairwise_results[population_pair] = values_dict
             continue
         
@@ -171,10 +189,10 @@ def calc_fstats(populations, allele_counts):
 
             # CALCULATE Hs AND Ht
             n = 2
-            Hs_prime_est_ = fstats.Hs_prime_est(allele_freqs,n)
-            Ht_prime_est_ = fstats.Ht_prime_est(allele_freqs,n)
+            Hs_prime_est_ = fstats.Hs_prime_est(allele_freqs, n)
+            Ht_prime_est_ = fstats.Ht_prime_est(allele_freqs, n)
             Hs_est_ = fstats.Hs_est(Hs_prime_est_, Ns_harm)
-            Ht_est_ = fstats.Ht_est(Ht_prime_est_,Hs_est_,Ns_harm,n)
+            Ht_est_ = fstats.Ht_est(Ht_prime_est_, Hs_est_, Ns_harm, n)
 
             # CALCULATE F-STATISTICS
             Gst_est_ = fstats.Gst_est(Ht_est_, Hs_est_)
@@ -185,7 +203,9 @@ def calc_fstats(populations, allele_counts):
             # PRINT OUTPUT
             values = [Hs_est_, Ht_est_, Gst_est_, G_prime_st_est_, G_double_prime_st_est_, D_est_]
             values_dict = dict(zip(['Hs_est', 'Ht_est', 'Gst_est', \
-                                    'G_prime_st_est', 'G_double_prime_st_est', 'D_est'],values))
+                                    'G_prime_st_est', 'G_double_prime_st_est', 
+                                    'D_est'],
+                                    values))
 
             pairwise_results[population_pair] = values_dict
 
@@ -353,7 +373,7 @@ def process_window(data):
             pos = vcf_line_dict['POS']
             info = parse_info(vcf_line_dict["INFO"])
         
-
+        # create filters
         if filter_on_population_sizes(vcf_line_dict, populations, min_samples=5) == False:
             continue
 
@@ -398,29 +418,41 @@ def process_window(data):
     return format_output(chrm, start, stop, mean_depth, f_statistic, multilocus_f_statistics)
 
 
-def do_windowed_analysis(vcf_path, output, window_size, populations, f_statistic, cores):
+# def do_windowed_analysis(vcf_path, output, window_size, populations, f_statistic, cores):
 
-    # OPEN INPUT AND OUTPUT FILES
-    fout = open(output, 'w')
-    vcf_file = open(vcf_path,'rU')
+#     # OPEN INPUT AND OUTPUT FILES
+#     fout = open(output, 'w')
+#     vcf_file = open(vcf_path,'rU')
     
-    # WRITE HEADER
-    header_dict = set_header(vcf_path)
-    left, right =populations.keys()
-    fout.write('chrm,start,stop,mean_depth,' + ','.join([left+"-"+right]) + "-" + f_statistic+'\n')
+#     # WRITE HEADER
+#     header_dict = set_header(vcf_path)
+#     left, right =populations.keys()
+#     fout.write('chrm,start,stop,mean_depth,' + ','.join([left+"-"+right]) + "-" + f_statistic+'\n')
 
-    p = multiprocessing.Pool(cores)
-    for chunk in grouper(5000, slidingWindow(vcf_file, window_size)):
+#     p = multiprocessing.Pool(cores)
+#     for chunk in grouper(5000, slidingWindow(vcf_file, window_size)):
 
-        chunk = [(window, header_dict, populations, f_statistic) for window in chunk]
-        results = p.map(process_window, chunk)
+#         chunk = [(window, header_dict, populations, f_statistic) for window in chunk]
+#         results = p.map(process_window, chunk)
 
-        for line in results:
-            if line != None:
-                fout.write(line)   
+#         for line in results:
+#             if line != None:
+#                 fout.write(line)   
 
-    fout.close()
-    vcf_file.close()
+#     fout.close()
+#     vcf_file.close()
+
+def get_chromosome_info_from_vcf(vcf_path):
+    
+    if vcf_path.endswith('.gz'):
+        try:
+            
+        except Exception, e:
+            raise e
+
+def do_windowed_analysis(vcf_path, output, window_size, populations, f_statistic, cores):
+    # Get Chromosome Information
+
 
 
 def main():
