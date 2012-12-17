@@ -47,6 +47,7 @@ import VCF
 import dadi
 import types
 import argparse
+import unittest
 import itertools
 import multiprocessing
 from copy import copy, deepcopy
@@ -229,12 +230,16 @@ def slices_list_generator(args):
 
     for ccount, chrm in enumerate(slices.keys()):
 
+        
+
         if slices[chrm] == None: 
             print 'skipping', chrm
             continue
 
+        print slices[chrm]
+
         for scount, s in enumerate(slices[chrm]):
-            cmds = [args.input, chrm] + list(s)   
+            cmds = [args.input, chrm] + list(s)  
             vcf_slices.append(vcf.slice_vcf(*cmds))
 
             if len(vcf_slices) % 2 == 0:
@@ -242,7 +247,7 @@ def slices_list_generator(args):
                 print [vcf.vcf_slice_2_fstats(s, projection_size = 10) for s in vcf_slices]
                 vcf_slices = []
 
-    print [vcf.vcf_slice_2_fstats(s, projection_size = 10) for s in vcf_slices]
+    # # print [vcf.vcf_slice_2_fstats(s, projection_size = 10) for s in vcf_slices]
 
 
 
@@ -381,14 +386,22 @@ def low_density_SNPs(args):
         fstats = vcf.calc_fstats(allele_counts)
 
         for pair in fstats.keys():
+
+            # Sometimes the first line is incomplete so this updates the outfiles if necesary
+            if outfiles.has_key(pair) == False:
+                outfiles = dict([(pair, open('%s_%s.fstats.txt' % pair,'w')) for pair in fstats.keys()])
+                write_headers = [outfiles[pair].write("\t".join(header) + "\n") for pair in outfiles.keys()]
+
             outfiles[pair].write('\t'.join([str(fstats[pair][h]) for h in header]) + "\n")
+
 
 if __name__ == '__main__':
     vcf = VCF.VCF()
     args = get_args()
     vcf.set_header(args.input)
     vcf.populations = args.populations
-    low_density_SNPs(args)
+    slices_list_generator(args)
+    #low_density_SNPs(args)
 
 
 
