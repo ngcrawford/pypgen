@@ -52,14 +52,10 @@ def get_args():
                         type=int,
                         help='Size of the window in which to \
                               calculate pairwise F-staticstics')
-    
-    parser.add_argument("-f",'--f-statistic',
-                        required=True, 
-                        choices=['Gst_est', 'G_prime_st_est', \
-                                 'G_double_prime_st_est', 'D_est'])
 
     parser.add_argument("-m",'--min-samples',
                         type=int,
+                        default=5,
                         help="Minimum number of samples per population.")
 
     return parser.parse_args()
@@ -71,7 +67,7 @@ def generate_fstats_from_vcf_slices(slice_indicies, populations, header, args):
         chrm, start, stop = si
 
         yield [slice_vcf(args.input, chrm, start, stop), 
-               chrm, start, stop, populations, header]
+               chrm, start, stop, populations, header, args.min_samples]
 
         # if count > 1: break
 
