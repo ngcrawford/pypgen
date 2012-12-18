@@ -346,7 +346,7 @@ def calc_slice_stats(data):
        Make it easy to add more statistics.
     """
 
-    tabix_slice, chrm, start, stop, populations, header = data
+    tabix_slice, chrm, start, stop, populations, header, min_samples = data
 
     if len(tabix_slice) == 0:
         return None
@@ -367,7 +367,7 @@ def calc_slice_stats(data):
             vcf_line_dict = parse_vcf_line(line, header)
 
             # CREATE FILTERS HERE:
-            if filter_on_population_sizes(vcf_line_dict, populations, min_samples=5) == False:
+            if filter_on_population_sizes(vcf_line_dict, populations, min_samples) == False:
                 continue
 
             # CALCULATE SNPWISE F-STATISTICS
