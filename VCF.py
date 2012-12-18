@@ -43,7 +43,7 @@ def pairwise(iterable):
     next(b, None)
     return itertools.izip(a, b)
 
-def get_slice_indicies(vcf_bgzipped_file, window_size=500):
+def get_slice_indicies(vcf_bgzipped_file, regions, window_size):
     """Get slice information from VCF file that is tabix indexed file (bgzipped). """
 
     # READ IN FILE HEADER
@@ -140,9 +140,6 @@ def parse_vcf_line(pos, header):
 
     return vcf_line_dict
 
-
-
-
 def filter_on_population_sizes(vcfline, populations, min_samples=0):
 
     sample_counts = []
@@ -208,9 +205,6 @@ def calc_allele_counts(populations, vcf_line_dict):
 
 def calc_fstats(populations, allele_counts):
 
-
-    #test_pair = {'So_Riviere_Goyaves': np.array([ 0.0, 1.0, 0.0, 0.0]), 'Plage_de_Viard': np.array([ 1.0, 0.0, 0.0, 0.0]),}
-    
     # CALCULATE ALLELE FREQUENCIES
     allele_freqs_dict = populations.fromkeys(populations.keys(), None)
     for population in allele_counts.keys():
