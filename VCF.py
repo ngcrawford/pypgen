@@ -68,13 +68,25 @@ def get_slice_indicies(vcf_bgzipped_file, window_size=500):
     tbx.close()
 
     # GENERATE SLICES
-    # current does not make overlapping slices. 
-    for chrm, start, stop in chrm_lengths:
+    # current does not make overlapping slices.
+
+    if regions == None:
+
+        for chrm, start, stop in chrm_lengths:
+
+            slice_indicies = itertools.islice(xrange(start, stop + 1), 0, stop + 1, window_size)
+            
+            for count, s in enumerate(pairwise(slice_indicies)):
+                yield (chrm, s[0], s[1] -1) # subtract one to prevent 1 bp overlap
+    else:
+
+        chrm, start, stop = re.split(r':|-', regions)
+        start, stop = int(start), int(stop)
 
         slice_indicies = itertools.islice(xrange(start, stop + 1), 0, stop + 1, window_size)
-        
         for count, s in enumerate(pairwise(slice_indicies)):
             yield (chrm, s[0], s[1] -1) # subtract one to prevent 1 bp overlap
+
 
 def slice_vcf(vcf_bgzipped_file, chrm, start, stop):
     
