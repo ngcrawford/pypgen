@@ -144,6 +144,6 @@ def multilocus_D_est(Ht_est, Hs_est, n):
 	pairs = zip(Ht_est, Hs_est)
 	Dest_values = [D_est(pair[0], pair[1], 2) for pair in pairs]
 	D_est_ = harmonic_mean_chao(Dest_values)
-	return D_est
+	return D_est_
 
 
