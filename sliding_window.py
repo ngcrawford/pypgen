@@ -32,7 +32,7 @@ def get_args():
 
     parser.add_argument('-r','--regions', 
                         required=False,
-                        action=FooAction, # TODO: fix this!
+                        # action=FooAction, # TODO: fix this!
                         type=str,
                         help="Define a chromosomal region. \
                               A region can be presented, for example, in the following \
@@ -65,9 +65,20 @@ def get_args():
     return parser.parse_args()
 
 
+def generate_fstats_from_vcf_slices(slice_indicies, populations, header, args):
+
+    for count, si in enumerate(slice_indicies):
+        chrm, start, stop = si
+
+        yield [slice_vcf(args.input, chrm, start, stop), 
+               chrm, start, stop, populations, header]
+
+        # if count > 1: break
+
 def main():
     # get args. 
     args = get_args()
+    print args
 
     # TODO: 
     # test that pysam is installed.
@@ -77,28 +88,26 @@ def main():
     # 1. read file and get chrm sizes
     # 2. process chrm sizes and return as
     #    slices and a zipped list (chrm, (start, stop))
-    slice_indicies = get_slice_indicies(args.input, args.window_size)
+    slice_indicies = get_slice_indicies(args.input, args.regions, args.window_size)
     
     # Get information about samples from the header.
     # this becomes the precursor to the VCF row
     header = set_header(args.input)
     populations = parse_populations_list(args.populations)
 
+    p = multiprocessing.Pool(4)
+    order = []
 
-    def generate_fstats_from_vcf_slices(slice_indicies):
+    for count, result in enumerate(p.map(calc_slice_stats, generate_fstats_from_vcf_slices(slice_indicies, populations, header, args))):
+        if result == None: continue
+        chrm_start_stop, result = result
+        stats, order = multilocus_f_statistics_2_sorted_list(result, order=order)
 
-        for count, si in enumerate(slice_indicies):
-            chrm, start, stop = si
-            #tbx_slice = slice_vcf(args.input, chrm, start, stop)
-            yield [slice_vcf(args.input, chrm, start, stop), 
-                   chrm, start, stop, populations, header]
-            #calc_slice_stats(tbx_slice, chrm, start, stop, populations, header)
-
-            if count > 1: break
-
-
-    map(calc_slice_stats, generate_fstats_from_vcf_slices(slice_indicies))
-
+        if count == 0:
+            print ','.join(['chrm','start','stop','snp_count', 'total_depth_mean', 'total_depth_stdev'] +  map(str, order))
+            print ','.join(map(str, chrm_start_stop) + map(str, stats))
+        else:
+            print ','.join(map(str, chrm_start_stop) + map(str, stats))
 
 
 if __name__ == '__main__':
