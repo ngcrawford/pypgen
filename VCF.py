@@ -282,45 +282,122 @@ def calc_fstats(populations, allele_counts):
 def output_header():
     return 'Chrm,Start,Stop,DP_mean,DP_std'
 
+
+def calculate_multilocus_f_statistics(Hs_est_dict, Ht_est_dict):
+       
+
+    multilocus_f_statistics = {}
+
+    for key in Hs_est_dict.keys():
+
+        Hs_est_list = Hs_est_dict[key]
+        Ht_est_list = Ht_est_dict[key]
+
+        pairs = zip(Hs_est_list, Ht_est_list)
+        pairs = [pair for pair in pairs if np.nan not in pair]
+
+        multilocus_f_statistics[key] = None
+        
+        if len(pairs) != 0:
+
+            n = 2 # fix this
+            Gst_est = fstats.multilocus_Gst_est(Ht_est_list, Hs_est_list)
+            G_prime_st_est = fstats.multilocus_G_prime_st_est(Ht_est_list, Hs_est_list, n)
+            G_double_prime_st_est = fstats.multilocus_G_double_prime_st_est(Ht_est_list, Hs_est_list, n)
+            D_est = fstats.multilocus_D_est(Ht_est_list, Hs_est_list, n)
+
+            values_dict = dict(zip(['Gst_est', 'G_prime_st_est', 'G_double_prime_st_est', 'D_est'],\
+                          [Gst_est, G_prime_st_est, G_double_prime_st_est, D_est]))
+
+            multilocus_f_statistics[key] = values_dict
+
+    return multilocus_f_statistics
+
+
+def update_Hs_and_Ht_dicts(f_statistics, Hs_est_dict, Ht_est_dict):
+    
+    for pop_pair in f_statistics.keys():
+    
+        if Hs_est_dict.has_key(pop_pair) == True:
+            Hs_est_dict[pop_pair].append(f_statistics[pop_pair]['Hs_est'])
+        else:
+            Hs_est_dict[pop_pair] = [f_statistics[pop_pair]['Hs_est']]
+
+        if Ht_est_dict.has_key(pop_pair) == True:
+            Ht_est_dict[pop_pair].append(f_statistics[pop_pair]['Ht_est'])
+        else:
+            Ht_est_dict[pop_pair] = [f_statistics[pop_pair]['Ht_est']]
+    return (Hs_est_dict, Ht_est_dict)
+
+def multilocus_f_statistics_2_sorted_list(multilocus_f_statistics, order):
+    
+    order = []
+    if len(order) == 0:
+        for pair in multilocus_f_statistics.keys():
+            joined_pair = '.'.join(pair) 
+            for stat in multilocus_f_statistics[pair].keys():
+                order.append('.'.join((joined_pair,stat)))
+    order.sort()
+    stats = []
+    for key in order:
+        pop1, pop2, stat = key.split(".")
+        stat = multilocus_f_statistics[(pop1,pop2)][stat]
+        stats.append(stat)
+
+    return (stats, order)
+
 def calc_slice_stats(data):
     """Main function for caculating statistics.
 
-       Make it easy to add more statitics.
+       Make it easy to add more statistics.
     """
 
     tabix_slice, chrm, start, stop, populations, header = data
 
-    Hs_est_list = []
-    Ht_est_list = []
+    if len(tabix_slice) == 0:
+        return None
 
-    chrm = None
-    pos = None
-    total_depth = []
+    else:
+        # Create lists to store values for final printing.
+        output_line = [chrm, start, stop]
+        total_depth = []
+        snp_wise_f_statistics = []
 
-    output_line = [chrm, start, stop]
+        Hs_est_dict = {}
+        Ht_est_dict = {}
+        ordered_list = None
+        snp_count = 0
 
-    for count, line in enumerate(tabix_slice):
+        for count, line in enumerate(tabix_slice):
 
-        vcf_line_dict = parse_vcf_line(line, header)
+            vcf_line_dict = parse_vcf_line(line, header)
 
-        # CREATE FILTERS HERE:
-        if filter_on_population_sizes(vcf_line_dict, populations, min_samples=5) == False:
-            continue
+            # CREATE FILTERS HERE:
+            if filter_on_population_sizes(vcf_line_dict, populations, min_samples=5) == False:
+                continue
 
-        total_depth.append(int(vcf_line_dict['INFO']["DP"]))
+            # CALCULATE SNPWISE F-STATISTICS
+            allele_counts = calc_allele_counts(populations, vcf_line_dict)
+            f_statistics = calc_fstats(populations, allele_counts)
+            
+            # UPDATE Hs AND Ht DICTIIONARIES
+            Hs_est_dict, Ht_est_dict = update_Hs_and_Ht_dicts(f_statistics, Hs_est_dict, Ht_est_dict)
 
-    total_depth = np.array(total_depth)
-    
-    # UPDATE OUTPUT LINE
-    output_line += [total_depth.mean(), total_depth.std()] 
+            f_statistics['LOCATION'] = (chrm, start, stop)
+            snp_wise_f_statistics.append(f_statistics)
 
-    allele_counts = calc_allele_counts(populations, vcf_line_dict)
-    f_statistics = calc_fstats(populations, allele_counts)
-    print f_statistics[('melpo', 'pachi')]
+            total_depth.append(int(vcf_line_dict['INFO']["DP"]))
+            snp_count = count
+
+        multilocus_f_statistics = calculate_multilocus_f_statistics(Hs_est_dict, Ht_est_dict)
+        
+        # UPDATE OUTPUT LINE WITH DEPTH INFO
+        total_depth = np.array(total_depth)
+        output_line += [snp_count, total_depth.mean(), total_depth.std()]
 
 
+        return ([chrm, start, stop, snp_count, total_depth.mean(), total_depth.std()], multilocus_f_statistics)
 
-    # return format_output(chrm, start, stop, mean_depth, f_statistic, multilocus_f_statistics)
 
 
 
