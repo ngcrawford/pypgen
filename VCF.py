@@ -12,6 +12,56 @@ from fstats import fstats
 from collections import OrderedDict
 from itertools import combinations, izip_longest
 
+def process_snp_call(snp_call, ref, alt):
+    """Process VCF genotype fields.
+        The current version is very basic and
+        doesn't directly take into account the
+        quality of the call or call hets with 
+        IUPAC ambiguity codes."""
+
+    IUPAC_dict = {('A','C'):'M',
+                  ('A','G'):'R',
+                  ('A','T'):'W',
+                  ('C','G'):'S',
+                  ('C','T'):'Y',
+                  ('G','T'):'K',
+                  ('A','C','G'):'V',
+                  ('A','C','T'):'H',
+                  ('A','G','T'):'D',
+                  ('C','G','T'):'B'}
+
+    called_base = ""
+    snp_call = snp_call.split(":")
+
+    # process blanks, many are reall
+    if snp_call[0] == "./.":
+        called_base = "-"
+
+    else:
+        allele1, allele2 = snp_call[0].split("/")
+
+        # process "0/0"
+        if allele1 == '0' and allele2 == '0':
+            called_base = ref
+
+        # process "0/N"
+        if allele1 == '0' and allele2 != '0':
+            call = [ref] + alt.split(',')
+            call.sort()
+            call = tuple(call)
+            called_base = IUPAC_dict[call]
+
+        # process "N/N"
+        # this is a bit hacked. For example
+        # '2/3' will be considered '2/2'
+        if allele1 != '0' and allele2 != '0':
+            pos = int(allele1) -1
+            called_base = alt.split(",")[pos]
+
+    return called_base
+
+
+
 def set_header(vcf_path):
     """Open VCF file and read in header line as Ordered Dict"""
 
@@ -192,7 +242,7 @@ def calc_allele_counts(populations, vcf_line_dict):
             if vcf_line_dict[sample_id] != None:
                 
                 genotype = vcf_line_dict[sample_id]
-                genotype = genotype["GT"].split("/")
+                genotype = genotype["GT"].split("/") # TODO add phased logic
 
                 if genotype == [".","."]: continue
 
@@ -272,9 +322,6 @@ def calc_fstats(populations, allele_counts):
             pairwise_results[population_pair] = values_dict
 
     return pairwise_results
-
-def output_header():
-    return 'Chrm,Start,Stop,DP_mean,DP_std'
 
 
 def calculate_multilocus_f_statistics(Hs_est_dict, Ht_est_dict):
