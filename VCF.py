@@ -12,7 +12,7 @@ from fstats import fstats
 from collections import OrderedDict
 from itertools import combinations, izip_longest
 
-def process_snp_call(snp_call, ref, alt):
+def process_snp_call(snp_call, ref, alt, IUPAC_ambiguities=False):
     """Process VCF genotype fields.
         The current version is very basic and
         doesn't directly take into account the
@@ -44,9 +44,13 @@ def process_snp_call(snp_call, ref, alt):
         if allele1 == '0' and allele2 == '0':
             called_base = ref
 
+        if allele1 == '1' and allele2 == '1':
+            called_base = alt
+
         # process "0/N"
         if allele1 == '0' and allele2 != '0':
-            call = [ref] + alt.split(',')
+
+            call = [ref] + [alt.split(',')[int(allele2) - 1]]
             call.sort()
             call = tuple(call)
             called_base = IUPAC_dict[call]
@@ -54,9 +58,17 @@ def process_snp_call(snp_call, ref, alt):
         # process "N/N"
         # this is a bit hacked. For example
         # '2/3' will be considered '2/2'
-        if allele1 != '0' and allele2 != '0':
-            pos = int(allele1) -1
-            called_base = alt.split(",")[pos]
+        if int(allele1) > 1 and int(allele2) > 1 :
+
+            if allele1 == allele2:
+                called_base = alt.split(',')[int(allele1) - 1]
+                
+            else:
+                ref = alt.split(',')[int(allele1) - 1]
+                alt = alt.split(',')[int(allele2) - 1]
+                call.sort()
+                call = tuple(call)
+                called_base = IUPAC_dict[call]
 
     return called_base
 
