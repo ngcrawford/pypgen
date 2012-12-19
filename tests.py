@@ -90,9 +90,25 @@ class TestVCFInfoParsing(unittest.TestCase):
         self.assertEqual(set(header_sample_ids), set(populations_sample_ids))
         self.assertEqual(len(header_sample_ids), len(populations_sample_ids))
 
-    # def test_allele_counts(self):
-    #     self.allele_counts
-    #     pass
+class TestGenoTypeParsing(unittest.TestCase):
+
+    def test_genotypes(self):
+        homo_ref = VCF.process_snp_call('0/0:10,9:19:99:254,0,337', 'A', 'T', IUPAC_ambiguities=True)
+        self.assertEqual(homo_ref, 'A')
+
+        heterozygote = VCF.process_snp_call('0/1:10,9:19:99:254,0,337', 'A', 'T', IUPAC_ambiguities=True)
+        self.assertEqual(heterozygote, 'W')
+
+        homo_alt =  VCF.process_snp_call('1/1:10,9:19:99:254,0,337', 'A', 'T', IUPAC_ambiguities=True)
+        self.assertEqual(homo_alt, 'T')
+
+        second_alt = VCF.process_snp_call('0/2:10,9:19:99:254,0,337', 'A', 'T,G', IUPAC_ambiguities=True)
+        self.assertEqual(second_alt, 'R')
+
+        double_alt = VCF.process_snp_call('1/2:10,9:19:99:254,0,337', 'A', 'T,G', IUPAC_ambiguities=True)
+        self.assertEqual(double_alt ,'K')
+
+        
 
 
 if __name__ == '__main__':

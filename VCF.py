@@ -58,14 +58,15 @@ def process_snp_call(snp_call, ref, alt, IUPAC_ambiguities=False):
         # process "N/N"
         # this is a bit hacked. For example
         # '2/3' will be considered '2/2'
-        if int(allele1) > 1 and int(allele2) > 1 :
+        if int(allele1) >= 1 and int(allele2) > 1 :
 
             if allele1 == allele2:
                 called_base = alt.split(',')[int(allele1) - 1]
-                
+
             else:
                 ref = alt.split(',')[int(allele1) - 1]
                 alt = alt.split(',')[int(allele2) - 1]
+                call = [ref,alt]
                 call.sort()
                 call = tuple(call)
                 called_base = IUPAC_dict[call]
