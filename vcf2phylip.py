@@ -25,6 +25,7 @@ The author may be contacted at ngcrawford@gmail.com
 import os
 import re
 import sys
+import VCF
 import gzip
 import pysam
 import shlex
@@ -89,40 +90,6 @@ def array2OnelinerAlignment(info, taxa, bases):
     oneliner = oneliner[:-1] + ";"
     return oneliner
 
-def process_snp_call(snp_call, ref, alt):
-    """Process VCF genotype fields.
-        The current version is very basic and
-        doesn't directly take into account the
-        quality of the call."""
-
-    called_base = ""
-    snp_call = snp_call.split(":")
-
-    # process blanks, many are reall
-    if snp_call[0] == "./.":
-        called_base = "-"
-
-    else:
-        allele1, allele2 = snp_call[0].split("/")
-
-        # process "0/0"
-        if allele1 == '0' and allele2 == '0':
-            called_base = ref
-
-        # process "0/N"
-        if allele1 == '0' and allele2 != '0':
-            called_base = ref
-
-        # process "N/N"
-        # this is a bit hacked. For example
-        # '2/3' will be considered '2/2'
-        if allele1 != '0' and allele2 != '0':
-            pos = int(allele1) -1
-            called_base = alt.split(",")[pos]
-
-    return called_base
-
-
 def callSNPs(current_base, numb_of_seqs):
     """Call the SNPs. Duh!"""
 
@@ -135,7 +102,7 @@ def callSNPs(current_base, numb_of_seqs):
         blanks.fill("-")
 
     for count, snp_call in enumerate(current_base[9:]):
-        base = process_snp_call(snp_call, current_base.REF, current_base.ALT)
+        base = VCF.process_snp_call(snp_call, current_base.REF, current_base.ALT)
         blanks[count] = base
 
     return blanks
