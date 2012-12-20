@@ -92,24 +92,38 @@ class TestVCFInfoParsing(unittest.TestCase):
 
 class TestGenoTypeParsing(unittest.TestCase):
 
-    def test_genotypes(self):
+    #### WITH AMBIGUITY CODES ####
+    def test_homo_ref_genotype_calling(self):
         homo_ref = VCF.process_snp_call('0/0:10,9:19:99:254,0,337', 'A', 'T', IUPAC_ambiguities=True)
         self.assertEqual(homo_ref, 'A')
 
+    def test_heterozygote_genotype_calling(self):
         heterozygote = VCF.process_snp_call('0/1:10,9:19:99:254,0,337', 'A', 'T', IUPAC_ambiguities=True)
         self.assertEqual(heterozygote, 'W')
 
+    def test_homo_alt_genotype_calling(self):
         homo_alt =  VCF.process_snp_call('1/1:10,9:19:99:254,0,337', 'A', 'T', IUPAC_ambiguities=True)
         self.assertEqual(homo_alt, 'T')
 
+    def test_second_alt_genotype_calling(self):
         second_alt = VCF.process_snp_call('0/2:10,9:19:99:254,0,337', 'A', 'T,G', IUPAC_ambiguities=True)
         self.assertEqual(second_alt, 'R')
 
+    def test_double_alt_genotype_calling(self):
         double_alt = VCF.process_snp_call('1/2:10,9:19:99:254,0,337', 'A', 'T,G', IUPAC_ambiguities=True)
-        self.assertEqual(double_alt ,'K')
+        self.assertEqual(double_alt, 'K')
 
-        
 
+    #### WITHOUT AMBIGUITY CODES ####
+    def test_heterozygote_as_N_genotype_calling(self):        
+        heterozygote_as_N = VCF.process_snp_call('0/1:10,9:19:99:254,0,337', 'A', 'T', IUPAC_ambiguities=False)
+        self.assertEqual(heterozygote_as_N, 'N')
+
+    def test_double_alt_het_as_N_genotype_calling(self):
+        double_alt_het_as_N = VCF.process_snp_call('1/2:10,9:19:99:254,0,337', 'A', 'T,G', IUPAC_ambiguities=False)
+        self.assertEqual(double_alt_het_as_N, 'N')
 
 if __name__ == '__main__':
     unittest.main()
+
+
