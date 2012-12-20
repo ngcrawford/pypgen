@@ -7,10 +7,9 @@
 *.e*
 *.o*
 48-AnoMars*
-*.gz
-*.tbi
 *.ipynb
 *.fa
 *dadi.txt
 *.fstats.txt
 *.png
+*snps.txt
