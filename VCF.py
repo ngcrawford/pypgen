@@ -19,6 +19,7 @@ def process_snp_call(snp_call, ref, alt, IUPAC_ambiguities=False):
         quality of the call or call hets with 
         IUPAC ambiguity codes."""
 
+    # IUPAC ambiguity codes
     IUPAC_dict = {('A','C'):'M',
                   ('A','G'):'R',
                   ('A','T'):'W',
@@ -30,10 +31,10 @@ def process_snp_call(snp_call, ref, alt, IUPAC_ambiguities=False):
                   ('A','G','T'):'D',
                   ('C','G','T'):'B'}
 
-    called_base = ""
+    #called_base = ""
     snp_call = snp_call.split(":")
 
-    # process blanks, many are reall
+    # process blanks
     if snp_call[0] == "./.":
         called_base = "-"
 
@@ -50,26 +51,35 @@ def process_snp_call(snp_call, ref, alt, IUPAC_ambiguities=False):
         # process "0/N"
         if allele1 == '0' and allele2 != '0':
 
-            call = [ref] + [alt.split(',')[int(allele2) - 1]]
-            call.sort()
-            call = tuple(call)
-            called_base = IUPAC_dict[call]
-
-        # process "N/N"
-        # this is a bit hacked. For example
-        # '2/3' will be considered '2/2'
-        if int(allele1) >= 1 and int(allele2) > 1 :
-
-            if allele1 == allele2:
-                called_base = alt.split(',')[int(allele1) - 1]
+            if IUPAC_ambiguities == False:
+                called_base = 'N'
 
             else:
-                ref = alt.split(',')[int(allele1) - 1]
-                alt = alt.split(',')[int(allele2) - 1]
-                call = [ref,alt]
+                call = [ref] + [alt.split(',')[int(allele2) - 1]]
                 call.sort()
                 call = tuple(call)
                 called_base = IUPAC_dict[call]
+
+        # process "2/2, 1/2, etc."
+        if int(allele1) >= 1 and int(allele2) > 1 :
+
+            # deal with homozygotes
+            if allele1 == allele2:
+                called_base = alt.split(',')[int(allele1) - 1]
+
+            # deal with heterozygotes
+            else:
+
+                if IUPAC_ambiguities == False:
+                    called_base = 'N'
+
+                else:
+                    ref = alt.split(',')[int(allele1) - 1]
+                    alt = alt.split(',')[int(allele2) - 1]
+                    call = [ref,alt]
+                    call.sort()
+                    call = tuple(call)
+                    called_base = IUPAC_dict[call]
 
     return called_base
 
