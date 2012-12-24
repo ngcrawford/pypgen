@@ -7,6 +7,7 @@ import sys
 import datetime
 import argparse
 from VCF import *
+from helpers import *
 import multiprocessing
 
 def get_args():
@@ -38,6 +39,10 @@ def get_args():
                               (region between 1,000,000 and 2,000,000bp including the end \
                               points). The coordinate is 1-based.' [Same format as \
                               SAMTOOLs/GATK, example text cribbed from SAMTOOLs]")
+
+    parser.add_argument('-f', '--filter-string',
+                        require=False,
+                        default="'FILTER' == 'PASS'")
 
     parser.add_argument('--regions-to-skip',
                         default=[],
