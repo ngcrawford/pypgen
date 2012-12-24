@@ -66,6 +66,7 @@ def get_args():
 def generate_fstats_from_vcf_slices(slice_indicies, populations, header, args):
 
     for count, si in enumerate(slice_indicies):
+        
         chrm, start, stop = si
 
         yield [slice_vcf(args.input, chrm, start, stop), 
