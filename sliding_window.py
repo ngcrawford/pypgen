@@ -2,7 +2,9 @@
 # encoding: utf-8
 
 import os
+import re
 import sys
+import datetime
 import argparse
 from VCF import *
 import multiprocessing
@@ -48,7 +50,7 @@ def get_args():
                               The format is: "PopName:sample1,sample2,sample3,etc..."')
 
     parser.add_argument('-w','--window-size',
-                        default=None, 
+                        default=5000, 
                         type=int,
                         help='Size of the window in which to \
                               calculate pairwise F-staticstics')
@@ -71,10 +73,55 @@ def generate_fstats_from_vcf_slices(slice_indicies, populations, header, args):
 
         # if count > 1: break
 
+
+class VCFProgressMeter(object):
+    """docstring for ProgressMeter"""
+    def __init__(self, starting_time, total_lines_2_process):
+        super(ProgressMeter, self).__init__()
+        self.starting_time = starting_time
+        self.total_lines_2_process = None
+    
+    def start(self,total_lines=None):
+        self.starting_time = datetime.datetime.now()
+        self.total_lines_2_process
+
+    def update(self):
+        pass
+
+
+
+def progress_meter(starting_time, chrm, pos, bp_processed, total_bp_in_dataset):
+    
+    ct = datetime.datetime.now()
+    elapsed = (datetime.datetime.now() - starting_time)
+
+    proportion_processed = bp_processed/float(total_bp_in_dataset)
+
+    if elapsed.seconds > 30:
+
+        "INFO  19:29:31,683 ProgressMeter - GL343193.1:820101\t1.79e+09\t2.3 h\t4.6 s\t99.2%\t2.3 h\t62.5 s "
+        update = "INFO  {} ProgressMeter - {}:{} {} {}\n".format(ct.time(), chrm, pos, elapsed, proportion_processed)
+        sys.stderr.write(update)
+        sys.stderr.flush()
+
+def process_header(tabix_file):
+
+    chrm_lenghts_dict = {}
+    tabix_file = pysam.Tabixfile(tabix_file)
+    
+    for line in tabix_file.header:
+        
+        if line.startswith("##contig") == True: 
+            chrm, length = re.split(r"<ID=|,length=", line)[1:]
+            length =  int(length.strip(">"))
+            chrm_lenghts_dict[chrm] = length
+
+    return chrm_lenghts_dict
+
+
 def main():
     # get args. 
     args = get_args()
-    print args
 
     # TODO: 
     # test that pysam is installed.
@@ -85,26 +132,47 @@ def main():
     # 2. process chrm sizes and return as
     #    slices and a zipped list (chrm, (start, stop))
     slice_indicies = get_slice_indicies(args.input, args.regions, args.window_size)
+    starting_time = datetime.datetime.now()
+
     
+    # Calculate the total size of the dataset
+    chrm_lengths = process_header(args.input)
+    total_bp_in_dataset = sum(chrm_lengths.values())
+
     # Get information about samples from the header.
     # this becomes the precursor to the VCF row
-    header = set_header(args.input)
+    empty_vcf_line = make_empty_vcf_ordered_dict(args.input)
+
+
+    # Convert populations input into a dict of pops where
+    # values are lists of samples
     populations = parse_populations_list(args.populations)
 
-    p = multiprocessing.Pool(4)
-    order = []
 
-    for count, result in enumerate(p.map(calc_slice_stats, generate_fstats_from_vcf_slices(slice_indicies, populations, header, args))):
+    order = [] # store order of samples.
+    bp_processed = 0
+
+    fout = open(args.output,'w')    
+
+    p = multiprocessing.Pool(int(args.cores))
+
+    for count, result in enumerate(p.map(calc_slice_stats, generate_fstats_from_vcf_slices(slice_indicies, populations, empty_vcf_line, args))):
+        
         if result == None: continue
+        
         chrm_start_stop, result = result
         stats, order = multilocus_f_statistics_2_sorted_list(result, order=order)
 
         if count == 0:
-            print ','.join(['chrm','start','stop','snp_count', 'total_depth_mean', 'total_depth_stdev'] +  map(str, order))
-            print ','.join(map(str, chrm_start_stop) + map(str, stats))
+            fout.write(','.join(['chrm','start','stop','snp_count', 'total_depth_mean', 'total_depth_stdev'] +  map(str, order)) + "\n")
+            fout.write(','.join(map(str, chrm_start_stop) + map(str, stats)) + "\n")
         else:
-            print ','.join(map(str, chrm_start_stop) + map(str, stats))
+            fout.write(','.join(map(str, chrm_start_stop) + map(str, stats)) + "\n")
 
+
+        chrm, start, stop  = chrm_start_stop[0:3]
+        bp_processed += stop
+        progress_meter(starting_time, chrm, stop, bp_processed, total_bp_in_dataset)
 
 if __name__ == '__main__':
     main()
