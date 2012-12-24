@@ -85,7 +85,7 @@ def process_snp_call(snp_call, ref, alt, IUPAC_ambiguities=False):
 
 
 
-def set_header(vcf_path):
+def make_empty_vcf_ordered_dict(vcf_path):
     """Open VCF file and read in header line as Ordered Dict"""
 
     vcf_file = gzip.open(vcf_path,'rb')

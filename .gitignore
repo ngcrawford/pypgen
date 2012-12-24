@@ -12,4 +12,4 @@
 *dadi.txt
 *.fstats.txt
 *.png
-*snps.txt
+*snps*
