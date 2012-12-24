@@ -6,6 +6,7 @@ import re
 import sys
 import gzip
 import pysam
+import datetime
 import itertools
 import numpy as np
 from fstats import fstats
@@ -116,7 +117,7 @@ def pairwise(iterable):
     next(b, None)
     return itertools.izip(a, b)
 
-def get_slice_indicies(vcf_bgzipped_file, regions, window_size):
+def get_slice_indicies(vcf_bgzipped_file, regions, window_size, regions_to_skip=None):
     """Get slice information from VCF file that is tabix indexed file (bgzipped). """
 
     # READ IN FILE HEADER
@@ -124,6 +125,7 @@ def get_slice_indicies(vcf_bgzipped_file, regions, window_size):
     chrms = tbx.contigs
 
     # PARSE LENGTH INFO FROM HEADER
+
     chrm_lengths = []
     for line in tbx.header:
         
@@ -134,6 +136,10 @@ def get_slice_indicies(vcf_bgzipped_file, regions, window_size):
             
             chrm_length = re.findall(r'length=.*>',line)
             chrm_length = int(chrm_length[0].strip('length=').strip('>'))
+
+            if chrm_name in regions_to_skip: 
+                print 'skipping', chrm_name
+                continue
             
             chrm_lengths.append((chrm_name, 1, chrm_length))
 
@@ -410,6 +416,37 @@ def multilocus_f_statistics_2_sorted_list(multilocus_f_statistics, order):
 
     return (stats, order)
 
+
+class Unbuffered:
+   def __init__(self, stream):
+       self.stream = stream
+   def write(self, data):
+       self.stream.write(data)
+       self.stream.flush()
+   def __getattr__(self, attr):
+       return getattr(self.stream, attr)
+
+def progress_meter(starting_time, chrm, pos, bp_processed, total_bp_in_dataset):
+    
+    #sys.stdout=Unbuffered(sys.stdout) # make sure writing to std out isn't buffered
+
+    ct = datetime.datetime.now()
+    elapsed = (datetime.datetime.now() - starting_time)
+
+    proportion_processed = bp_processed/float(total_bp_in_dataset)
+
+    if elapsed.seconds % 30 == 0 and elapsed.seconds > 10:
+
+        "INFO  19:29:31,683 ProgressMeter - GL343193.1:820101\t1.79e+09\t2.3 h\t4.6 s\t99.2%\t2.3 h\t62.5 s "
+        status = "INFO  {:.3} ProgressMeter - {}:{:,} {:.3} {:.2%}\n".format(ct.time(), chrm, pos, elapsed, proportion_processed)
+        sys.stdout.write(status)
+        return ct
+
+    else:
+        return starting_time
+ 
+
+
 def calc_slice_stats(data):
     """Main function for caculating statistics.
 
@@ -417,6 +454,8 @@ def calc_slice_stats(data):
     """
 
     tabix_slice, chrm, start, stop, populations, header, min_samples = data
+
+    #progress_meter(starting_time, chrm, stop, bp_processed, total_bp_in_dataset)
 
     if len(tabix_slice) == 0:
         return None

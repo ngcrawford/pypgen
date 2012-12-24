@@ -9,11 +9,6 @@ import argparse
 from VCF import *
 import multiprocessing
 
-class FooAction(argparse.Action):
-    def __call__(self, parser, namespace, values, option_string=None):
-        print '%r %r %r' % (namespace, values, option_string)
-        setattr(namespace, self.dest, values)
-
 def get_args():
     """Parse sys.argv"""
     parser = argparse.ArgumentParser()
@@ -35,7 +30,7 @@ def get_args():
     parser.add_argument('-r','--regions', 
                         required=False,
                         # action=FooAction, # TODO: fix this!
-                        type=str,
+                        nargs='+',
                         help="Define a chromosomal region. \
                               A region can be presented, for example, in the following \
                               format: ‘chr2’ (the whole chr2), ‘chr2:1000000’ (region \
@@ -43,6 +38,12 @@ def get_args():
                               (region between 1,000,000 and 2,000,000bp including the end \
                               points). The coordinate is 1-based.' [Same format as \
                               SAMTOOLs/GATK, example text cribbed from SAMTOOLs]")
+
+    parser.add_argument('--regions-to-skip',
+                        default=[],
+                        required=False,
+                        nargs='+',
+                        help='Define a chromosomal region(s) to skip.')
     
     parser.add_argument('-p','--populations', 
                         nargs='+',
@@ -62,47 +63,17 @@ def get_args():
 
     return parser.parse_args()
 
-
 def generate_fstats_from_vcf_slices(slice_indicies, populations, header, args):
 
     for count, si in enumerate(slice_indicies):
         chrm, start, stop = si
 
         yield [slice_vcf(args.input, chrm, start, stop), 
-               chrm, start, stop, populations, header, args.min_samples]
+               chrm, start, stop, populations, header, 
+               args.min_samples]
 
         # if count > 1: break
 
-
-class VCFProgressMeter(object):
-    """docstring for ProgressMeter"""
-    def __init__(self, starting_time, total_lines_2_process):
-        super(ProgressMeter, self).__init__()
-        self.starting_time = starting_time
-        self.total_lines_2_process = None
-    
-    def start(self,total_lines=None):
-        self.starting_time = datetime.datetime.now()
-        self.total_lines_2_process
-
-    def update(self):
-        pass
-
-
-
-def progress_meter(starting_time, chrm, pos, bp_processed, total_bp_in_dataset):
-    
-    ct = datetime.datetime.now()
-    elapsed = (datetime.datetime.now() - starting_time)
-
-    proportion_processed = bp_processed/float(total_bp_in_dataset)
-
-    if elapsed.seconds > 30:
-
-        "INFO  19:29:31,683 ProgressMeter - GL343193.1:820101\t1.79e+09\t2.3 h\t4.6 s\t99.2%\t2.3 h\t62.5 s "
-        update = "INFO  {} ProgressMeter - {}:{} {} {}\n".format(ct.time(), chrm, pos, elapsed, proportion_processed)
-        sys.stderr.write(update)
-        sys.stderr.flush()
 
 def process_header(tabix_file):
 
@@ -119,10 +90,12 @@ def process_header(tabix_file):
     return chrm_lenghts_dict
 
 
+
+
 def main():
     # get args. 
     args = get_args()
-
+    
     # TODO: 
     # test that pysam is installed.
     # bgzip check. MDSum?
@@ -131,9 +104,9 @@ def main():
     # 1. read file and get chrm sizes
     # 2. process chrm sizes and return as
     #    slices and a zipped list (chrm, (start, stop))
-    slice_indicies = get_slice_indicies(args.input, args.regions, args.window_size)
+    slice_indicies = get_slice_indicies(args.input, args.regions, args.window_size, args.regions_to_skip)
     starting_time = datetime.datetime.now()
-
+    previous_update_time = datetime.datetime.now()
     
     # Calculate the total size of the dataset
     chrm_lengths = process_header(args.input)
@@ -154,9 +127,10 @@ def main():
 
     fout = open(args.output,'w')    
 
-    p = multiprocessing.Pool(int(args.cores))
+    p = multiprocessing.Pool(processes=int(args.cores),maxtasksperchild=1000)
 
-    for count, result in enumerate(p.map(calc_slice_stats, generate_fstats_from_vcf_slices(slice_indicies, populations, empty_vcf_line, args))):
+    fstat_input_iterator = generate_fstats_from_vcf_slices(slice_indicies, populations, empty_vcf_line, args)
+    for count, result in enumerate(p.imap(calc_slice_stats, fstat_input_iterator)):
         
         if result == None: continue
         
@@ -169,10 +143,11 @@ def main():
         else:
             fout.write(','.join(map(str, chrm_start_stop) + map(str, stats)) + "\n")
 
-
         chrm, start, stop  = chrm_start_stop[0:3]
-        bp_processed += stop
-        progress_meter(starting_time, chrm, stop, bp_processed, total_bp_in_dataset)
+        bp_processed += args.window_size
+
+        previous_update_time = progress_meter(previous_update_time, chrm, stop, bp_processed, total_bp_in_dataset)
+
 
 if __name__ == '__main__':
     main()

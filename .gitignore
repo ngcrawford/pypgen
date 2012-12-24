@@ -1,3 +1,4 @@
+.nfs*
 *working
 *.h5
 *.sync
