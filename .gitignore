@@ -1,3 +1,4 @@
+*.windows
 .nfs*
 *working
 *.h5
