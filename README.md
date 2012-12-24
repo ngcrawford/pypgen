@@ -7,7 +7,7 @@ This is repository contains a python classes for parsing [genepop files](http://
 
 Pypop requires that you install the python mathematics and plotting software [MatPlotLib](http://matplotlib.sourceforge.net/index.html).  If you're installing on OSX or linux I recommend using [easy install](http://pypi.python.org/pypi/setuptools) to do the installation as MatPlotLib can be difficult to install from source.  With that in mind the basic steps would be as follows:
 
-1.) They easy way: [download](http://www.enthought.com/products/edudownload.php) and install the *free*, to academics anyway, [Enthought Python](http://www.enthought.com/products/epd.php) which contains matplotlib, scipy, numpy, and ipython preinstalled  . 
+1.) The really easy way: [download](http://www.enthought.com/products/edudownload.php) and install the *free*, to academics anyway, [Enthought Python](http://www.enthought.com/products/epd.php) which contains matplotlib, scipy, numpy, and ipython preinstalled  . 
 
 Alternately you can use *easy_install* to install just the modules you need:
 
@@ -33,7 +33,7 @@ Alternately you can use *easy_install* to install just the modules you need:
 *   Crawford, N. G. (2009). SMOGD: software for the measurement of genetic diversity. Molecular Ecology Resources, 10, 556-557. doi:10.1111/j.1755-0998.2009.02801.x
 *   Hedrick, P. W. (2005). A standardized genetic differentiation measure. Evolution; international journal of organic evolution, 59(8), 1633-1638.
 *   Jost, L. (2008). Gst and its relatives do not measure differentiation. Molecular Ecology, 17(18), 4015-4026. doi:10.1111/mec.2008.17.issue-18
-*   Masatoshi Nei. (1973). Analysis of Gene Diversity in Subdivided Populations. Proceedings of the National Academy of Sciences of the United States of America, 70(12 Pt 1-2), 3321.
+*   Nei, M. (1973). Analysis of Gene Diversity in Subdivided Populations. Proceedings of the National Academy of Sciences of the United States of America, 70(12 Pt 1-2), 3321.
 *   Nei, M., & Chesser, R. K. (1983). Estimation of fixation indices and gene diversities. Annals of human genetics, 47(Pt 3), 253-259.
 
 

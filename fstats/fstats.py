@@ -102,6 +102,7 @@ def G_double_prime_st_est(Ht_est, Hs_est, n):
 
 def D_est(Ht_est, Hs_est, n):
 	"""((Ht-Hs)/(1.0-Hs))*(n/(n-1))"""
+
 	n = float(n)
 	if ((1.0-Hs_est))*(n/(n-1)) == 0.0: return 0.0
 	else: D_est = ((Ht_est-Hs_est)/(1.0-Hs_est))*(n/(n-1))
@@ -134,7 +135,6 @@ def multilocus_G_double_prime_st_est(Ht_est, Hs_est, n):
 	Hs_est = sum(Hs_est)/float(len(Hs_est))
 	# G_est = multilocus_Gst_est(Ht_est,Hs_est)
 	if (n*Ht_est-Hs_est)*(1.0-Hs_est) == 0: return 0.0
-
 	else: G_double_prime_st_est = n*(Ht_est-Hs_est)/((n*Ht_est-Hs_est)*(1.0-Hs_est))
 	return G_double_prime_st_est
 
@@ -144,6 +144,6 @@ def multilocus_D_est(Ht_est, Hs_est, n):
 	pairs = zip(Ht_est, Hs_est)
 	Dest_values = [D_est(pair[0], pair[1], 2) for pair in pairs]
 	D_est_ = harmonic_mean_chao(Dest_values)
-	return D_est
+	return D_est_
 
 

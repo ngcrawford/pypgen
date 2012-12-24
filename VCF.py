@@ -1,658 +1,467 @@
+#!/usr/bin/env python
+# encoding: utf-8
 
+import os
+import re
+import sys
 import gzip
-import dadi
 import pysam
+import itertools
 import numpy as np
-from copy import copy
-from random import choice
 from fstats import fstats
-from itertools import combinations
 from collections import OrderedDict
+from itertools import combinations, izip_longest
 
-class VCF(object):
-    """docstring for VCF"""
-    def __init__(self):
-        super(VCF, self).__init__()
-    
-        self.header = None
-        self.__header_dict__ = None
+def process_snp_call(snp_call, ref, alt, IUPAC_ambiguities=False):
+    """Process VCF genotype fields.
+        The current version is very basic and
+        doesn't directly take into account the
+        quality of the call or call hets with 
+        IUPAC ambiguity codes."""
 
-        self.sample_format = None
-        self.sample_format_dict = None
+    # IUPAC ambiguity codes
+    IUPAC_dict = {('A','C'):'M',
+                  ('A','G'):'R',
+                  ('A','T'):'W',
+                  ('C','G'):'S',
+                  ('C','T'):'Y',
+                  ('G','T'):'K',
+                  ('A','C','G'):'V',
+                  ('A','C','T'):'H',
+                  ('A','G','T'):'D',
+                  ('C','G','T'):'B'}
 
-        self.populations = None
-        self.f_statistic  = None
-        self.vcf_file = None
-        self.window_size = None
-        self.chrm2length = None
+    #called_base = ""
+    snp_call = snp_call.split(":")
 
-    def parse_individual_snps(self, vcf ):
+    # process blanks
+    if snp_call[0] == "./.":
+        called_base = "-"
 
-        if vcf.endswith(".gz") == True:
-            vcf = gzip.open(vcf,'rb')
+    else:
+        allele1, allele2 = snp_call[0].split("/")
 
-        else:
-            vcf = open(vcf,'rU')
-        
+        # process "0/0"
+        if allele1 == '0' and allele2 == '0':
+            called_base = ref
 
-        # SETUP NAMED TUPLE TO STORE INFO FROM A SINGLE BASE
-        field_labels = []
+        if allele1 == '1' and allele2 == '1':
+            called_base = alt
 
-        # SETUP COUNTERS
-        current_base = None
-        line_count = None
+        # process "0/N"
+        if allele1 == '0' and allele2 != '0':
 
-        # PARSE VCF FIlE
-        snp_count = 0
+            if IUPAC_ambiguities == False:
+                called_base = 'N'
 
-        for line in vcf:
+            else:
+                call = [ref] + [alt.split(',')[int(allele2) - 1]]
+                call.sort()
+                call = tuple(call)
+                called_base = IUPAC_dict[call]
 
-            # SKIP HEADER
-            if line.startswith("#CHROM"):
-                self.header = line.strip("#").strip().split()
-                self.__header_dict__ = OrderedDict([(item,None) for item in self.header])
-                line_count = 0
+        # process "2/2, 1/2, etc."
+        if int(allele1) >= 1 and int(allele2) > 1 :
 
-            # START PROCESSING ALIGNED BASES
-            if line_count > 0:
-                vcf_line_dict = self.parse_vcf_line(line)
-                yield vcf_line_dict
+            # deal with homozygotes
+            if allele1 == allele2:
+                called_base = alt.split(',')[int(allele1) - 1]
 
-            if line_count >=0:
-                line_count += 1
+            # deal with heterozygotes
+            else:
 
-    def filter_vcf_line(self, filter_string, vcf_line):
-        """Apply filter to VCF. If VCF passes filter returns True.
-
-            Example filter string: "QUAL > 500"
-
-            Should work with JEXL expressions used in GATK. But, I 
-            should think about the best, most pythonic, way to do this.
-        """
-
-        # TO DO: rewrite
-        # This is very unsophisticated and insecure!
-
-
-        col, exp, value = filter_string.split(' ')
-        exp = "vcf_line[%s] %s %s" % (col, exp, value )
-
-        return eval(exp)
-
-
-    def parse_info(self,info_field):
-        
-        info = []
-        for item in info_field.split(','): # TO DO: comma should be ';'
-            pair = item.split("=") 
-            if len(pair) == 2:
-                info.append(pair)
-
-        info_dict = dict(info)
-        return info_dict
-
-    def parse_vcf_line(self, line):
-
-        line_parts = line.strip().split()
-        vcf_line_dict = self.__header_dict__
-
-        for count, item in enumerate(vcf_line_dict):
-            vcf_line_dict[item] = line_parts[count]
-
-        if self.sample_format == None:
-            self.sample_format = vcf_line_dict["FORMAT"].split(":")
-            self.sample_format_dict = dict([(item,None) for item in self.sample_format])      
-     
-        for count, item in enumerate(vcf_line_dict):
-            
-            if count >= 9:
-                genotype = vcf_line_dict[item]
-                
-                if genotype == "./.":
-                    vcf_line_dict[item] = None
+                if IUPAC_ambiguities == False:
+                    called_base = 'N'
 
                 else:
-                    genotype = dict(zip(self.sample_format,genotype.split(":")))
-                    vcf_line_dict[item] = genotype
+                    ref = alt.split(',')[int(allele1) - 1]
+                    alt = alt.split(',')[int(allele2) - 1]
+                    call = [ref,alt]
+                    call.sort()
+                    call = tuple(call)
+                    called_base = IUPAC_dict[call]
 
-        return vcf_line_dict
+    return called_base
 
-   
-    def calc_fstats(self, allele_counts):
 
-        #test_pair = {'So_Riviere_Goyaves': np.array([ 0.0, 1.0, 0.0, 0.0]), 'Plage_de_Viard': np.array([ 1.0, 0.0, 0.0, 0.0]),}
+
+def set_header(vcf_path):
+    """Open VCF file and read in header line as Ordered Dict"""
+
+    vcf_file = gzip.open(vcf_path,'rb')
+    header_dict = None
+    for line in vcf_file:
+        if line.startswith("#CHROM"):
+            header = line.strip("#").strip().split()
+            header_dict = OrderedDict([(item, None) for item in header])
+            break
+
+    vcf_file.close()
+    return header_dict
+
+def parse_populations_list(populations):
+    populations_dict  = {}
+    for pop in populations:
+        pop_name, sample_ids = pop.strip().split(":")
+        sample_ids = sample_ids.split(",")
+        populations_dict[pop_name] = sample_ids
+
+    return populations_dict
+
+def pairwise(iterable):
+    """Generates paris of slices from iterator
+       s -> (s0,s1), (s1,s2), (s2, s3), ..."""
+
+    a, b = itertools.tee(iterable)
+    next(b, None)
+    return itertools.izip(a, b)
+
+def get_slice_indicies(vcf_bgzipped_file, regions, window_size):
+    """Get slice information from VCF file that is tabix indexed file (bgzipped). """
+
+    # READ IN FILE HEADER
+    tbx = pysam.Tabixfile(vcf_bgzipped_file) # TODO: create try statement to test that file is actually a VCF
+    chrms = tbx.contigs
+
+    # PARSE LENGTH INFO FROM HEADER
+    chrm_lengths = []
+    for line in tbx.header:
         
-        # CALCULATE ALLELE FREQUENCIES
-        allele_freqs_dict = self.populations.fromkeys(self.populations.keys(),None)
-        for pop in self.populations:
-            counts =  allele_counts[pop].values()
-            freqs =  counts/np.sum(counts, dtype=float)
-            allele_freqs_dict[pop] = freqs
-        
-        allele_freqs = allele_freqs_dict.values()
-
-
-        # CACULATE PAIRWISE F-STATISTICS
-        pairwise_results = {}
-
-        pops_no_outgroup =  self.populations.keys()
-        if 'outgroups' in pops_no_outgroup:
-           pops_no_outgroup.remove('outgroups')
-
-        for population_pair in combinations(pops_no_outgroup,2):
+        if line.startswith("##contig="):
             
-            pop1, pop2 =  population_pair
-
-            Ns = [sum(allele_counts[pop].values()) for pop in [pop1, pop2]]
-
-            if 0 in Ns: 
-                values = [np.nan, np.nan, np.nan, np.nan, np.nan, np.nan]
-                values_dict = dict(zip(['Hs_est', 'Ht_est', 'Gst_est', 'G_prime_st_est', 'G_double_prime_st_est', 'D_est'],values))
-                pairwise_results[population_pair] = values_dict
-                values_dict['CHROM'] = allele_counts["CHROM"]
-                values_dict['POS'] = allele_counts["POS"]
-                continue
+            chrm_name = re.findall(r'ID=.*,',line)
+            chrm_name = chrm_name[0].strip('ID=').strip(',')
             
-            else:
- 
-                pop1 = allele_freqs_dict[pop1]
-                pop2 = allele_freqs_dict[pop2]
-
-                # Skip populations fixed at particular SNPS
-                # this can happen when the reference is divergent.
-                if pop1[1] == 1.0 and pop2[1] == 1.0:
-                    values = [np.nan, np.nan, np.nan, np.nan, np.nan, np.nan]
-                    values_dict = dict(zip(['Hs_est', 'Ht_est', 'Gst_est', 'G_prime_st_est', 'G_double_prime_st_est', 'D_est'],values))
-                    pairwise_results[population_pair] = values_dict
-                    values_dict['CHROM'] = allele_counts["CHROM"]
-                    values_dict['POS'] = allele_counts["POS"]
-                    continue # skip fixed SNPs
-               
-                if pop1[0] == 1.0 and pop2[0] == 1.0:
-                    values = [np.nan, np.nan, np.nan, np.nan, np.nan, np.nan]
-                    values_dict = dict(zip(['Hs_est', 'Ht_est', 'Gst_est', 'G_prime_st_est', 'G_double_prime_st_est', 'D_est'],values))
-                    pairwise_results[population_pair] = values_dict
-                    values_dict['CHROM'] = allele_counts["CHROM"]
-                    values_dict['POS'] = allele_counts["POS"]
-                    continue # skip fixed SNPs 
-
-                print pop1, pop2
-
-
-                allele_freqs = [pop1, pop2]
-
-                n = float(len(Ns))
-                Ns_harm = fstats.harmonic_mean(Ns)
-                Ns_harm_chao = fstats.harmonic_mean_chao(Ns)
-
-                # CALCULATE Hs AND Ht
-                n = 2
-                Hs_prime_est_ = fstats.Hs_prime_est(allele_freqs,n)
-                Ht_prime_est_ = fstats.Ht_prime_est(allele_freqs,n)
-                Hs_est_ = fstats.Hs_est(Hs_prime_est_, Ns_harm)
-                Ht_est_ = fstats.Ht_est(Ht_prime_est_,Hs_est_,Ns_harm,n)
-
-                # CALCULATE F-STATISTICS
-                Gst_est_ = fstats.Gst_est(Ht_est_, Hs_est_)
-                G_prime_st_est_ = fstats.G_prime_st_est(Ht_est_, Hs_est_, Gst_est_, n)
-                G_double_prime_st_est_ = fstats.G_double_prime_st_est(Ht_est_, Hs_est_, n)
-                D_est_ = fstats.D_est(Ht_est_, Hs_est_, n)
-                
-                # PRINT OUTPUT
-                values = [Hs_est_, Ht_est_, Gst_est_, G_prime_st_est_, G_double_prime_st_est_, D_est_]
-                values_dict = dict(zip(['Hs_est', 'Ht_est', 'Gst_est', \
-                                        'G_prime_st_est', 'G_double_prime_st_est', 'D_est'],values))
-
-                values_dict['CHROM'] = allele_counts["CHROM"]
-                values_dict['POS'] = allele_counts["POS"]
-
-                pairwise_results[population_pair] = values_dict
-
-        return pairwise_results
-
-    def __write_to_outfiles__(self, chrm, pos, depth, stat_id, f_statistics):
-
-        line = ",".join((chrm, pos, str(depth)))
-        for pair in f_statistics.keys():
-            if f_statistics[pair] == None:
-                continue
-
-            if f_statistics[pair][stat_id] == np.nan:
-                value = 'NA'
-            else:
-                value = str(f_statistics[pair][stat_id])
-            line += "," + value
-        
-        header = 'chrm,pos,total_depth,' + ','.join([left+"-"+right for left, right in f_statistics.keys()]) + "," + stat_id
-        return (line, header)
-
-    def phred2probablility(self, phred_score):
-        if phred_score == "./.": 
-            return phred_score
-        else:
-            phred_score = int(phred_score)
-            #phred to probability = 10**(-phred/10)
-            probability = 10**((phred_score*-1)/10.0)
-        return probability
-
-    def sample2population(self, sample_id):
-        sample_pop = None
-        for pop in self.populations.keys():
-            if sample_id in self.populations[pop]:
-                sample_pop = pop
-
-        return sample_pop
-
-
-    def slice_vcf(self, tabix_filename, chrm, start=None, stop=None):
-
-        tabixfile = pysam.Tabixfile(tabix_filename)
-        results = None
-        # pysam throws exception when there are no SNPs in the range given.
-        # this correction makes sure that some empty data is returned instead
-        try:
-            chunk = tabixfile.fetch(reference=chrm, start=start, end=stop)
-        except:
-            results = []
-
-        if results != []:
-            results = []
-            for line in chunk:
-                line = self.parse_vcf_line(line)
-                results.append(line.copy())
-
-        return results
-
-
-    def calc_MAF(self, gt_likelihoods):
-        pass
-
-
-    def set_chrms(self, vcf_path):
-        
-        if vcf_path.endswith('gz'):
-            vcf_file = gzip.open(vcf_path, 'rb')
-        else:
-            vcf_file = open(vcf_path,'rU')
-
-        chrm_len_pairs = []
-        for line in vcf_file:
-            if line.startswith("##contig"):
-                line_parts = line.strip("##contig=<ID=").strip(">\n").split(",")
-                line_parts[-1] = int(line_parts[-1].strip("length="))
-                chrm_len_pairs.append(line_parts)
-            if line.startswith("#CHROM"):
-                break
-        
-        vcf_file.close()
-        self.chrm2length =  dict(chrm_len_pairs)
-
-    def set_header(self, vcf_path):
-        if vcf_path.endswith('gz'):
-            vcf_file = gzip.open(vcf_path, 'rb')
-        
-        else:
-            vcf_file = open(vcf_path,'rU')
-        
-        for line in vcf_file:
-            if line.startswith("#CHROM"):
-                self.header = line.strip("#").strip().split()
-                self.__header_dict__ = OrderedDict([(item,None) for item in self.header])
-                break
-
-        vcf_file.close()
-
-    def process_genotype(self, snp_call):
-        """Given GT string convert to allele counts.
-
-            e.g., '1/1' becomes (0,2)
-                  '0/0' becomes (2,0)  
-                  '0/1' becomes (1,1)                 
-
-            To Do: Properly handle multiallelic GTs
-        """
-
-        if snp_call == "0/0":
-            return (2,0)
-        
-        elif snp_call == "1/1":
-            return (0,2)
-        
-        elif snp_call == '1/0' or \
-               snp_call == '0/1':
-            return (1,1)
-        
-        # skip multiallelic sites
-        else:
-            return (0,0)
-
-
-    def get_major_allele(self, vcf_line):
-        """Choose major allele from VCF line based on genotype counts."""
-
-        samples = self.header[9:]
-        GT_counts = (self.process_genotype(vcf_line[k]['GT']) for k in samples if vcf_line[k] != None)
-
-        ref_count = sum(( gt[0] for gt in GT_counts))
-        alt_count = sum(( gt[1] for gt in GT_counts))
-        
-        if alt_count > ref_count:
-            return vcf_line['ALT']
-        
-        elif alt_count == ref_count:
-            return choice((vcf_line['ALT'],vcf_line['REF']))
-        
-        else:
-            return vcf_line['REF']
-
-    def sequence_between_SNPS(self, fasta_handle, chrm, start, stop):
-        """Returns sequence between SNPs. Requires an opened pysam faidxed fasta."""
-        if start == None and stop == None:
-            return None
-
-        elif start == None and stop != None:
-            start = 0
-            stop = int(stop) - 1
-            seq = fasta_handle.fetch(chrm,start, stop)
-            return seq
-
-        elif int(stop) - int(start) == 1:
-            seq = ''
-            return seq
-  
-        elif int(stop) - int(start) == 1:
-            return ''
-        
-        else:
-            start = int(start) + 1
-            stop = int(stop) - 1
-            seq = fasta_handle.fetch(chrm,start, stop)
-            return seq
-
-    def polarize_allele_counts(self, allele_counts, vcf_line):
-        """For a set of allele counts use outgroup to determine REF and ALT alleles.
-
-        The outgroup is required to be fixed at one allele. SNPS with variable outgroups are ignored.
-        """
-
-        # To Do: Check that outgroup is defined. Throw exception if is isn't. 
-
-        # skip outgroup not fixed at one value
-        if self.check_outgroup(allele_counts) == False:
-            return None 
-
-        # skip multi-allelic sites
-        elif len(vcf_line['REF']) > 1 or len(vcf_line["ALT"]) > 1:
-            return None                         
-
-        else:
-            # CALL BASE FOR OUTGROUP
-            outgroup_allele = self.get_outgroup_base(allele_counts, vcf_line)
+            chrm_length = re.findall(r'length=.*>',line)
+            chrm_length = int(chrm_length[0].strip('length=').strip('>'))
             
-            # CALL MAJOR ALLELE (BASE) FOR INGROUP
-            major_allele = self.get_ingroup_major_allele(allele_counts, vcf_line, outgroup_allele)
+            chrm_lengths.append((chrm_name, 1, chrm_length))
 
-            # POLORIZE REF AND ALT FOR INGROUP
-            if major_allele != vcf_line['REF']:
-                ref, alt = ('ALT','REF')
-            else:
-                ref, alt = ('REF','ALT')
+    chrm_lengths = tuple(chrm_lengths)
+    tbx.close()
 
-            polarized_calls = {"CHROM":vcf_line['CHROM'], 'POS':vcf_line['POS'], \
-                               'MAJOR_ALLELE':major_allele, 'OUTGROUP_ALLELE':outgroup_allele, \
-                               'REF':vcf_line['REF'], 'ALT':vcf_line["ALT"]}
+    # GENERATE SLICES
+    # current does not make overlapping slices.
 
-            for count, pop in enumerate(self.populations.keys()):
-                polarized_calls[pop] = {'REF':allele_counts[pop][ref], 'ALT':allele_counts[pop][alt]}
+    if regions == None:
 
-            return polarized_calls
+        for chrm, start, stop in chrm_lengths:
 
-
-    def count_alleles(self, vcf_line, polarize=False):
-        """"Given a vcf file summarize allele counts per population."""
-
-        allele_counts = {"CHROM":vcf_line['CHROM'], 'POS':vcf_line['POS']}
-
-   
-        for pop in self.populations.keys():
+            slice_indicies = itertools.islice(xrange(start, stop + 1), 0, stop + 1, window_size)
             
-            alleles = {'REF':0, 'ALT':0}
-            
-            for sample in self.populations[pop]:
-                if vcf_line[sample] != None:
-                    ref, alt = self.process_genotype(vcf_line[sample]['GT'])
-                    alleles['REF'] += ref
-                    alleles['ALT'] += alt
-            
-            allele_counts[pop] = alleles.copy()
+            for count, s in enumerate(pairwise(slice_indicies)):
+                yield (chrm, s[0], s[1] -1) # subtract one to prevent 1 bp overlap
+    else:
 
-        if polarize == True:
-            return self.polarize_allele_counts(allele_counts, vcf_line)
+        chrm, start, stop = re.split(r':|-', regions)
+        start, stop = int(start), int(stop)
 
-        else:
-            return allele_counts
-                
-
-    def check_outgroup(self, row):
-        outgroup = row["outgroups"]
-
-        if outgroup['ALT'] == 0 and outgroup['REF'] > 0:
-            return True
-
-        elif outgroup['REF'] == 0 and outgroup['ALT'] > 0:
-            return True
-
-        else:
-            return False
+        slice_indicies = itertools.islice(xrange(start, stop + 1), 0, stop + 1, window_size)
+        for count, s in enumerate(pairwise(slice_indicies)):
+            yield (chrm, s[0], s[1] -1) # subtract one to prevent 1 bp overlap
 
 
-    def get_outgroup_base(self, row, raw_calls):
-        pops = self.populations.keys()
-
-        if row["outgroups"]['REF'] > row["outgroups"]['ALT']:
-            outgroup_base = raw_calls['REF']
-        
-        elif sum(row['outgroups'].values()) == 0 : # e.g, == {'ALT': 0, 'REF': 0}
-            ref = sum([row[pop]['REF'] for pop in pops])
-            alt = sum([row[pop]['ALT'] for pop in pops])
-            
-            if ref > alt:
-                outgroup_base = raw_calls['REF']
-            else: 
-                outgroup_base = raw_calls['ALT']
-        
-        else:
-            outgroup_base = raw_calls['ALT']    
-        
-        return outgroup_base
-
-    def get_ingroup_major_allele(self, row, raw_calls, outgroup_allele):
+def slice_vcf(vcf_bgzipped_file, chrm, start, stop):
     
-        pops = self.populations.keys()
-        pops.remove('outgroups')
+    tbx = pysam.Tabixfile(vcf_bgzipped_file)
+    return tuple(row for row in tbx.fetch(chrm, start, stop))
 
-        ref_sum = sum([row[pop]['REF'] for pop in pops])
-        alt_sum = sum([row[pop]['ALT'] for pop in pops])
 
-        if ref_sum < alt_sum:
-            return raw_calls['ALT']
+def parse_info_field(info_field):
+    
+    info_dict = {}
+    for item in info_field.split(';'):
+        pair = item.split("=") 
+        if len(pair) == 2:
+            info_dict[pair[0]] = pair[1] # this could be improved on
+    return info_dict
 
-        else:
-            return raw_calls['REF']
+def parse_vcf_line(pos, header):
+    """Read in VCF line and convert it to an OrderedDict"""
 
-    def make_triplet(self, base):
-        return "-{0}-".format(base) 
+    pos_parts = pos.strip().split()
+    vcf_line_dict = header
 
-    def count_alleles_in_vcf(self, vcf_slice):
-        """"Fuction that returns rows of allele counts line by line of a given VCF."""
+    for count, item in enumerate(vcf_line_dict):
+        vcf_line_dict[item] = pos_parts[count]
 
-        # To Do: Add code to skip header. Currently assumes sliced vcf. 
-
-        if vcf_slice == [] or vcf_slice == None:
-            return None
-
-        else:
-            return [self.count_alleles(vcf_line, polarize=True) for vcf_line in vcf_slice]
-
-    def sliding_window_dadi(self, args):
-
-        # Using the data in the VCF header generate all slices
-        print 'Generating Slices...'
-        slices = generate_slices(args)
+    sample_format = vcf_line_dict["FORMAT"].split(":")
+ 
+    for count, item in enumerate(vcf_line_dict):
         
-        # Open output file
-        print 'Processing Slices...'
-        fout = open(args.output,'w')
-
-        # Write output header
-        fout.write(','.join(create_header(pop_ids)) + "\n")
-
-        for key_count, chrm in enumerate(slices.keys()):
-
-            if args.region != [None]:
-                chrm = args.region[0]
-                #if key_count == 2: break
+        if count >= 9:
+            genotype = vcf_line_dict[item]
             
-            for count, s in enumerate(slices[chrm]):
+            if genotype == "./." or genotype == ".":      # "'./.'' for dip, '.' for haploid
+                vcf_line_dict[item] = None
 
-                # Break out of loop if loop proceeds beyond
-                #   defined region (-L=1:1-5000 = 5000)
-                if s[-1] > args.region[-1] and args.region[-1] != None: break
-
-                region = [chrm] + list(s)
-
-                # Setup Pairwise Dadi
-                dadi_data = make_dadi_fs(args, region)
-                if dadi_data == None: continue # skip empty calls
-
-                dd, pop_ids = dadi_data
-                projection_size = 10
-                pairwise_fs  = dadi.Spectrum.from_data_dict(dd, pop_ids, [projection_size]*2)
-
-                # Create final line, add Fst info
-                final_line = region
-                final_line += [pairwise_fs.Fst()]
-
-                # Add in population level stats
-                for pop in pop_ids:
-                    fs = dadi.Spectrum.from_data_dict(dd, [pop], [projection_size])
-                    final_line += [fs.Tajima_D(), fs.Watterson_theta(), fs.pi(), fs.S()]
-
-                # write output
-                final_line = [str(i) for i in final_line]
-                fout.write(','.join(final_line) + "\n")
-
-            # Don't process any more keys than necessary
-            print 'Processed {0} of {1} slices from contig {2}'.format(count+1, len(slices[chrm]), chrm)
-            if args.region != [None]: break
-
-        fout.close()
-
-
-    def generate_slices(self, args):
-
-        if args.region != [None]:
-            self.chrm2length = {args.region[0]:args.region[-1]}
-        else:
-            self.set_chrms(args.input)
-        
-        chrm_2_windows = self.chrm2length.fromkeys(self.chrm2length.keys(),None)
-
-        for count, chrm in enumerate(self.chrm2length.keys()):
-
-            length = self.chrm2length[chrm]
-            window_size = args.window_size
-            overlap = args.overlap
-
-            # Skip contigs that are to short
-            if length <= window_size: continue
-            
-            # Fit windows into remaining space
-            if (length % window_size) > overlap:
-                start = (length % window_size)/2
-                stop = (length - window_size) - overlap/2
-
-            # Prevent windows from invading remaining space 
-            if (length % window_size) <= overlap:
-                start = (length % window_size)/2
-                stop = length - overlap*2
-        
-            if overlap == 0:
-                starts = xrange(start, stop, window_size)
             else:
-                starts = xrange(start, stop, overlap)
-            
-            stops = [i+window_size for i in starts]
-            windows = zip(starts, stops)
-            
-            chrm_2_windows[chrm] = windows
+                genotype = dict(zip(sample_format,genotype.split(":")))
 
-        return chrm_2_windows
+                # CONVERT STRINGS TO APPOPRIATE TYPES (INTS, FLOATS, ETC.)
+                genotype['GQ'] = float(genotype['GQ'])
+                genotype['DP'] = int(genotype['DP'])
+                genotype['AD'] = tuple(int(ad) for ad in genotype['AD'].split(","))
+                genotype['PL'] = tuple(int(ad) for ad in genotype['PL'].split(","))
+
+                vcf_line_dict[item] = genotype
+    
+    vcf_line_dict['POS'] = int(vcf_line_dict['POS'])
+    vcf_line_dict['QUAL'] = float(vcf_line_dict['QUAL'])
+
+    vcf_line_dict['INFO'] = parse_info_field(vcf_line_dict['INFO'])
+
+    return vcf_line_dict
+
+def filter_on_population_sizes(vcfline, populations, min_samples=0):
+
+    sample_counts = []
+
+    for pop in populations.keys():
+        sample_count = 0
+        for sample in populations[pop]:
+            if vcfline[sample] != None:
+                sample_count += 1
+
+        sample_counts.append(sample_count)
+
+    sample_counts = [item for item in sample_counts if item >= min_samples]
+
+    if len(sample_counts) >= 2: 
+        return True
+    else: 
+        return False
 
 
-    def slice_2_allele_counts(self, tabix_filename, chrm, start=None, stop=None):
-        vcf_slice = self.slice_vcf( tabix_filename, chrm, start, stop)
-        processed_slice = self.count_alleles_in_vcf( vcf_slice)
-        return processed_slice
+def format_output(chrm, start, stop, depth, stat_id, multilocus_f_statistics):
 
+    line = ",".join((chrm, str(start), str(stop), str(depth)))
+    for pair in multilocus_f_statistics.keys():
+        if multilocus_f_statistics[pair] == None:
+            continue
 
-    def vcf_slice_2_fstats(self, vcf_slice, projection_size = 10):
+        if multilocus_f_statistics[pair][stat_id] == np.nan:
+            value = 'NA'
+        
+        else:
+            value = str(multilocus_f_statistics[pair][stat_id])
+        
+        line += "," + value
+    
+    line += "\n"
+    return (line)
 
-        pop_ids = self.populations.keys()
-        pop_ids.remove('outgroups')
+def calc_allele_counts(populations, vcf_line_dict):
 
-        processed_slice = self.count_alleles_in_vcf(vcf_slice)
-        print self.calc_fstats(processed_slice)
-        # calc_fstats
-        #dd = self.make_dadi_fs(processed_slice)
-        #fs = dadi.Spectrum.from_data_dict(dd, pop_ids, [projection_size]*len(pop_ids))
-        #return fs.Fst()
+    allele_counts = populations.fromkeys(populations.keys(), None)
 
+    for population in populations.keys():
 
-    def make_dadi_fs( self, vcf_slice,):
+        allele_format_dict = {0:0.0,1:0.0,2:0.0,3:0.0,4:0.0}   # create dict to prevent pointer issues
+        allele_counts[population] = allele_format_dict
 
-        if vcf_slice == [] or vcf_slice == None:
-            return None
+        for sample_id in populations[population]:
+
+            if vcf_line_dict[sample_id] != None:
+                
+                genotype = vcf_line_dict[sample_id]
+                genotype = genotype["GT"].split("/") # TODO add phased logic
+
+                if genotype == [".","."]: continue
+
+                genotype = [int(item) for item in genotype]
+                
+                for allele in genotype:
+                    allele_counts[population][allele] += 1.0 
+    
+    return allele_counts
+
+def calc_fstats(populations, allele_counts):
+
+    # CALCULATE ALLELE FREQUENCIES
+    allele_freqs_dict = populations.fromkeys(populations.keys(), None)
+    for population in allele_counts.keys():
+        counts =  allele_counts[population].values()
+        
+        if sum(counts) == 0.0:
+            freqs = [0.0] * 4
 
         else:
+            freqs =  [count/sum(counts) for count in counts]
 
-            final_dadi = {}
+        allele_freqs_dict[population] = freqs
+
+    allele_freqs = allele_freqs_dict.values()
+
+
+    # CACULATE PAIRWISE F-STATISTICS
+    pairwise_results = {}
+    for population_pair in combinations(populations.keys(),2):
+        
+        pop1, pop2 =  population_pair
+        Ns = [sum(allele_counts[pop].values()) for pop in [pop1, pop2]]
+
+        if 0 in Ns: 
+            values = [np.nan, np.nan, np.nan, np.nan, np.nan, np.nan]
+            values_dict = dict(zip(['Hs_est', 'Ht_est', 'Gst_est', 
+                                    'G_prime_st_est', 'G_double_prime_st_est', 
+                                    'D_est'],
+                                    values))
+            pairwise_results[population_pair] = values_dict
+            continue
+        
+        else:
+
+            pop1 = allele_freqs_dict[pop1]
+            pop2 = allele_freqs_dict[pop2]
+
+            allele_freqs = [pop1, pop2]
+
+            n = float(len(Ns))
+            Ns_harm = fstats.harmonic_mean(Ns)
+            Ns_harm_chao = fstats.harmonic_mean_chao(Ns)
+
+            # CALCULATE Hs AND Ht
+            n = 2
+            Hs_prime_est_ = fstats.Hs_prime_est(allele_freqs, n)
+            Ht_prime_est_ = fstats.Ht_prime_est(allele_freqs, n)
+            Hs_est_ = fstats.Hs_est(Hs_prime_est_, Ns_harm)
+            Ht_est_ = fstats.Ht_est(Ht_prime_est_, Hs_est_, Ns_harm, n)
+
+            # CALCULATE F-STATISTICS
+            Gst_est_ = fstats.Gst_est(Ht_est_, Hs_est_)
+            G_prime_st_est_ = fstats.G_prime_st_est(Ht_est_, Hs_est_, Gst_est_, n)
+            G_double_prime_st_est_ = fstats.G_double_prime_st_est(Ht_est_, Hs_est_, n)
+            D_est_ = fstats.D_est(Ht_est_, Hs_est_, n)
             
-            for row_count, row in enumerate(vcf_slice):
-                
-                if row == None: continue
-                
-                calls = {}
-                for count, pop in enumerate(self.populations.keys()):
-                    if pop == 'outgroups': continue
-                    calls[pop] = (row[pop]['REF'], row[pop]['ALT'])
+            # PRINT OUTPUT
+            values = [Hs_est_, Ht_est_, Gst_est_, G_prime_st_est_, 
+                      G_double_prime_st_est_, D_est_]
+            values_dict = dict(zip(['Hs_est', 'Ht_est', 'Gst_est', \
+                                    'G_prime_st_est', 'G_double_prime_st_est', 
+                                    'D_est'],
+                                    values))
 
-                row_id = "{0}_{1}".format(row['CHROM'],row['POS'])
-            
-                dadi_site = {'calls': calls,
-                       'context': self.make_triplet(row['MAJOR_ALLELE']),
-                       'outgroup_context': self.make_triplet(row['OUTGROUP_ALLELE']),
-                       'outgroup_allele': row['OUTGROUP_ALLELE'],
-                       'segregating': (row['REF'], row['ALT'])
-                       }
+            pairwise_results[population_pair] = values_dict
 
-                final_dadi[row_id] = dadi_site
-
-            return final_dadi
+    return pairwise_results
 
 
+def calculate_multilocus_f_statistics(Hs_est_dict, Ht_est_dict):
+       
 
-    def SNPwise_fstats(self, vcf, vcf_slice):
+    multilocus_f_statistics = {}
 
-        #vcf, vcf_slice = vcf_slice
-        results = []
-        for vcf_line in vcf_slice:
-            allele_counts = vcf.count_alleles(vcf_line, polarize=False)
-            try:
-                results.append(vcf.calc_fstats(allele_counts))
-            except:
+    for key in Hs_est_dict.keys():
+
+        Hs_est_list = Hs_est_dict[key]
+        Ht_est_list = Ht_est_dict[key]
+
+        pairs = zip(Hs_est_list, Ht_est_list)
+        pairs = [pair for pair in pairs if np.nan not in pair]
+
+        multilocus_f_statistics[key] = None
+        
+        if len(pairs) != 0:
+
+            n = 2 # fix this
+            Gst_est = fstats.multilocus_Gst_est(Ht_est_list, Hs_est_list)
+            G_prime_st_est = fstats.multilocus_G_prime_st_est(Ht_est_list, Hs_est_list, n)
+            G_double_prime_st_est = fstats.multilocus_G_double_prime_st_est(Ht_est_list, Hs_est_list, n)
+            D_est = fstats.multilocus_D_est(Ht_est_list, Hs_est_list, n)
+
+            values_dict = dict(zip(['Gst_est', 'G_prime_st_est', 'G_double_prime_st_est', 'D_est'],\
+                          [Gst_est, G_prime_st_est, G_double_prime_st_est, D_est]))
+
+            multilocus_f_statistics[key] = values_dict
+
+    return multilocus_f_statistics
+
+
+def update_Hs_and_Ht_dicts(f_statistics, Hs_est_dict, Ht_est_dict):
+    
+    for pop_pair in f_statistics.keys():
+    
+        if Hs_est_dict.has_key(pop_pair) == True:
+            Hs_est_dict[pop_pair].append(f_statistics[pop_pair]['Hs_est'])
+        else:
+            Hs_est_dict[pop_pair] = [f_statistics[pop_pair]['Hs_est']]
+
+        if Ht_est_dict.has_key(pop_pair) == True:
+            Ht_est_dict[pop_pair].append(f_statistics[pop_pair]['Ht_est'])
+        else:
+            Ht_est_dict[pop_pair] = [f_statistics[pop_pair]['Ht_est']]
+    return (Hs_est_dict, Ht_est_dict)
+
+def multilocus_f_statistics_2_sorted_list(multilocus_f_statistics, order):
+    
+    order = []
+    if len(order) == 0:
+        for pair in multilocus_f_statistics.keys():
+            joined_pair = '.'.join(pair) 
+            for stat in multilocus_f_statistics[pair].keys():
+                order.append('.'.join((joined_pair,stat)))
+    order.sort()
+    stats = []
+    for key in order:
+        pop1, pop2, stat = key.split(".")
+        stat = multilocus_f_statistics[(pop1,pop2)][stat]
+        stats.append(stat)
+
+    return (stats, order)
+
+def calc_slice_stats(data):
+    """Main function for caculating statistics.
+
+       Make it easy to add more statistics.
+    """
+
+    tabix_slice, chrm, start, stop, populations, header, min_samples = data
+
+    if len(tabix_slice) == 0:
+        return None
+
+    else:
+        # Create lists to store values for final printing.
+        output_line = [chrm, start, stop]
+        total_depth = []
+        snp_wise_f_statistics = []
+
+        Hs_est_dict = {}
+        Ht_est_dict = {}
+        ordered_list = None
+        snp_count = 0
+
+        for count, line in enumerate(tabix_slice):
+
+            vcf_line_dict = parse_vcf_line(line, header)
+
+            # CREATE FILTERS HERE:
+            if filter_on_population_sizes(vcf_line_dict, populations, min_samples) == False:
                 continue
 
-        return results
+            # CALCULATE SNPWISE F-STATISTICS
+            allele_counts = calc_allele_counts(populations, vcf_line_dict)
+            f_statistics = calc_fstats(populations, allele_counts)
+            
+            # UPDATE Hs AND Ht DICTIIONARIES
+            Hs_est_dict, Ht_est_dict = update_Hs_and_Ht_dicts(f_statistics, Hs_est_dict, Ht_est_dict)
+
+            f_statistics['LOCATION'] = (chrm, start, stop)
+            snp_wise_f_statistics.append(f_statistics)
+
+            total_depth.append(int(vcf_line_dict['INFO']["DP"]))
+            snp_count = count
+
+        multilocus_f_statistics = calculate_multilocus_f_statistics(Hs_est_dict, Ht_est_dict)
+        
+        # UPDATE OUTPUT LINE WITH DEPTH INFO
+        total_depth = np.array(total_depth)
+        output_line += [snp_count, total_depth.mean(), total_depth.std()]
+
+
+        return ([chrm, start, stop, snp_count, total_depth.mean(), total_depth.std()], multilocus_f_statistics)
+
+
 
 
