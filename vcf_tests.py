@@ -67,8 +67,8 @@ class TestVCFInfoParsing(unittest.TestCase):
             'c512', 'c513', 'c514', 'c515', 'c563', 'c614', 'c630', 
             'c639', 'c640'], 'outgroups': ['h665', 'i02-210']})
 
-    def test_header_to_ordereddict_parsing(self):
-        header = VCF.set_header(self.bgzip_path)
+    def test_header_to_ordered_dict_parsing(self):
+        header = VCF.make_empty_vcf_ordered_dict(self.bgzip_path)
         
         self.assertEqual(header,self.header_dict)
 
@@ -80,7 +80,7 @@ class TestVCFInfoParsing(unittest.TestCase):
             samples and populations than actually contained in the VCF file.
         """
 
-        header = VCF.set_header(self.bgzip_path)
+        header = VCF.make_empty_vcf_ordered_dict(self.bgzip_path, )
         header_sample_ids = [item for count, item in enumerate(header) if count >= 9]
         
         populations_dict  = VCF.parse_populations_list(self.populations_list)
