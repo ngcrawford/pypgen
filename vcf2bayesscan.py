@@ -81,7 +81,6 @@ def main():
     # get args. 
     args = get_args()
     populations = parse_populations_list(args.populations)
-    print populations
 
     header = set_header(args.input)
 
@@ -91,7 +90,8 @@ def main():
     
     for count, line in enumerate(fin):
         if line.startswith('#') == True: continue
-        if count > 10: break
+        # if count > 10: break
+        
         vcf_line_dict = parse_vcf_line(line, header)
         
         for pop in populations.keys():
@@ -103,6 +103,7 @@ def main():
 
                 gt =  vcf_line_dict[sample]["GT"]
                 gt = gt.split('/')
+
                 calls[gt[0]] += 1
                 calls[gt[1]] += 1
 
