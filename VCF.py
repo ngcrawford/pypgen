@@ -13,6 +13,11 @@ from fstats import fstats
 from collections import OrderedDict
 from itertools import combinations, izip_longest
 
+
+
+
+
+
 def process_snp_call(snp_call, ref, alt, IUPAC_ambiguities=False):
     """Process VCF genotype fields.
         The current version is very basic and
@@ -83,8 +88,6 @@ def process_snp_call(snp_call, ref, alt, IUPAC_ambiguities=False):
                     called_base = IUPAC_dict[call]
 
     return called_base
-
-
 
 def make_empty_vcf_ordered_dict(vcf_path):
     """Open VCF file and read in header line as Ordered Dict"""
