@@ -221,12 +221,13 @@ def get_slice_indicies(vcf_bgzipped_file, regions, window_size, regions_to_skip=
                 yield (chrm, s[0], s[1] -1) # subtract one to prevent 1 bp overlap
     else:
 
-        chrm, start, stop = re.split(r':|-', regions)
-        start, stop = int(start), int(stop)
+        for r in regions:
+            chrm, start, stop = re.split(r':|-', r)
+            start, stop = int(start), int(stop)
 
-        slice_indicies = itertools.islice(xrange(start, stop + 1), 0, stop + 1, window_size)
-        for count, s in enumerate(pairwise(slice_indicies)):
-            yield (chrm, s[0], s[1] -1) # subtract one to prevent 1 bp overlap
+            slice_indicies = itertools.islice(xrange(start, stop + 1), 0, stop + 1, window_size)
+            for count, s in enumerate(pairwise(slice_indicies)):
+                yield (chrm, s[0], s[1] -1) # subtract one to prevent 1 bp overlap
 
 
 def slice_vcf(vcf_bgzipped_file, chrm, start, stop):
@@ -281,24 +282,42 @@ def parse_vcf_line(pos, header):
 
     return vcf_line_dict
 
-def filter_on_population_sizes(vcfline, populations, min_samples=0):
+def get_population_sizes(vcfline, populations):
 
-    sample_counts = []
+    sample_counts = {}
 
     for pop in populations.keys():
         sample_count = 0
+        
         for sample in populations[pop]:
-            if vcfline[sample] != None:
+            if vcfline[sample] is not None:
                 sample_count += 1
+    
+        sample_counts[pop] = sample_count
 
-        sample_counts.append(sample_count)
+    return sample_counts
 
-    sample_counts = [item for item in sample_counts if item >= min_samples]
+def summarize_population_sizes(dict_of_sizes):
+    results = {}
+    for pop, sizes, in dict_of_sizes.iteritems():
+        sizes = np.array(sizes)
+        results[pop+'.sample_count.mean'] = sizes.mean()
+        results[pop+'.sample_count.stdev'] = np.std(sizes)
 
-    if len(sample_counts) >= 2: 
-        return True
-    else: 
-        return False
+    return results
+
+def pop_size_statistics_2_sorted_list(pop_size_statistics, order):
+
+    if len(order) == 0:
+        order = pop_size_statistics.keys()
+        order.sort()
+    
+    stats = []
+    for key in order:        
+        stat = pop_size_statistics[key]
+        stats.append(stat)
+
+    return (stats, order)
 
 
 def format_output(chrm, start, stop, depth, stat_id, multilocus_f_statistics):
@@ -463,13 +482,17 @@ def update_Hs_and_Ht_dicts(f_statistics, Hs_est_dict, Ht_est_dict):
 
 def multilocus_f_statistics_2_sorted_list(multilocus_f_statistics, order):
     
-    order = []
+    
     if len(order) == 0:
+        order = []
+        
         for pair in multilocus_f_statistics.keys():
             joined_pair = '.'.join(pair) 
             for stat in multilocus_f_statistics[pair].keys():
                 order.append('.'.join((joined_pair,stat)))
-    order.sort()
+        
+        order.sort()
+    
     stats = []
     for key in order:
         pop1, pop2, stat = key.split(".")
@@ -477,6 +500,56 @@ def multilocus_f_statistics_2_sorted_list(multilocus_f_statistics, order):
         stats.append(stat)
 
     return (stats, order)
+
+def process_header(tabix_file):
+
+    chrm_lenghts_dict = {}
+    tabix_file = pysam.Tabixfile(tabix_file)
+    
+    for line in tabix_file.header:
+        
+        if line.startswith("##contig") == True: 
+            chrm, length = re.split(r"<ID=|,length=", line)[1:]
+            length =  int(length.strip(">"))
+            chrm_lenghts_dict[chrm] = length
+
+    return chrm_lenghts_dict
+
+def generate_fstats_from_vcf_slices(slice_indicies, populations, header, args):
+
+    for count, si in enumerate(slice_indicies):
+        chrm, start, stop = si
+
+        yield [slice_vcf(args.input, chrm, start, stop), 
+               chrm, start, stop, populations, header, 
+               args.min_samples]
+
+def process_outgroup(vcf_line, populations):
+    og = populations["Outgroup"]
+
+    # Create list of outgroup genotypes
+    gt = []
+    for s in og:
+        if vcf_line[s] != None:
+            gt.append(vcf_line[s]["GT"])
+
+    # Get unique genotypes and only return
+    # genotypic information if the genotype is
+    # homozygous for both samples wit 
+    
+    gt = set(gt)
+    if len(gt) == 1:
+        gt = tuple(gt)[0]
+        gt = set(re.split(r"/|\|", gt)) # split on "/" or "|"
+        
+        if len(gt) == 1:
+            return tuple(gt)[0]
+        else: 
+            return None
+
+    else:
+        return None
+
 
 def calc_slice_stats(data):
     """Main function for caculating statistics.
@@ -496,6 +569,7 @@ def calc_slice_stats(data):
         output_line = [chrm, start, stop]
         total_depth = []
         snp_wise_f_statistics = []
+        population_sizes = defaultdict(list)
 
         Hs_est_dict = {}
         Ht_est_dict = {}
@@ -507,8 +581,12 @@ def calc_slice_stats(data):
             vcf_line_dict = parse_vcf_line(line, header)
 
             # CREATE FILTERS HERE:
-            if filter_on_population_sizes(vcf_line_dict, populations, min_samples) == False:
+            if vcf_line_dict["FILTER"] != 'PASS':
                 continue
+
+            for pop, size in get_population_sizes(vcf_line_dict, populations).iteritems():
+                population_sizes[pop].append(size)
+
 
             # CALCULATE SNPWISE F-STATISTICS
             allele_counts = calc_allele_counts(populations, vcf_line_dict)
@@ -523,14 +601,15 @@ def calc_slice_stats(data):
             total_depth.append(int(vcf_line_dict['INFO']["DP"]))
             snp_count = count
 
+        pop_size_statistics = summarize_population_sizes(population_sizes)
         multilocus_f_statistics = calculate_multilocus_f_statistics(Hs_est_dict, Ht_est_dict)
         
         # UPDATE OUTPUT LINE WITH DEPTH INFO
         total_depth = np.array(total_depth)
         output_line += [snp_count, total_depth.mean(), total_depth.std()]
 
-
-        return ([chrm, start, stop, snp_count, total_depth.mean(), total_depth.std()], multilocus_f_statistics)
+        return ([chrm, start, stop, snp_count, total_depth.mean(), total_depth.std()], \
+                 pop_size_statistics, multilocus_f_statistics)
 
 
 
