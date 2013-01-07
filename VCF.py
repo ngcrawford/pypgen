@@ -6,11 +6,75 @@ import re
 import sys
 import gzip
 import pysam
+import argparse
 import itertools
 import numpy as np
 from fstats import fstats
-from collections import OrderedDict
+from collections import OrderedDict, defaultdict
 from itertools import combinations, izip_longest
+
+
+def default_args():
+    """Parse sys.argv"""
+    parser = argparse.ArgumentParser()
+
+    parser.add_argument('-i', '--input', 
+                        required=True, 
+                        type=str,
+                        help='Path to VCF file.')
+    
+    parser.add_argument('-o','--output',
+                        help='Path to output csv file. \
+                              If path is not set defaults to STDOUT.')
+    
+    parser.add_argument('-c','--cores', 
+                        required=True, 
+                        type=int,
+                        help='Number of cores to use.')
+
+    parser.add_argument('-r','--regions', 
+                        required=False,
+                        # action=FooAction, # TODO: fix this!
+                        nargs='+',
+                        help="Define a chromosomal region. \
+                              A region can be presented, for example, in the following \
+                              format: ‘chr2’ (the whole chr2), ‘chr2:1000000’ (region \
+                              starting from 1,000,000bp) or ‘chr2:1,000,000-2,000,000’ \
+                              (region between 1,000,000 and 2,000,000bp including the end \
+                              points). The coordinate is 1-based.' [Same format as \
+                              SAMTOOLs/GATK, example text cribbed from SAMTOOLs]")
+
+    parser.add_argument('-f', '--filter-string',
+                        required=False,
+                        default="FILTER == PASS")
+
+    parser.add_argument('--regions-to-skip',
+                        default=[],
+                        required=False,
+                        nargs='+',
+                        help='Define a chromosomal region(s) to skip.')
+    
+    parser.add_argument('-p','--populations', 
+                        nargs='+',
+                        help='Names of populations and samples. \
+                              The format is: "PopName:sample1,sample2,.. \
+                              PopName2:sample3,sample4,..." \
+                              Whitespace is used to delimit populations. Note: the \
+                              population name uname "Outgroup" is reserved for \
+                              samples that that are used to polarize genotype calls.')
+
+    parser.add_argument('-w','--window-size',
+                        default=5000, 
+                        type=int,
+                        help='Size of the window in which to \
+                              calculate pairwise F-staticstics')
+
+    parser.add_argument("-m",'--min-samples',
+                        type=int,
+                        default=5,
+                        help="Minimum number of samples per population.")
+
+    return parser
 
 
 def process_snp_call(snp_call, ref, alt, IUPAC_ambiguities=False):
