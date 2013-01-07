@@ -1,6 +1,21 @@
 #!/usr/bin/env python
 # encoding: utf-8
 
+"""
+python sliding_window.py \
+-i test_data/butterfly.vcf.gz \
+-o bayesscan.snps \
+-p cydno:c511,c512,c513,c514,c515,c563,c614,c630,c639,c640 \
+outgroups:h665,i02-210 
+melpo:m523,m524,m525,m589,m675,m676,m682,m683,m687,m689 \
+pachi:p516,p517,p518,p519,p520,p591,p596,p690,p694,p696 \
+-c 2 \
+-r Chr01:1-10001
+
+
+"""
+
+
 import os
 import re
 import sys
@@ -19,7 +34,10 @@ def get_args():
                         type=str,
                         help='Path to VCF file.')
     
-    parser.add_argument('-o','--output',
+    parser.add_argument('-o','--output', 
+                        nargs='?', 
+                        type=argparse.FileType('w'),
+                        default=sys.stdout,
                         help='Path to output csv file. \
                               If path is not set defaults to STDOUT.')
     
@@ -68,10 +86,10 @@ def get_args():
 
     return parser.parse_args()
 
+
 def generate_fstats_from_vcf_slices(slice_indicies, populations, header, args):
 
     for count, si in enumerate(slice_indicies):
-        
         chrm, start, stop = si
 
         yield [slice_vcf(args.input, chrm, start, stop), 
@@ -79,7 +97,6 @@ def generate_fstats_from_vcf_slices(slice_indicies, populations, header, args):
                args.min_samples]
 
         # if count > 1: break
-
 
 def process_header(tabix_file):
 
@@ -95,12 +112,10 @@ def process_header(tabix_file):
 
     return chrm_lenghts_dict
 
-
-
-
 def main():
     # get args. 
-    args = get_args()
+    args = default_args()
+    args = args.parse_args()
     
     # TODO: 
     # test that pysam is installed.
@@ -127,32 +142,36 @@ def main():
     # values are lists of samples
     populations = parse_populations_list(args.populations)
 
+    fstat_order = [] # store order of paired samples.
+    pop_size_order = []
 
-    order = [] # store order of samples.
     bp_processed = 0
 
-    fout = open(args.output,'w')    
+    fout = args.output    
 
-    p = multiprocessing.Pool(processes=int(args.cores),maxtasksperchild=1000)
+    p = multiprocessing.Pool(processes=int(args.cores), maxtasksperchild=1000)
 
     fstat_input_iterator = generate_fstats_from_vcf_slices(slice_indicies, populations, empty_vcf_line, args)
     for count, result in enumerate(p.imap(calc_slice_stats, fstat_input_iterator)):
         
         if result == None: continue
         
-        chrm_start_stop, result = result
-        stats, order = multilocus_f_statistics_2_sorted_list(result, order=order)
+        chrm_start_stop, pop_size_statistics, fstats = result
+        f_stats, fstat_order = multilocus_f_statistics_2_sorted_list(fstats, order=fstat_order)
+        pop_size_stats, pop_size_order = pop_size_statistics_2_sorted_list(pop_size_statistics, order=pop_size_order)
 
         if count == 0:
-            fout.write(','.join(['chrm','start','stop','snp_count', 'total_depth_mean', 'total_depth_stdev'] +  map(str, order)) + "\n")
-            fout.write(','.join(map(str, chrm_start_stop) + map(str, stats)) + "\n")
+            fout.write(','.join(['chrm','start','stop','snp_count', 'total_depth_mean', 'total_depth_stdev'] \
+                       + map(str, pop_size_order) + map(str, fstat_order)) + "\n")
+
+            fout.write(','.join(map(str, chrm_start_stop) + map(str, pop_size_stats) + map(str, f_stats)) + "\n")
         else:
-            fout.write(','.join(map(str, chrm_start_stop) + map(str, stats)) + "\n")
+            fout.write(','.join(map(str, chrm_start_stop) + map(str, pop_size_stats) + map(str, f_stats)) + "\n")
 
         chrm, start, stop  = chrm_start_stop[0:3]
         bp_processed += args.window_size
 
-        previous_update_time = progress_meter(previous_update_time, chrm, stop, bp_processed, total_bp_in_dataset)
+        #previous_update_time = progress_meter(previous_update_time, chrm, stop, bp_processed, total_bp_in_dataset)
 
 
 if __name__ == '__main__':

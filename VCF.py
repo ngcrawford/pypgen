@@ -6,11 +6,75 @@ import re
 import sys
 import gzip
 import pysam
+import argparse
 import itertools
 import numpy as np
 from fstats import fstats
-from collections import OrderedDict
+from collections import OrderedDict, defaultdict
 from itertools import combinations, izip_longest
+
+
+def default_args():
+    """Parse sys.argv"""
+    parser = argparse.ArgumentParser()
+
+    parser.add_argument('-i', '--input', 
+                        required=True, 
+                        type=str,
+                        help='Path to VCF file.')
+    
+    parser.add_argument('-o','--output',
+                        help='Path to output csv file. \
+                              If path is not set defaults to STDOUT.')
+    
+    parser.add_argument('-c','--cores', 
+                        required=True, 
+                        type=int,
+                        help='Number of cores to use.')
+
+    parser.add_argument('-r','--regions', 
+                        required=False,
+                        # action=FooAction, # TODO: fix this!
+                        nargs='+',
+                        help="Define a chromosomal region. \
+                              A region can be presented, for example, in the following \
+                              format: ‘chr2’ (the whole chr2), ‘chr2:1000000’ (region \
+                              starting from 1,000,000bp) or ‘chr2:1,000,000-2,000,000’ \
+                              (region between 1,000,000 and 2,000,000bp including the end \
+                              points). The coordinate is 1-based.' [Same format as \
+                              SAMTOOLs/GATK, example text cribbed from SAMTOOLs]")
+
+    parser.add_argument('-f', '--filter-string',
+                        required=False,
+                        default="FILTER == PASS")
+
+    parser.add_argument('--regions-to-skip',
+                        default=[],
+                        required=False,
+                        nargs='+',
+                        help='Define a chromosomal region(s) to skip.')
+    
+    parser.add_argument('-p','--populations', 
+                        nargs='+',
+                        help='Names of populations and samples. \
+                              The format is: "PopName:sample1,sample2,.. \
+                              PopName2:sample3,sample4,..." \
+                              Whitespace is used to delimit populations. Note: the \
+                              population name uname "Outgroup" is reserved for \
+                              samples that that are used to polarize genotype calls.')
+
+    parser.add_argument('-w','--window-size',
+                        default=5000, 
+                        type=int,
+                        help='Size of the window in which to \
+                              calculate pairwise F-staticstics')
+
+    parser.add_argument("-m",'--min-samples',
+                        type=int,
+                        default=5,
+                        help="Minimum number of samples per population.")
+
+    return parser
 
 
 def process_snp_call(snp_call, ref, alt, IUPAC_ambiguities=False):
@@ -157,18 +221,26 @@ def get_slice_indicies(vcf_bgzipped_file, regions, window_size, regions_to_skip=
                 yield (chrm, s[0], s[1] -1) # subtract one to prevent 1 bp overlap
     else:
 
-        chrm, start, stop = re.split(r':|-', regions)
-        start, stop = int(start), int(stop)
+        for r in regions:
+            chrm, start, stop = re.split(r':|-', r)
+            start, stop = int(start), int(stop)
 
-        slice_indicies = itertools.islice(xrange(start, stop + 1), 0, stop + 1, window_size)
-        for count, s in enumerate(pairwise(slice_indicies)):
-            yield (chrm, s[0], s[1] -1) # subtract one to prevent 1 bp overlap
+            slice_indicies = itertools.islice(xrange(start, stop + 1), 0, stop + 1, window_size)
+            for count, s in enumerate(pairwise(slice_indicies)):
+                yield (chrm, s[0], s[1] -1) # subtract one to prevent 1 bp overlap
 
 
 def slice_vcf(vcf_bgzipped_file, chrm, start, stop):
     
     tbx = pysam.Tabixfile(vcf_bgzipped_file)
-    return tuple(row for row in tbx.fetch(chrm, start, stop))
+
+    try:
+        vcf_slice = tbx.fetch(chrm, start, stop)
+    except ValueError:
+        return None
+
+    else:
+        return tuple(row for row in vcf_slice)
 
 
 def parse_info_field(info_field):
@@ -217,24 +289,42 @@ def parse_vcf_line(pos, header):
 
     return vcf_line_dict
 
-def filter_on_population_sizes(vcfline, populations, min_samples=0):
+def get_population_sizes(vcfline, populations):
 
-    sample_counts = []
+    sample_counts = {}
 
     for pop in populations.keys():
         sample_count = 0
+        
         for sample in populations[pop]:
-            if vcfline[sample] != None:
+            if vcfline[sample] is not None:
                 sample_count += 1
+    
+        sample_counts[pop] = sample_count
 
-        sample_counts.append(sample_count)
+    return sample_counts
 
-    sample_counts = [item for item in sample_counts if item >= min_samples]
+def summarize_population_sizes(dict_of_sizes):
+    results = {}
+    for pop, sizes, in dict_of_sizes.iteritems():
+        sizes = np.array(sizes)
+        results[pop+'.sample_count.mean'] = sizes.mean()
+        results[pop+'.sample_count.stdev'] = np.std(sizes)
 
-    if len(sample_counts) >= 2: 
-        return True
-    else: 
-        return False
+    return results
+
+def pop_size_statistics_2_sorted_list(pop_size_statistics, order):
+
+    if len(order) == 0:
+        order = pop_size_statistics.keys()
+        order.sort()
+    
+    stats = []
+    for key in order:        
+        stat = pop_size_statistics[key]
+        stats.append(stat)
+
+    return (stats, order)
 
 
 def format_output(chrm, start, stop, depth, stat_id, multilocus_f_statistics):
@@ -399,13 +489,17 @@ def update_Hs_and_Ht_dicts(f_statistics, Hs_est_dict, Ht_est_dict):
 
 def multilocus_f_statistics_2_sorted_list(multilocus_f_statistics, order):
     
-    order = []
+    
     if len(order) == 0:
+        order = []
+        
         for pair in multilocus_f_statistics.keys():
             joined_pair = '.'.join(pair) 
             for stat in multilocus_f_statistics[pair].keys():
                 order.append('.'.join((joined_pair,stat)))
-    order.sort()
+        
+        order.sort()
+    
     stats = []
     for key in order:
         pop1, pop2, stat = key.split(".")
@@ -413,6 +507,55 @@ def multilocus_f_statistics_2_sorted_list(multilocus_f_statistics, order):
         stats.append(stat)
 
     return (stats, order)
+
+def process_header(tabix_file):
+
+    chrm_lenghts_dict = {}
+    tabix_file = pysam.Tabixfile(tabix_file)
+    
+    for line in tabix_file.header:
+        
+        if line.startswith("##contig") == True: 
+            chrm, length = re.split(r"<ID=|,length=", line)[1:]
+            length =  int(length.strip(">"))
+            chrm_lenghts_dict[chrm] = length
+
+    return chrm_lenghts_dict
+
+def generate_fstats_from_vcf_slices(slice_indicies, populations, header, args):
+
+    for count, si in enumerate(slice_indicies):
+        chrm, start, stop = si
+
+        yield [slice_vcf(args.input, chrm, start, stop), 
+               chrm, start, stop, populations, header, 
+               args.min_samples]
+
+def process_outgroup(vcf_line, populations):
+    og = populations["Outgroup"]
+
+    # Create list of outgroup genotypes
+    gt = []
+    for s in og:
+        if vcf_line[s] != None:
+            gt.append(vcf_line[s]["GT"])
+
+    # Get unique genotypes and only return
+    # genotypic information if the genotype is
+    # homozygous for both samples wit 
+    
+    gt = set(gt)
+    if len(gt) == 1:
+        gt = tuple(gt)[0]
+        gt = set(re.split(r"/|\|", gt)) # split on "/" or "|"
+        
+        if len(gt) == 1:
+            return tuple(gt)[0]
+        else: 
+            return None
+
+    else:
+        return None
 
 def calc_slice_stats(data):
     """Main function for caculating statistics.
@@ -432,6 +575,7 @@ def calc_slice_stats(data):
         output_line = [chrm, start, stop]
         total_depth = []
         snp_wise_f_statistics = []
+        population_sizes = defaultdict(list)
 
         Hs_est_dict = {}
         Ht_est_dict = {}
@@ -443,8 +587,12 @@ def calc_slice_stats(data):
             vcf_line_dict = parse_vcf_line(line, header)
 
             # CREATE FILTERS HERE:
-            if filter_on_population_sizes(vcf_line_dict, populations, min_samples) == False:
+            if vcf_line_dict["FILTER"] != 'PASS':
                 continue
+
+            for pop, size in get_population_sizes(vcf_line_dict, populations).iteritems():
+                population_sizes[pop].append(size)
+
 
             # CALCULATE SNPWISE F-STATISTICS
             allele_counts = calc_allele_counts(populations, vcf_line_dict)
@@ -459,14 +607,15 @@ def calc_slice_stats(data):
             total_depth.append(int(vcf_line_dict['INFO']["DP"]))
             snp_count = count
 
+        pop_size_statistics = summarize_population_sizes(population_sizes)
         multilocus_f_statistics = calculate_multilocus_f_statistics(Hs_est_dict, Ht_est_dict)
         
         # UPDATE OUTPUT LINE WITH DEPTH INFO
         total_depth = np.array(total_depth)
         output_line += [snp_count, total_depth.mean(), total_depth.std()]
 
-
-        return ([chrm, start, stop, snp_count, total_depth.mean(), total_depth.std()], multilocus_f_statistics)
+        return ([chrm, start, stop, snp_count, total_depth.mean(), total_depth.std()], \
+                 pop_size_statistics, multilocus_f_statistics)
 
 
 

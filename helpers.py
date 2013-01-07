@@ -1,3 +1,5 @@
+import sys
+
 import datetime
 
 class Unbuffered:
@@ -21,7 +23,7 @@ def progress_meter(starting_time, chrm, pos, bp_processed, total_bp_in_dataset):
     if elapsed.seconds % 30 == 0 and elapsed.seconds > 10:
 
         "INFO  19:29:31,683 ProgressMeter - GL343193.1:820101\t1.79e+09\t2.3 h\t4.6 s\t99.2%\t2.3 h\t62.5 s "
-        status = "INFO  {:.3} ProgressMeter - {}:{:,} {:.3} {:.2%}\n".format(ct.time(), chrm, pos, elapsed, proportion_processed)
+        status = "INFO  {} ProgressMeter - {}:{:,} {:.3} {:.2%}\n".format(ct.time(), chrm, pos, elapsed, proportion_processed)
         sys.stdout.write(status)
         return ct
 

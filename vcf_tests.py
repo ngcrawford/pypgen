@@ -92,6 +92,22 @@ class TestVCFInfoParsing(unittest.TestCase):
 
 class TestGenoTypeParsing(unittest.TestCase):
 
+    def setUp(self):
+        self.vcf_line = OrderedDict([
+                        ('CHROM', 'Chr01'), 
+                        ('POS', 4984), 
+                        ('ID', '.'), 
+                        ('REF', 'C'), 
+                        ('ALT', 'T'), 
+                        ('QUAL', 235.91), 
+                        ('FILTER', 'PASS'), 
+                        ('INFO', {'AC': '1'}), 
+                        ('FORMAT', 'GT:AD:DP:GQ:PL'), 
+                        ('out1', {'GT': '0/0', 'GQ': 51.17, 'AD': (17, 0), 'DP': 17, 'PL': (0, 51, 669)}), 
+                        ('out2', {'GT': '0/0', 'GQ': 45.15, 'AD': (16, 0), 'DP': 16, 'PL': (0, 45, 600)})])
+
+        self.populations = {'Outgroup': ['out1', 'out2']}
+
     #### WITH AMBIGUITY CODES ####
     def test_homo_ref_genotype_calling(self):
         homo_ref = VCF.process_snp_call('0/0:10,9:19:99:254,0,337', 'A', 'T', IUPAC_ambiguities=True)
@@ -122,6 +138,40 @@ class TestGenoTypeParsing(unittest.TestCase):
     def test_double_alt_het_as_N_genotype_calling(self):
         double_alt_het_as_N = VCF.process_snp_call('1/2:10,9:19:99:254,0,337', 'A', 'T,G', IUPAC_ambiguities=False)
         self.assertEqual(double_alt_het_as_N, 'N')
+
+
+    #### TEST OUTGROUP CALLING ####
+    def test_home_ref_outgroup_calling(self):
+        homo_ref = VCF.process_outgroup(self.vcf_line, self.populations)
+        self.assertEqual(homo_ref, '0')
+
+    def test_home_alt_outgroup_calling(self):
+        vcf_line = self.vcf_line
+
+        vcf_line['out1']['GT'] = '1/1'
+        vcf_line['out2']['GT'] = '1/1'
+
+        homo_alt = VCF.process_outgroup(vcf_line, self.populations)
+        self.assertEqual(homo_alt, '1')
+
+    def test_heterozyogote_outgroup_calling(self):
+        vcf_line = self.vcf_line
+        
+        vcf_line['out1']['GT'] = '1/1'
+        vcf_line['out2']['GT'] = '1/0'
+
+        het = VCF.process_outgroup(vcf_line, self.populations)
+        self.assertEqual(het, None)
+
+    def test_diff_homozygotes_outgroups_calling(self):
+        vcf_line = self.vcf_line
+        
+        vcf_line['out1']['GT'] = '1/1'
+        vcf_line['out2']['GT'] = '0/0'
+
+        diff = VCF.process_outgroup(vcf_line, self.populations)
+        self.assertEqual(diff, None)
+
 
 if __name__ == '__main__':
     unittest.main()
