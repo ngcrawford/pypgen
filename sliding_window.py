@@ -18,7 +18,10 @@ def get_args():
                         type=str,
                         help='Path to VCF file.')
     
-    parser.add_argument('-o','--output',
+    parser.add_argument('-o','--output', 
+                        nargs='?', 
+                        type=argparse.FileType('w'),
+                        default=sys.stdout,
                         help='Path to output csv file. \
                               If path is not set defaults to STDOUT.')
     
@@ -90,9 +93,6 @@ def process_header(tabix_file):
 
     return chrm_lenghts_dict
 
-
-
-
 def main():
     # get args. 
     args = get_args()
@@ -122,32 +122,36 @@ def main():
     # values are lists of samples
     populations = parse_populations_list(args.populations)
 
+    fstat_order = [] # store order of paired samples.
+    pop_size_order = []
 
-    order = [] # store order of samples.
     bp_processed = 0
 
-    fout = open(args.output,'w')    
+    fout = args.output    
 
-    p = multiprocessing.Pool(processes=int(args.cores),maxtasksperchild=1000)
+    p = multiprocessing.Pool(processes=int(args.cores), maxtasksperchild=1000)
 
     fstat_input_iterator = generate_fstats_from_vcf_slices(slice_indicies, populations, empty_vcf_line, args)
     for count, result in enumerate(p.imap(calc_slice_stats, fstat_input_iterator)):
         
         if result == None: continue
         
-        chrm_start_stop, result = result
-        stats, order = multilocus_f_statistics_2_sorted_list(result, order=order)
+        chrm_start_stop, pop_size_statistics, fstats = result
+        f_stats, fstat_order = multilocus_f_statistics_2_sorted_list(fstats, order=fstat_order)
+        pop_size_stats, pop_size_order = pop_size_statistics_2_sorted_list(pop_size_statistics, order=pop_size_order)
 
         if count == 0:
-            fout.write(','.join(['chrm','start','stop','snp_count', 'total_depth_mean', 'total_depth_stdev'] +  map(str, order)) + "\n")
-            fout.write(','.join(map(str, chrm_start_stop) + map(str, stats)) + "\n")
+            fout.write(','.join(['chrm','start','stop','snp_count', 'total_depth_mean', 'total_depth_stdev'] \
+                       + map(str, pop_size_order) + map(str, fstat_order)) + "\n")
+
+            fout.write(','.join(map(str, chrm_start_stop) + map(str, pop_size_stats) + map(str, f_stats)) + "\n")
         else:
-            fout.write(','.join(map(str, chrm_start_stop) + map(str, stats)) + "\n")
+            fout.write(','.join(map(str, chrm_start_stop) + map(str, pop_size_stats) + map(str, f_stats)) + "\n")
 
         chrm, start, stop  = chrm_start_stop[0:3]
         bp_processed += args.window_size
 
-        previous_update_time = progress_meter(previous_update_time, chrm, stop, bp_processed, total_bp_in_dataset)
+        #previous_update_time = progress_meter(previous_update_time, chrm, stop, bp_processed, total_bp_in_dataset)
 
 
 if __name__ == '__main__':
