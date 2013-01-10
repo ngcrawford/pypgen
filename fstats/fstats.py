@@ -1,23 +1,27 @@
+import math
 
-def calc_SNP_freqs(pops):
+# def calc_SNP_freqs(pops):
 
-	def freq(value,total_count):
-		"""Avoid divide by zero errors"""
-		if total_count == 0.0:
-			return value
-		else:
-			return value/total_count
+# 	def freq(value,total_count):
+# 		"""Avoid divide by zero errors"""
+# 		if total_count == 0.0:
+# 			return value
+# 		else:
+# 			return value/total_count
 
-	frequencies = []
-	coverage = []
-	for pop in pops:
-		counts =  [float(value) for value in pop.split(":")]
-		total_count = float(sum(counts))
-		coverage.append(total_count)
-		freqs = [freq(value, total_count) for value in counts]
-		frequencies.append(freqs)
+# 	frequencies = []
+# 	coverage = []
+# 	for pop in pops:
+# 		counts =  [float(value) for value in pop.split(":")]
+# 		total_count = float(sum(counts))
+# 		coverage.append(total_count)
+# 		freqs = [freq(value, total_count) for value in counts]
+# 		frequencies.append(freqs)
 
-	return (frequencies, coverage)
+# 	return (frequencies, coverage)
+
+def de_NaN_list(l):
+	return [i for i in l if math.isnan(i) != True]
 
 
 def harmonic_mean(values):
@@ -114,6 +118,8 @@ def multilocus_Gst_est(Ht_est, Hs_est):
 	
 	Ht_est = sum(Ht_est)/float(len(Ht_est))
 	Hs_est = sum(Hs_est)/float(len(Hs_est))
+
+
 	if Ht_est == 0.0: return 0.0
 	else: Gst_est = (Ht_est-Hs_est)/Ht_est
 	return Gst_est
@@ -121,6 +127,7 @@ def multilocus_Gst_est(Ht_est, Hs_est):
 def multilocus_G_prime_st_est(Ht_est, Hs_est,n):
 	"""Averages across loci before calculating G'st."""
 	
+	n = float(n)
 	Ht_est_ = sum(Ht_est)/float(len(Ht_est))
 	Hs_est_ = sum(Hs_est)/float(len(Hs_est))
 	G_est = multilocus_Gst_est(Ht_est,Hs_est)
@@ -131,6 +138,7 @@ def multilocus_G_prime_st_est(Ht_est, Hs_est,n):
 def multilocus_G_double_prime_st_est(Ht_est, Hs_est, n):
 	"""Averages across loci before calculating G''st."""
 	
+	n = float(n)
 	Ht_est = sum(Ht_est)/float(len(Ht_est))
 	Hs_est = sum(Hs_est)/float(len(Hs_est))
 	# G_est = multilocus_Gst_est(Ht_est,Hs_est)
@@ -139,7 +147,7 @@ def multilocus_G_double_prime_st_est(Ht_est, Hs_est, n):
 	return G_double_prime_st_est
 
 def multilocus_D_est(Ht_est, Hs_est, n):
-	"""Calculate Anne Chao's harmonic mean all Dest values."""
+	"""Calculate Dest values using Anne Chao's harmonic mean."""
 	
 	pairs = zip(Ht_est, Hs_est)
 	Dest_values = [D_est(pair[0], pair[1], 2) for pair in pairs]
