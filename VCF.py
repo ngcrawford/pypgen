@@ -340,13 +340,11 @@ def format_output(chrm, start, stop, depth, stat_id, multilocus_f_statistics):
 
 def calc_allele_counts(populations, vcf_line_dict):
 
-    allele_counts = populations.fromkeys(populations.keys(), None)
+    #allele_counts = defaultdict({0:0.0,1:0.0,2:0.0,3:0.0,4:0.0})
+    allele_counts = dict((key, {0:0.0,1:0.0,2:0.0,3:0.0,4:0.0}) for key in populations.keys())
+    
 
     for population in populations.keys():
-
-        allele_format_dict = {0:0.0,1:0.0,2:0.0,3:0.0,4:0.0}   # create dict to prevent pointer issues
-        allele_counts[population] = allele_format_dict
-
         for sample_id in populations[population]:
 
             if vcf_line_dict[sample_id] != None:
@@ -360,13 +358,16 @@ def calc_allele_counts(populations, vcf_line_dict):
                 
                 for allele in genotype:
                     allele_counts[population][allele] += 1.0 
-    
+
     return allele_counts
 
-def calc_fstats(populations, allele_counts):
+def calc_fstats(allele_counts):
 
     # CALCULATE ALLELE FREQUENCIES
-    allele_freqs_dict = populations.fromkeys(populations.keys(), None)
+    #allele_freqs_dict = populations.fromkeys(populations.keys(), None)
+    allele_freqs_dict = defaultdict(None)
+    populations = allele_counts.keys()
+
     for population in allele_counts.keys():
         counts =  allele_counts[population].values()
         
