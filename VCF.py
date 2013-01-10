@@ -23,9 +23,12 @@ def default_args():
                         type=str,
                         help='Path to VCF file.')
     
-    parser.add_argument('-o','--output',
+    parser.add_argument('-o','--output', 
+                        nargs='?', 
+                        type=argparse.FileType('w'),
+                        default=sys.stdout,
                         help='Path to output csv file. \
-                              If path is not set defaults to STDOUT.')
+                              If path is not set, defaults to STDOUT.')
     
     parser.add_argument('-c','--cores', 
                         required=True, 
@@ -320,7 +323,7 @@ def pop_size_statistics_2_sorted_list(pop_size_statistics, order):
         order.sort()
     
     stats = []
-    for key in order:        
+    for key in order:  
         stat = pop_size_statistics[key]
         stats.append(stat)
 
@@ -442,8 +445,7 @@ def calc_fstats(populations, allele_counts):
 
 
 def calculate_multilocus_f_statistics(Hs_est_dict, Ht_est_dict):
-       
-
+    
     multilocus_f_statistics = {}
 
     for key in Hs_est_dict.keys():
@@ -489,9 +491,7 @@ def update_Hs_and_Ht_dicts(f_statistics, Hs_est_dict, Ht_est_dict):
 
 def multilocus_f_statistics_2_sorted_list(multilocus_f_statistics, order):
     
-    
     if len(order) == 0:
-        order = []
         
         for pair in multilocus_f_statistics.keys():
             joined_pair = '.'.join(pair) 
@@ -593,7 +593,6 @@ def calc_slice_stats(data):
             for pop, size in get_population_sizes(vcf_line_dict, populations).iteritems():
                 population_sizes[pop].append(size)
 
-
             # CALCULATE SNPWISE F-STATISTICS
             allele_counts = calc_allele_counts(populations, vcf_line_dict)
             f_statistics = calc_fstats(populations, allele_counts)
@@ -610,11 +609,20 @@ def calc_slice_stats(data):
         pop_size_statistics = summarize_population_sizes(population_sizes)
         multilocus_f_statistics = calculate_multilocus_f_statistics(Hs_est_dict, Ht_est_dict)
         
-        # UPDATE OUTPUT LINE WITH DEPTH INFO
-        total_depth = np.array(total_depth)
-        output_line += [snp_count, total_depth.mean(), total_depth.std()]
+        # SKIP SAMPLES WITH TOO MANY NANs
 
-        return ([chrm, start, stop, snp_count, total_depth.mean(), total_depth.std()], \
+        if len(multilocus_f_statistics.values()) == 0:
+            return None
+        
+        elif multilocus_f_statistics.values()[0] is None:
+            return None
+
+        else:
+            # UPDATE OUTPUT LINE WITH DEPTH INFO
+            total_depth = np.array(total_depth)
+            output_line += [snp_count, total_depth.mean(), total_depth.std()]
+
+            return ([chrm, start, stop, snp_count, total_depth.mean(), total_depth.std()], \
                  pop_size_statistics, multilocus_f_statistics)
 
 
