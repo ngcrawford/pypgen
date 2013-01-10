@@ -452,6 +452,10 @@ def calculate_multilocus_f_statistics(Hs_est_dict, Ht_est_dict):
         
         if len(pairs) != 0:
 
+            # THIS REMOVES NaNs FROM THE Ht and Hs LISTS
+            Ht_est_list = fstats.de_NaN_list(Ht_est_list)
+            Hs_est_list = fstats.de_NaN_list(Hs_est_list)
+
             n = 2 # fix this
             Gst_est = fstats.multilocus_Gst_est(Ht_est_list, Hs_est_list)
             G_prime_st_est = fstats.multilocus_G_prime_st_est(Ht_est_list, Hs_est_list, n)
