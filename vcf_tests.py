@@ -172,6 +172,49 @@ class TestGenoTypeParsing(unittest.TestCase):
         diff = VCF.process_outgroup(vcf_line, self.populations)
         self.assertEqual(diff, None)
 
+class TestFstatsCalculations(unittest.TestCase):
+
+    def setUp(self):
+        self.trivial_allele_counts = {'pop1': {0: 2.0, 1: 8.0, },
+                                      'pop2': {0: 8.0, 1: 2.0, }}
+        
+        self.normal_allele_counts= {'melpo': {0: 18.0, 1: 2.0, 2: 0.0, 3: 0.0, 4: 0.0}, 
+                                    'cydno': {0: 16.0, 1: 4.0, 2: 0.0, 3: 0.0, 4: 0.0}, 
+                                    'pachi': {0: 4.0, 1: 16.0, 2: 0.0, 3: 0.0, 4: 0.0}, 
+                                    'outgroups': {0: 4.0, 1: 0.0, 2: 0.0, 3: 0.0, 4: 0.0}}
+
+    def test_calc_fstats_trivial_allele_counts(self):
+        f_statistics = VCF.calc_fstats(self.trivial_allele_counts)
+        self.assertEqual(
+            {('pop2', 'pop1'): 
+                {'G_prime_st_est': 0.6803049722304385, 
+                'D_est': 0.517460317460318, 
+                'G_double_prime_st_est': 0.7609710550887027, 
+                'Gst_est': 0.33747412008281613, 
+                'Hs_est': 0.3368421052631577, 
+                'Ht_est': 0.508421052631579}},
+            f_statistics)
+
+    def test_calc_fstats_normal_allele_counts(self):
+        f_statistics = VCF.calc_fstats(self.normal_allele_counts)
+        self.assertEqual(
+            {'G_prime_st_est': 0.9140159767610748, 
+            'D_est': 0.7581699346405228, 
+            'G_double_prime_st_est': 0.9477124183006534, 
+            'Gst_est': 0.6444444444444445, 
+            'Hs_est': 0.1729729729729729, 
+            'Ht_est': 0.48648648648648646},
+            f_statistics[('pachi', 'outgroups')])
+
+
+    def test_calculate_multilocus_f_statistics(self):
+
+        import numpy as np
+
+        Hs_est_dict = {('pop1','pop2'):[0.2,0.5]}
+        Ht_est_dict = {('pop1','pop2'):[np.nan,0.5]}
+        print VCF.calc_multilocus_f_statistics(Hs_est_dict, Ht_est_dict)
+
 
 if __name__ == '__main__':
     unittest.main()
