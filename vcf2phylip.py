@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # encoding: utf-8
 """
-vcf2oneliners.py
+vcf2phylip.py
 
 Created by Nick Crawford on 2011-11-18.
 Copyright (c) 2011
@@ -212,7 +212,7 @@ def slice_vcf(vcf, chrm, start, stop):
 def process_vcf_slice(tabix_file, chrm, start, stop, position_data):
 
     tbx = pysam.Tabixfile(tabix_file)
-    tbx_lines = tbx.fetch()
+    tbx_lines = tbx.fetch(chrm, start, stop)
 
     numb_of_seqs = len(position_data._fields[9:])
     alignment = np.zeros((stop-start,numb_of_seqs), np.string0)
@@ -261,9 +261,9 @@ def main():
 
     chrm, start, stop = re.split(r':|-', args.regions)
     start, stop = int(start), int(stop)
+    
     # OPEN VCF
     vcf_file = gzip.open(args.input[0],'rb')
-
     position_data, chrm_data = makeDataTuple(vcf_file)
     vcf_file.close()
 

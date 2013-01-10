@@ -1,12 +1,28 @@
 #!/usr/bin/env python
 # encoding: utf-8
 
+"""
+python sliding_window.py \
+-i test_data/butterfly.vcf.gz \
+-o bayesscan.snps \
+-p cydno:c511,c512,c513,c514,c515,c563,c614,c630,c639,c640 \
+outgroups:h665,i02-210 
+melpo:m523,m524,m525,m589,m675,m676,m682,m683,m687,m689 \
+pachi:p516,p517,p518,p519,p520,p591,p596,p690,p694,p696 \
+-c 2 \
+-r Chr01:1-10001
+
+
+"""
+
+
 import os
 import re
 import sys
 import datetime
 import argparse
 from VCF import *
+from helpers import *
 import multiprocessing
 
 def get_args():
@@ -42,6 +58,10 @@ def get_args():
                               points). The coordinate is 1-based.' [Same format as \
                               SAMTOOLs/GATK, example text cribbed from SAMTOOLs]")
 
+    parser.add_argument('-f', '--filter-string',
+                        require=False,
+                        default="'FILTER' == 'PASS'")
+
     parser.add_argument('--regions-to-skip',
                         default=[],
                         required=False,
@@ -66,10 +86,10 @@ def get_args():
 
     return parser.parse_args()
 
+
 def generate_fstats_from_vcf_slices(slice_indicies, populations, header, args):
 
     for count, si in enumerate(slice_indicies):
-        
         chrm, start, stop = si
 
         yield [slice_vcf(args.input, chrm, start, stop), 
@@ -77,7 +97,6 @@ def generate_fstats_from_vcf_slices(slice_indicies, populations, header, args):
                args.min_samples]
 
         # if count > 1: break
-
 
 def process_header(tabix_file):
 
@@ -95,7 +114,8 @@ def process_header(tabix_file):
 
 def main():
     # get args. 
-    args = get_args()
+    args = default_args()
+    args = args.parse_args()
     
     # TODO: 
     # test that pysam is installed.

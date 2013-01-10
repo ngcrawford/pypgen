@@ -233,7 +233,14 @@ def get_slice_indicies(vcf_bgzipped_file, regions, window_size, regions_to_skip=
 def slice_vcf(vcf_bgzipped_file, chrm, start, stop):
     
     tbx = pysam.Tabixfile(vcf_bgzipped_file)
-    return tuple(row for row in tbx.fetch(chrm, start, stop))
+
+    try:
+        vcf_slice = tbx.fetch(chrm, start, stop)
+    except ValueError:
+        return None
+
+    else:
+        return tuple(row for row in vcf_slice)
 
 
 def parse_info_field(info_field):
@@ -554,7 +561,6 @@ def process_outgroup(vcf_line, populations):
 
     else:
         return None
-
 
 def calc_slice_stats(data):
     """Main function for caculating statistics.
