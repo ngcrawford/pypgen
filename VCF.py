@@ -384,7 +384,7 @@ def calc_fstats(allele_counts):
 
     # CACULATE PAIRWISE F-STATISTICS
     pairwise_results = {}
-    for population_pair in combinations(populations.keys(),2):
+    for population_pair in combinations(populations,2):
         
         pop1, pop2 =  population_pair
         Ns = [sum(allele_counts[pop].values()) for pop in [pop1, pop2]]
@@ -435,9 +435,9 @@ def calc_fstats(allele_counts):
     return pairwise_results
 
 
-def calculate_multilocus_f_statistics(Hs_est_dict, Ht_est_dict):
-       
+def calc_multilocus_f_statistics(Hs_est_dict, Ht_est_dict):
 
+       
     multilocus_f_statistics = {}
 
     for key in Hs_est_dict.keys():
@@ -589,25 +589,25 @@ def calc_slice_stats(data):
             if vcf_line_dict["FILTER"] != 'PASS':
                 continue
 
+            # COUNT SAMPLES IN EACH POPULATION
             for pop, size in get_population_sizes(vcf_line_dict, populations).iteritems():
                 population_sizes[pop].append(size)
 
-
             # CALCULATE SNPWISE F-STATISTICS
             allele_counts = calc_allele_counts(populations, vcf_line_dict)
-            f_statistics = calc_fstats(populations, allele_counts)
+            f_statistics = calc_fstats(allele_counts)
             
             # UPDATE Hs AND Ht DICTIIONARIES
             Hs_est_dict, Ht_est_dict = update_Hs_and_Ht_dicts(f_statistics, Hs_est_dict, Ht_est_dict)
-
             f_statistics['LOCATION'] = (chrm, start, stop)
             snp_wise_f_statistics.append(f_statistics)
 
             total_depth.append(int(vcf_line_dict['INFO']["DP"]))
             snp_count = count
 
+        # SUMMARIZE POPULATION WIDE STATISTICS
         pop_size_statistics = summarize_population_sizes(population_sizes)
-        multilocus_f_statistics = calculate_multilocus_f_statistics(Hs_est_dict, Ht_est_dict)
+        multilocus_f_statistics = calc_multilocus_f_statistics(Hs_est_dict, Ht_est_dict)
         
         # UPDATE OUTPUT LINE WITH DEPTH INFO
         total_depth = np.array(total_depth)
