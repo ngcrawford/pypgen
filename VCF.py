@@ -461,13 +461,16 @@ def calc_multilocus_f_statistics(Hs_est_dict, Ht_est_dict):
         if len(pairs) != 0:
 
             # THIS REMOVES NaNs FROM THE Ht and Hs LISTS
-            Ht_est_list = fstats.de_NaN_list(Ht_est_list)
-            Hs_est_list = fstats.de_NaN_list(Hs_est_list)
+            Ht_est_list_no_NaN = fstats.de_NaN_list(Ht_est_list)
+            Hs_est_list_no_NaN = fstats.de_NaN_list(Hs_est_list)
 
-            n = 2 # fix this
-            Gst_est = fstats.multilocus_Gst_est(Ht_est_list, Hs_est_list)
-            G_prime_st_est = fstats.multilocus_G_prime_st_est(Ht_est_list, Hs_est_list, n)
-            G_double_prime_st_est = fstats.multilocus_G_double_prime_st_est(Ht_est_list, Hs_est_list, n)
+            n = 2 # fix this, assumes pairs = paired population
+            Gst_est = fstats.multilocus_Gst_est(Ht_est_list_no_NaN, Hs_est_list_no_NaN)
+            G_prime_st_est = fstats.multilocus_G_prime_st_est(Ht_est_list_no_NaN, Hs_est_list_no_NaN, n)
+            G_double_prime_st_est = fstats.multilocus_G_double_prime_st_est(Ht_est_list_no_NaN, Hs_est_list_no_NaN, n)
+            
+            # NOTE that the Dest calculation handles NaN's better and
+            # can use the raw Hs and Ht calls
             D_est = fstats.multilocus_D_est(Ht_est_list, Hs_est_list, n)
 
             values_dict = dict(zip(['Gst_est', 'G_prime_st_est', 'G_double_prime_st_est', 'D_est'],\
