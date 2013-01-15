@@ -1,5 +1,5 @@
 import sys
-
+import gzip
 import datetime
 
 class Unbuffered:
@@ -10,6 +10,17 @@ class Unbuffered:
        self.stream.flush()
    def __getattr__(self, attr):
        return getattr(self.stream, attr)
+
+
+def open_vcf(args):
+    if args.input.endswith('.gz') == True: # To Do: This is hacky.
+        fin = gzip.open(args.input,'rb')
+    else:
+        fin = open(args.input, 'rU')
+
+    return fin
+
+
 
 def progress_meter(starting_time, chrm, pos, bp_processed, total_bp_in_dataset):
     
