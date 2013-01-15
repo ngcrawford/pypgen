@@ -351,7 +351,7 @@ def format_output(chrm, start, stop, depth, stat_id, multilocus_f_statistics):
 def calc_allele_counts(populations, vcf_line_dict):
 
     #allele_counts = defaultdict({0:0.0,1:0.0,2:0.0,3:0.0,4:0.0})
-    allele_counts = dict((key, {0:0.0,1:0.0,2:0.0,3:0.0,4:0.0}) for key in populations.keys())
+    allele_counts = dict((key, {0:0.0,1:0.0,2:0.0,3:0.0}) for key in populations.keys())
     
 
     for population in populations.keys():
