@@ -14,102 +14,115 @@
 
 """
 
-import os
-import sys
-import argparse
-from VCF import *
-import multiprocessing
-
 """
 python vcf2bayesscan.py \
 -i test_data/butterfly.vcf.gz -o bayesscan.snps \
 -p cydno:c511,c512,c513,c514,c515,c563,c614,c630,c639,c640 \
-outgroups:h665,i02-210 melpo:m523,m524,m525,m589,m675,m676,m682,m683,m687,m689 \
+outgroups:h665,i02-210 \
+melpo:m523,m524,m525,m589,m675,m676,m682,m683,m687,m689 \
 pachi:p516,p517,p518,p519,p520,p591,p596,p690,p694,p696 
 
 """
 
+import os
+import re
+import sys
+import gzip
+import datetime
+import argparse
+from VCF import *
+from helpers import *
+import multiprocessing
+from collections import defaultdict
 
 
-def get_args():
-    """Parse sys.argv"""
-    parser = argparse.ArgumentParser()
+def process_header(tabix_file):
 
-    parser.add_argument('-i', '--input', 
-                        required=True, 
-                        type=str,
-                        help='Path to VCF file.')
+    chrm_lenghts_dict = {}
+    tabix_file = pysam.Tabixfile(tabix_file)
     
-    parser.add_argument('-o','--output',
-                        help='Path to output csv file. \
-                              If path is not set defaults to STDOUT.')
-    
-    parser.add_argument('-c','--cores', 
-                        required=True, 
-                        type=int,
-                        help='Number of cores to use.')
+    for line in tabix_file.header:
+        
+        if line.startswith("##contig") == True: 
+            chrm, length = re.split(r"<ID=|,length=", line)[1:]
+            length =  int(length.strip(">"))
+            chrm_lenghts_dict[chrm] = length
 
-    parser.add_argument('-r','--regions', 
-                        required=False,
-                        # action=FooAction, # TODO: fix this!
-                        type=str,
-                        help="Define a chromosomal region. \
-                              A region can be presented, for example, in the following \
-                              format: ‘chr2’ (the whole chr2), ‘chr2:1000000’ (region \
-                              starting from 1,000,000bp) or ‘chr2:1,000,000-2,000,000’ \
-                              (region between 1,000,000 and 2,000,000bp including the end \
-                              points). The coordinate is 1-based.' [Same format as \
-                              SAMTOOLs/GATK, example text cribbed from SAMTOOLs]")
-    
-    parser.add_argument('-p','--populations', 
-                        nargs='+',
-                        help='Names of populations and samples. \
-                              The format is: "PopName:sample1,sample2,sample3,etc..."')
+    return chrm_lenghts_dict
 
-    parser.add_argument("-m",'--min-samples',
-                        type=int,
-                        default=5,
-                        help="Minimum number of samples per population.")
-
-    return parser.parse_args()
-
-def call_genotype(gt_string):
-    final_call = None
-    call = gt_string.split(":")
 
 def main():
     # get args. 
-    args = get_args()
+    args = default_args()
+    args = args.parse_args()
+    
+    # TODO: 
+    # test that pysam is installed.
+    # bgzip check. MDSum?
+
+    # Get slice indicies
+    # 1. read file and get chrm sizes
+    # 2. process chrm sizes and return as
+    #    slices and a zipped list (chrm, (start, stop))
+    slice_indicies = get_slice_indicies(args.input, args.regions, args.window_size, args.regions_to_skip)
+    starting_time = datetime.datetime.now()
+    previous_update_time = datetime.datetime.now()
+    bp_processed = 0
+    
+    # Calculate the total size of the dataset
+    chrm_lengths = process_header(args.input)
+    total_bp_in_dataset = sum(chrm_lengths.values())
+
+    # Get information about samples from the header.
+    # this becomes the precursor to the VCF row
+    empty_vcf_line = make_empty_vcf_ordered_dict(args.input)
+
+    # Convert populations input into a dict of pops where
+    # values are lists of samples
     populations = parse_populations_list(args.populations)
 
-    header = set_header(args.input)
+    fstat_order = [] # store order of paired samples.
+    pop_size_order = []
 
-    fin = gzip.open(args.input,'rb')
+    sample_ids =  [s for p in populations.values() for s in p]
 
-    outfiles = dict([(pop, open("{}_snps.txt".format(pop),'w')) for pop in populations.keys()])
-    
-    for count, line in enumerate(fin):
-        if line.startswith('#') == True: continue
-        # if count > 10: break
+    output_population_info = defaultdict(list)
+
+    snp_count = 0
+    for count, line in enumerate(open_vcf(args)):
         
-        vcf_line_dict = parse_vcf_line(line, header)
+        if line.startswith('#') == True: continue
+        snp_count += 1
+
+        vcf_line = parse_vcf_line(line, empty_vcf_line)
+        allele_counts = calc_allele_counts(populations, vcf_line)
+
+        possible_alleles = set([a for d in allele_counts.keys() \
+                                  for a in allele_counts[d].keys() \
+                                  if allele_counts[d][a] > 0.0 ])
+
         
         for pop in populations.keys():
+            genes = len([vcf_line[s] for s in populations[pop] if vcf_line[s] != None]) * 2
+            info = '\t'.join(map(str, [snp_count, genes, len(possible_alleles)]))
+            a_counts = "\t".join([str(int(allele_counts[pop][a])) for a in possible_alleles])
+            line = "{}\t{}\n".format(info, a_counts)
+            output_population_info[pop].append(line)
 
-            sample_count = 0
-            calls = {'0':0, '1':0, '2':0, '3':0,}
-            for sample in populations[pop]:
-                if vcf_line_dict[sample] == None: continue
 
-                gt =  vcf_line_dict[sample]["GT"]
-                gt = gt.split('/')
+    fout = open('test.bayesscan.output','w')
+    fout.write("[loci]={}\n\n".format(len(output_population_info[output_population_info.keys()[0]])))
+    fout.write("[populations]={}\n\n".format(len(populations.keys())))
 
-                calls[gt[0]] += 1
-                calls[gt[1]] += 1
+    for count, pop in enumerate(output_population_info.keys()):
 
-                sample_count += 1
+        fout.write('[pop]={}\n'.format(pop))
+        
+        for line in output_population_info[pop]:
+            fout.write(line)
 
-            print pop, count, sample_count, calls
+
+
 
 
 
