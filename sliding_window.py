@@ -85,7 +85,7 @@ def main():
     p = multiprocessing.Pool(processes=int(args.cores), maxtasksperchild=1000)
 
     fstat_input_iterator = generate_fstats_from_vcf_slices(slice_indicies, populations, empty_vcf_line, args)
-    for count, result in enumerate(map(calc_slice_stats, fstat_input_iterator)):
+    for count, result in enumerate(p.imap(calc_slice_stats, fstat_input_iterator)):
         
         if result == None: continue
         
