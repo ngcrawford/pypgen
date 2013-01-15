@@ -207,15 +207,6 @@ class TestFstatsCalculations(unittest.TestCase):
             f_statistics[('pachi', 'outgroups')])
 
 
-    def test_calculate_multilocus_f_statistics(self):
-
-        import numpy as np
-
-        Hs_est_dict = {('pop1','pop2'):[0.2,0.5]}
-        Ht_est_dict = {('pop1','pop2'):[np.nan,0.5]}
-        print VCF.calc_multilocus_f_statistics(Hs_est_dict, Ht_est_dict)
-
-
 if __name__ == '__main__':
     unittest.main()
 
