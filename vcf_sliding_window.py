@@ -74,7 +74,6 @@ def main():
     # this becomes the precursor to the VCF row
     empty_vcf_line = make_empty_vcf_ordered_dict(args.input)
 
-
     # Convert populations input into a dict of pops where
     # values are lists of samples
     populations = parse_populations_list(args.populations)
@@ -85,7 +84,7 @@ def main():
     p = multiprocessing.Pool(processes=int(args.cores), maxtasksperchild=1000)
 
     fstat_input_iterator = generate_fstats_from_vcf_slices(slice_indicies, populations, empty_vcf_line, args)
-    for count, result in enumerate(p.imap(calc_slice_stats, fstat_input_iterator)):
+    for count, result in enumerate(p.map(calc_slice_stats, fstat_input_iterator)):
         
         if result == None: continue
         
@@ -95,7 +94,7 @@ def main():
         if not pop_size_statistics: continue
         if not fstats: continue
 
-        f_stats, fstat_order = multilocus_f_statistics_2_sorted_list(fstats, order=fstat_order)
+        f_stats, fstat_order = f_statistics_2_sorted_list(fstats, order=fstat_order)
         pop_size_stats, pop_size_order = pop_size_statistics_2_sorted_list(pop_size_statistics, order=pop_size_order)
 
         if count == 0:
