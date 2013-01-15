@@ -255,11 +255,10 @@ def parse_info_field(info_field):
             info_dict[pair[0]] = pair[1] # this could be improved on
     return info_dict
 
-def parse_vcf_line(pos, header):
+def parse_vcf_line(pos, vcf_line_dict):
     """Read in VCF line and convert it to an OrderedDict"""
 
     pos_parts = pos.strip().split()
-    vcf_line_dict = header
 
     for count, item in enumerate(vcf_line_dict):
         vcf_line_dict[item] = pos_parts[count]
@@ -432,7 +431,7 @@ def calc_fstats(allele_counts):
             G_double_prime_st_est_ = fstats.G_double_prime_st_est(Ht_est_, Hs_est_, n)
             D_est_ = fstats.D_est(Ht_est_, Hs_est_, n)
             
-            # PRINT OUTPUT
+            # FORMAT
             values = [Hs_est_, Ht_est_, Gst_est_, G_prime_st_est_, 
                       G_double_prime_st_est_, D_est_]
             values_dict = dict(zip(['Hs_est', 'Ht_est', 'Gst_est', \
@@ -494,9 +493,10 @@ def update_Hs_and_Ht_dicts(f_statistics, Hs_est_dict, Ht_est_dict):
             Ht_est_dict[pop_pair].append(f_statistics[pop_pair]['Ht_est'])
         else:
             Ht_est_dict[pop_pair] = [f_statistics[pop_pair]['Ht_est']]
+    
     return (Hs_est_dict, Ht_est_dict)
 
-def multilocus_f_statistics_2_sorted_list(multilocus_f_statistics, order):
+def f_statistics_2_sorted_list(multilocus_f_statistics, order=[]):
     
     if len(order) == 0:
         
