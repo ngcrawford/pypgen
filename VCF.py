@@ -564,6 +564,26 @@ def process_outgroup(vcf_line, populations):
     else:
         return None
 
+def identify_fixed_populations(allele_counts, order):
+
+    if len(order) == 0:
+        order = allele_counts.keys()
+        order.sort()
+
+    fixed_pops = []
+    for pop in order:
+        a_values = allele_counts[pop].values()
+        non_zero_a = set([a for a in a_values if a != 0])
+
+        if len(non_zero_a) == 1:
+            fixed_pops.append(1)
+        else:
+            fixed_pops.append(0)
+
+    return (fixed_pops, order)
+
+
+
 def calc_slice_stats(data):
     """Main function for caculating statistics.
 
@@ -604,7 +624,7 @@ def calc_slice_stats(data):
             # CALCULATE SNPWISE F-STATISTICS
             allele_counts = calc_allele_counts(populations, vcf_line_dict)
             f_statistics = calc_fstats(allele_counts)
-            
+
             # UPDATE Hs AND Ht DICTIIONARIES
             Hs_est_dict, Ht_est_dict = update_Hs_and_Ht_dicts(f_statistics, Hs_est_dict, Ht_est_dict)
             f_statistics['LOCATION'] = (chrm, start, stop)
@@ -616,12 +636,12 @@ def calc_slice_stats(data):
         # SUMMARIZE POPULATION WIDE STATISTICS
         pop_size_statistics = summarize_population_sizes(population_sizes)
         multilocus_f_statistics = calc_multilocus_f_statistics(Hs_est_dict, Ht_est_dict)
-        
+
         # SKIP SAMPLES WITH TOO MANY NANs
 
         if len(multilocus_f_statistics.values()) == 0:
             return None
-        
+
         elif multilocus_f_statistics.values()[0] is None:
             return None
 
@@ -632,7 +652,6 @@ def calc_slice_stats(data):
 
             return ([chrm, start, stop, snp_count, total_depth.mean(), total_depth.std()], \
                  pop_size_statistics, multilocus_f_statistics)
-
 
 
 
