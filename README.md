@@ -1,10 +1,9 @@
 Welcome to Pypgen (v0.2.0)
 --------------------------
 
-This is repository contains python classes for calculating Gst, G'st, G''st, D, and calculating the 'estimators' and multilocus parameters of each of these diversity measures (Hedrick, 2005; Jost, 2008; Masatoshi Nei, 1973; Nei & Chesser, 1983). I hav
+This is repository contains python classes for calculating Gst, G'st, G''st, D, and calculating the 'estimators' and multilocus parameters of each of these diversity measures (Hedrick, 2005; Jost, 2008; Masatoshi Nei, 1973; Nei & Chesser, 1983).
 
- SNPwise and sliding window 
-
+TO DO: Complete ReWrite of README
 
 - Sliding window analysis (vcf_sliding_window.py) 
 - Per SNP analysis (vcf_snpwise_fstats.py)

@@ -9,13 +9,14 @@ import argparse
 from VCF import *
 from helpers import *
 import multiprocessing
+from collections import defaultdict
 
 """
 python vcf2sweepfinder.py \
 -i test_data/butterfly.vcf.gz \
 -o bayesscan.snps \
 -p cydno:c511,c512,c513,c514,c515,c563,c614,c630,c639,c640 \
-outgroups:h665,i02-210 \
+outgroup:h665,i02-210 \
 melpo:m523,m524,m525,m589,m675,m676,m682,m683,m687,m689 \
 pachi:p516,p517,p518,p519,p520,p591,p596,p690,p694,p696 \
 -c 2 \
@@ -23,6 +24,29 @@ pachi:p516,p517,p518,p519,p520,p591,p596,p690,p694,p696 \
 """
 
 def vcf_line_2_sweepfinder_line(vcf_line, populations, outgroup_call):
+
+    """
+    The snp file should be a tab-delimited file with column headers, and
+one row per SNP.  One column header should be "x" (the frequency of the
+SNP), another should be "n" (the sample size, must be greater than x), and
+another should be "position" (the chromosomal location of the SNP).  
+Optionally, a fourth column named "folded" can be added.  If it is present,
+than a value of one indicates that the SNP is folded (there is no distinction
+between ancestral/derived states), and 0 means unfolded.  If the folded
+column is not present, all SNPs are assumed to be unfolded.
+Column names do not actually contain quotes.  A sample input file might look
+something like:
+
+position        x       n   folded
+37.000000       10      46  0
+145.000000      3       47  0
+277.000000      1       47  1
+385.000000      37      43  1
+469.000000      2       45  0
+585.000000      1       44  0
+733.000000      10      45  0
+
+    """
     
     # Process Folding
     if outgroup_call == None: 
@@ -31,42 +55,9 @@ def vcf_line_2_sweepfinder_line(vcf_line, populations, outgroup_call):
         folded = 1
 
 
-    final_lines = {}
-    for pop in populations.keys():
-        if pop == 'Outgroup': continue
-        
-        sample_count = 0
-        out_group_alleles = 0
+    print calc_allele_counts(populations, vcf_line)
 
-        for sample in populations[pop]:
-            call = vcf_line[sample]
-            if call == None: continue
-            
-            sample_count += 1
-            out_group_alleles += call['GT'].count(outgroup_call)
 
-        snp_count = (sample_count * 2) - out_group_alleles
-
-        print vcf_line['POS'], snp_count, sample_count
-
-        final_line = ' '.join(map(str, [vcf_line['POS'], snp_count, sample_count, folded]))
-        final_lines[pop] = final_line
-
-    return final_lines
-
-def filter_vcf_line(vcf_line, filter_string):
-    """Very basic and UNSAFE VCF line filtering.
-
-        #### NEEDS IMPROVEMENT!!!!! ####
-
-        Should accept expressions like:
-        "FILTER == PASS"
-        "FILTER == SOME_OTHER_NAME"
-    """
-
-    column, expression, value = filter_string.split()
-    filter_expression = "vcf_line['{}'] {} '{}'".format(column, expression, value)
-    return eval(filter_expression)
 
 def main():
     # get args. 
@@ -104,8 +95,6 @@ def main():
     order = [] # store order of samples.
     bp_processed = 0
 
-    fout = open(args.output,'w')    
-
     p = multiprocessing.Pool(processes=int(args.cores),maxtasksperchild=1000)
 
     fstat_input_iterator = generate_fstats_from_vcf_slices(slice_indicies, populations, empty_vcf_line, args)
@@ -116,16 +105,12 @@ def main():
         for count, line in enumerate(tabix_slice):
             vcf_line = parse_vcf_line(line, header)
 
-            if filter_vcf_line(vcf_line, args.filter_string) != True: continue
+            if vcf_line["FILTER"] != "PASS": continue
 
             outgroup_call = process_outgroup(vcf_line, populations)
             print vcf_line_2_sweepfinder_line(vcf_line, populations, outgroup_call)
 
-
-
         break
-
-
 
 if __name__ == '__main__':
     main()
