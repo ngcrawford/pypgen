@@ -37,8 +37,6 @@ PDV:CJS1974,CJS1976,CJS1978,CJS1979,CJS1980,CJS1982 \
 PPB:CEJ092,CEJ093,CEJ094,CEJ114,CEJ115,CEJ116,CEJ117 \
 SRG:CJS2066,CJS2067,CJS2068,CJS2069,CJS2072,CJS2073,CJS2074 \
 STM:CEJ028,CEJ029,CEJ030,CEJ031,CEJ032,CEJ033,CEJ034
-
-
 """
 
 import os
@@ -55,16 +53,16 @@ def get_args():
     """Parse sys.argv"""
     parser = argparse.ArgumentParser()
 
-    parser.add_argument('-i','--input', required=True,
+    parser.add_argument('-i', '--input', required=True,
                         help='Path to VCF file.')
-    
-    parser.add_argument('-o','--output',
+
+    parser.add_argument('-o', '--output',
                         help='Path to output csv file. If path is not set defaults to STDOUT.')
 
-    parser.add_argument('-p','--populations', nargs='+',
+    parser.add_argument('-p', '--populations', nargs='+',
                         help='Names of populations and samples. The format is: "PopName:sample1,sample2,sample3,etc..."')
 
-    parser.add_argument('-L','--region', default=None, type=str,
+    parser.add_argument('-L', '--region', default=None, type=str,
                         help='chrm:start-stop')
 
     parser.add_argument('-w', '--window-size', type=int,
@@ -84,7 +82,7 @@ def get_args():
 
     args = parser.parse_args()
 
-    populations_dict  = {}
+    populations_dict = {}
     for pop in args.populations:
         pop_name, sample_ids = pop.strip().split(":")
         sample_ids = sample_ids.split(",")
@@ -100,7 +98,6 @@ def get_args():
 
     else:
         args.region = [args.region]
-
 
     return args
 

@@ -12,15 +12,22 @@
   3  40  2   19  21
   4  40  2   31  9
 
-"""
-
-"""
 python vcf2bayesscan.py \
 -i test_data/butterfly.vcf.gz -o bayesscan.snps \
+-c 2 \
 -p cydno:c511,c512,c513,c514,c515,c563,c614,c630,c639,c640 \
 outgroups:h665,i02-210 \
 melpo:m523,m524,m525,m589,m675,m676,m682,m683,m687,m689 \
 pachi:p516,p517,p518,p519,p520,p591,p596,p690,p694,p696 
+
+
+python vcf2bayesscan.py \
+-i /usr3/graduate/ngcrawfo/genomics/bulk-seg-anoMar/vcf/december_2012/CAP_MAR.uni_geno.snps.indels.recallibrated.vcf.gz \
+-o /usr3/graduate/ngcrawfo/genomics/bulk-seg-anoMar/CAP_MAR.uni_geno.snps.indels.recallibrated.bayesscan.input \
+-c 2 \
+--regions-to-skip=MT \
+-p MAR:CEJ107,CEJ082,CEJ083,CEJ085,CEJ108,CEJ084,CEJ095,CEJ088,CEJ106,CEJ097 \
+CAP:CEJ040,CEJ039,CEJ010,CEJ020,CEJ019,CEJ013,CEJ041,CEJ037,CEJ036,CEJ035
 
 """
 
@@ -59,15 +66,6 @@ def main():
     # TODO: 
     # test that pysam is installed.
     # bgzip check. MDSum?
-
-    # Get slice indicies
-    # 1. read file and get chrm sizes
-    # 2. process chrm sizes and return as
-    #    slices and a zipped list (chrm, (start, stop))
-    slice_indicies = get_slice_indicies(args.input, args.regions, args.window_size, args.regions_to_skip)
-    starting_time = datetime.datetime.now()
-    previous_update_time = datetime.datetime.now()
-    bp_processed = 0
     
     # Calculate the total size of the dataset
     chrm_lengths = process_header(args.input)
@@ -81,27 +79,45 @@ def main():
     # values are lists of samples
     populations = parse_populations_list(args.populations)
 
-    fstat_order = [] # store order of paired samples.
-    pop_size_order = []
+    # List of Sample IDs
+    sample_ids = tuple([s for p in populations.values() for s in p])
 
-    sample_ids =  [s for p in populations.values() for s in p]
-
+    # Storage dictionary for output.
     output_population_info = defaultdict(list)
 
+    # Create file to track numerical snps to genomic positions
+    snp_info_output = os.path.splitext(args.output.name)[0] + '.snp_locations.gz'
+    snp_info_output = gzip.open(snp_info_output,'wb')
+    
+    print 'Parsing VCF file'
     snp_count = 0
-    for count, line in enumerate(open_vcf(args)):
+    for count, line in enumerate(open_vcf(args)): # open_vcf allows for gzip files
         
+        # SKIP HEADER AND FILTER ON 'PASS' SNPS
         if line.startswith('#') == True: continue
         snp_count += 1
 
         vcf_line = parse_vcf_line(line, empty_vcf_line)
+        if vcf_line["FILTER"] != "PASS": 
+            snp_count -= 1
+            continue
+
+        # COUNT ALLELES
         allele_counts = calc_allele_counts(populations, vcf_line)
 
+        if snp_count == 17:
+            print allele_counts
+
+        # Calculate possible alleles across 
         possible_alleles = set([a for d in allele_counts.keys() \
                                   for a in allele_counts[d].keys() \
                                   if allele_counts[d][a] > 0.0 ])
 
-        
+        # UPDATE OUTPUT
+        snp_info_output.write("{}\t{}\t{}\n".format(snp_count,vcf_line["CHROM"],vcf_line["POS"]))
+
+        # LOOP THOURGH POPS CALCULATING TOTAL NUMBER OF CHROMOSOMES REPRESENTED (=GENES) AND
+        # ALLELE COUNTS FOR EACH POPULATION (= AFS PRECURSOR)
         for pop in populations.keys():
             genes = len([vcf_line[s] for s in populations[pop] if vcf_line[s] != None]) * 2
             info = '\t'.join(map(str, [snp_count, genes, len(possible_alleles)]))
@@ -109,22 +125,19 @@ def main():
             line = "{}\t{}\n".format(info, a_counts)
             output_population_info[pop].append(line)
 
-
-    fout = open('test.bayesscan.output','w')
+    print 'Writing output'
+    fout = args.output
     fout.write("[loci]={}\n\n".format(len(output_population_info[output_population_info.keys()[0]])))
     fout.write("[populations]={}\n\n".format(len(populations.keys())))
 
     for count, pop in enumerate(output_population_info.keys()):
 
-        fout.write('[pop]={}\n'.format(pop))
+        fout.write('[pop]={}\n'.format(count + 1))
         
         for line in output_population_info[pop]:
             fout.write(line)
-
-
-
-
-
+	
+        fout.write('\n'.format(pop))
 
 if __name__ == '__main__':
     main()
