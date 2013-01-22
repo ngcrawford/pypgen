@@ -2,7 +2,7 @@
 # encoding: utf-8
 
 """
-python sliding_window.py \
+python vcf_snpwise_fstats.py\
 -i test_data/butterfly.vcf.gz \
 -o bayesscan.snps \
 -p cydno:c511,c512,c513,c514,c515,c563,c614,c630,c639,c640 \
@@ -29,23 +29,24 @@ def process_header(tabix_file):
 
     chrm_lenghts_dict = {}
     tabix_file = pysam.Tabixfile(tabix_file)
-    
+
     for line in tabix_file.header:
-        
-        if line.startswith("##contig") == True: 
+
+        if line.startswith("##contig") == True:
             chrm, length = re.split(r"<ID=|,length=", line)[1:]
-            length =  int(length.strip(">"))
+            length = int(length.strip(">"))
             chrm_lenghts_dict[chrm] = length
 
     return chrm_lenghts_dict
 
 
 def main():
-    # get args. 
+    # get args.
     args = default_args()
     args = args.parse_args()
-    
-    # TODO: 
+    print args
+
+    # TODO:
     # test that pysam is installed.
     # bgzip check. MDSum?
 
@@ -57,7 +58,7 @@ def main():
     starting_time = datetime.datetime.now()
     previous_update_time = datetime.datetime.now()
     bp_processed = 0
-    
+
     # Calculate the total size of the dataset
     chrm_lengths = process_header(args.input)
     total_bp_in_dataset = sum(chrm_lengths.values())
@@ -70,18 +71,24 @@ def main():
     # values are lists of samples
     populations = parse_populations_list(args.populations)
 
-    fstat_order = [] # store order of paired samples.
+    fstat_order = []    # store order of paired samples.
     pop_size_order = []
+    fixed_alleles_order = []
     vcf_count = 0
 
     for count, line in enumerate(open_vcf(args)):
-        
-        if line.startswith('#') == True: continue
+
+
+        if line.startswith('#') == True:
+            continue
+
         vcf_count += 1
 
         vcf_line = parse_vcf_line(line, empty_vcf_line)
         allele_counts = calc_allele_counts(populations, vcf_line)
-        fstats =  calc_fstats(allele_counts)
+
+        fixed_alleles, fixed_alleles_order = identify_fixed_populations(allele_counts, fixed_alleles_order)
+        fstats = calc_fstats(allele_counts)
         pop_size_stats = get_population_sizes(vcf_line, populations)
 
         f_stats, fstat_order = f_statistics_2_sorted_list(fstats, order=fstat_order)
@@ -90,10 +97,11 @@ def main():
         chrm = vcf_line['CHROM']
         pos = vcf_line['POS']
 
+
         if vcf_count == 1:
             args.output.write(','.join(['chrm','pos','snp_count', 'total_depth_mean', 'total_depth_stdev'] \
-                       + map(str, pop_size_order + fstat_order) + "\n")
-            args.output.write(','.join(map(str, [chrm, pos] + pop_size_stats + f_stats)) + "\n")
+                       + map(str, pop_size_order + fstat_order + [pop + "_fixed" for pop in fixed_alleles_order])) + "\n")
+            args.output.write(','.join(map(str, [chrm, pos] + pop_size_stats + f_stats + fixed_alleles)) + "\n")
 
         else:
             args.output.write(','.join(map(str, [chrm, pos] + pop_size_stats + f_stats)) + "\n")
