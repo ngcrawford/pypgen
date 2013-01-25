@@ -19,23 +19,23 @@ def default_args():
     parser = argparse.ArgumentParser()
 
     parser.add_argument('-i', '--input',
-                        required=True, 
+                        required=True,
                         type=str,
                         help='Path to VCF file.')
-    
+
     parser.add_argument('-o', '--output',
-                        nargs='?', 
+                        nargs='?',
                         type=argparse.FileType('w'),
                         default=sys.stdout,
                         help='Path to output csv file. \
                               If path is not set, defaults to STDOUT.')
-    
-    parser.add_argument('-c','--cores', 
-                        required=True, 
+
+    parser.add_argument('-c', '--cores',
+                        required=True,
                         type=int,
                         help='Number of cores to use.')
 
-    parser.add_argument('-r','--regions', 
+    parser.add_argument('-r', '--regions',
                         required=False,
                         # action=FooAction, # TODO: fix this!
                         nargs='+',
@@ -44,8 +44,10 @@ def default_args():
                               format: ‘chr2’ (the whole chr2), ‘chr2:1000000’ (region \
                               starting from 1,000,000bp) or ‘chr2:1,000,000-2,000,000’ \
                               (region between 1,000,000 and 2,000,000bp including the end \
-                              points). The coordinate is 1-based.' [Same format as \
-                              SAMTOOLs/GATK, example text cribbed from SAMTOOLs]")
+                              points). The coordinate is 1-based.' Multiple regions can \
+                              be submitted seperated by spaces. [NOte: this is the same \
+                              format as SAMTOOLs/GATK, example text largely cribbed from \
+                              SAMTOOLs]")
 
     parser.add_argument('-f', '--filter-string',
                         required=False,
@@ -56,8 +58,8 @@ def default_args():
                         required=False,
                         nargs='+',
                         help='Define a chromosomal region(s) to skip.')
-    
-    parser.add_argument('-p','--populations', 
+
+    parser.add_argument('-p', '--populations',
                         nargs='+',
                         help='Names of populations and samples. \
                               The format is: "PopName:sample1,sample2,.. \
@@ -66,13 +68,13 @@ def default_args():
                               population name uname "Outgroup" is reserved for \
                               samples that that are used to polarize genotype calls.')
 
-    parser.add_argument('-w','--window-size',
-                        default=5000, 
+    parser.add_argument('-w', '--window-size',
+                        default=5000,
                         type=int,
                         help='Size of the window in which to \
                               calculate pairwise F-staticstics')
 
-    parser.add_argument("-m",'--min-samples',
+    parser.add_argument("-m", '--min-samples',
                         type=int,
                         default=5,
                         help="Minimum number of samples per population.")
@@ -165,14 +167,16 @@ def make_empty_vcf_ordered_dict(vcf_path):
     vcf_file.close()
     return header_dict
 
+
 def parse_populations_list(populations):
-    populations_dict  = {}
+    populations_dict = {}
     for pop in populations:
         pop_name, sample_ids = pop.strip().split(":")
         sample_ids = sample_ids.split(",")
         populations_dict[pop_name] = sample_ids
 
     return populations_dict
+
 
 def pairwise(iterable):
     """Generates paris of slices from iterator
@@ -182,31 +186,33 @@ def pairwise(iterable):
     next(b, None)
     return itertools.izip(a, b)
 
+
 def get_slice_indicies(vcf_bgzipped_file, regions, window_size, regions_to_skip=[]):
     """Get slice information from VCF file that is tabix indexed file (bgzipped). """
 
     # READ IN FILE HEADER
-    tbx = pysam.Tabixfile(vcf_bgzipped_file) # TODO: create try statement to test that file is actually a VCF
-    chrms = tbx.contigs
+    tbx = pysam.Tabixfile(vcf_bgzipped_file)  # TODO: create try statement to test that file is actually a VCF
 
     # PARSE LENGTH INFO FROM HEADER
 
     chrm_lengths = []
+    chrm_lengths_dict = {}
     for line in tbx.header:
-        
+
         if line.startswith("##contig="):
-            
-            chrm_name = re.findall(r'ID=.*,',line)
+
+            chrm_name = re.findall(r'ID=.*,', line)
             chrm_name = chrm_name[0].strip('ID=').strip(',')
-            
-            chrm_length = re.findall(r'length=.*>',line)
+
+            chrm_length = re.findall(r'length=.*>', line)
             chrm_length = int(chrm_length[0].strip('length=').strip('>'))
 
-            if chrm_name in regions_to_skip: 
+            if chrm_name in regions_to_skip:
                 print 'skipping', chrm_name
                 continue
-            
+
             chrm_lengths.append((chrm_name, 1, chrm_length))
+            chrm_lengths_dict[chrm_name] = chrm_length
 
     chrm_lengths = tuple(chrm_lengths)
     tbx.close()
@@ -219,22 +225,28 @@ def get_slice_indicies(vcf_bgzipped_file, regions, window_size, regions_to_skip=
         for chrm, start, stop in chrm_lengths:
 
             slice_indicies = itertools.islice(xrange(start, stop + 1), 0, stop + 1, window_size)
-            
-            for count, s in enumerate(pairwise(slice_indicies)):
-                yield (chrm, s[0], s[1] -1) # subtract one to prevent 1 bp overlap
-    else:
 
+            for count, s in enumerate(pairwise(slice_indicies)):
+                yield (chrm, s[0], s[1] - 1)  # subtract one to prevent 1 bp overlap
+    else:
         for r in regions:
-            chrm, start, stop = re.split(r':|-', r)
+            split_region = re.split(r':|-', r)
+
+            if len(split_region) == 3:
+                chrm, start, stop = split_region
+            else:
+                chrm = split_region[0]
+                start, stop = 1, chrm_lengths_dict[chrm]
+
             start, stop = int(start), int(stop)
 
             slice_indicies = itertools.islice(xrange(start, stop + 1), 0, stop + 1, window_size)
             for count, s in enumerate(pairwise(slice_indicies)):
-                yield (chrm, s[0], s[1] -1) # subtract one to prevent 1 bp overlap
+                yield (chrm, s[0], s[1] - 1)   # subtract one to prevent 1 bp overlap
 
 
 def slice_vcf(vcf_bgzipped_file, chrm, start, stop):
-    
+
     tbx = pysam.Tabixfile(vcf_bgzipped_file)
 
     try:
