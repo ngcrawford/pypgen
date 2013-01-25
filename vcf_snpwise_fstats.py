@@ -4,6 +4,7 @@
 """
 python vcf_snpwise_fstats.py \
 -i test_data/butterfly.vcf.gz \
+<<<<<<< HEAD
 -p outgroups:h665,i02-210 \
 cydno:c511,c512,c513,c514,c515,c563,c614,c630,c639,c640 \
 melpo:m523,m524,m525,m589,m675,m676,m682,m683,m687,m689 \
