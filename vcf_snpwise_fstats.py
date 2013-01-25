@@ -4,12 +4,9 @@
 """
 python vcf_snpwise_fstats.py \
 -i test_data/butterfly.vcf.gz \
-<<<<<<< HEAD
 -p outgroups:h665,i02-210 \
-cydno:c511,c512,c513,c514,c515,c563,c614,c630,c639,c640 \
-melpo:m523,m524,m525,m589,m675,m676,m682,m683,m687,m689 \
-pachi:p516,p517,p518,p519,p520,p591,p596,p690,p694,p696 \
--c 2 \
+pop1:c511,c512,c513,c514,c515,c563,c614,c630,c639,c640 \
+pop2:m523,m524,m525,m589,m675,m676,m682,m683,m687,m689 \
 -o bayesscan.snps \
 """
 
@@ -94,8 +91,11 @@ def main():
         chrm = vcf_line['CHROM']
         pos = vcf_line['POS']
 
+        pop_size_stats = [float_2_string(i, places=4) for i in pop_size_stats]
+        f_stats = [float_2_string(i, places=4) for i in f_stats]
+
         if vcf_count == 1:
-            args.output.write(','.join(['chrm', 'pos', 'snp_count', 'total_depth_mean', 'total_depth_stdev'] \
+            args.output.write(','.join(['chrm', 'pos'] \
                        + map(str, pop_size_order + fstat_order + [pop + "_fixed" for pop in fixed_alleles_order])) + "\n")
             args.output.write(','.join(map(str, [chrm, pos] + pop_size_stats + f_stats + fixed_alleles)) + "\n")
 

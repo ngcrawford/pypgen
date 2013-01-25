@@ -31,17 +31,6 @@ def generate_fstats_from_vcf_slices(slice_indicies, populations, header, args):
         # if count > 1: break
 
 
-def float_2_string(value):
-
-    float_types = [float, numpy.float, numpy.float128, numpy.float16, numpy.float32, numpy.float64]
-    if type(value) in float_types:
-        value = str(round(value, 4))
-
-    else:
-        value = str(value)
-
-    return value
-
 def main():
     # get args.
     args = default_args()
@@ -91,9 +80,9 @@ def main():
         f_stats, fstat_order = f_statistics_2_sorted_list(fstats, order=fstat_order)
         pop_size_stats, pop_size_order = pop_size_statistics_2_sorted_list(pop_size_statistics, order=pop_size_order)
 
-        chrm_start_stop = [float_2_string(i) for i in chrm_start_stop]
-        pop_size_stats = [float_2_string(i) for i in pop_size_stats]
-        f_stats = [float_2_string(i) for i in f_stats]
+        chrm_start_stop = [float_2_string(i, places=4) for i in chrm_start_stop]
+        pop_size_stats = [float_2_string(i, places=4) for i in pop_size_stats]
+        f_stats = [float_2_string(i, places=4) for i in f_stats]
 
         if count == 0:
             args.output.write(','.join(['chrm', 'start', 'stop', 'snp_count', 'total_depth_mean', 'total_depth_stdev'] \
