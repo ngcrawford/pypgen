@@ -146,7 +146,7 @@ def process_snp_call(snp_call, ref, alt, IUPAC_ambiguities=False):
                 else:
                     ref = alt.split(',')[int(allele1) - 1]
                     alt = alt.split(',')[int(allele2) - 1]
-                    call = [ref,alt]
+                    call = [ref, alt]
                     call.sort()
                     call = tuple(call)
                     called_base = IUPAC_dict[call]
