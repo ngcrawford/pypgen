@@ -39,6 +39,7 @@ def main():
     args = default_args()
     args = args.parse_args()
 
+
     # TODO:
     # test that pysam is installed.
     # bgzip check. MDSum?
@@ -56,6 +57,7 @@ def main():
 
     fstat_order = []    # store order of paired samples.
     pop_size_order = []
+    fixed_alleles_order = []
     vcf_count = 0
 
     for count, line in enumerate(open_vcf(args)):
@@ -80,6 +82,8 @@ def main():
         vcf_count += 1
 
         allele_counts = calc_allele_counts(populations, vcf_line)
+
+        fixed_alleles, fixed_alleles_order = identify_fixed_populations(allele_counts, fixed_alleles_order)
         fstats = calc_fstats(allele_counts)
         pop_size_stats = get_population_sizes(vcf_line, populations)
 
@@ -89,15 +93,13 @@ def main():
         chrm = vcf_line['CHROM']
         pos = vcf_line['POS']
 
-        header_line = ','.join(['chrm', 'pos', 'total_depth'] + [pop + '.sample_count' for pop in pop_size_order] + fstat_order + ["\n"])
-        out_line = ','.join(map(str, [chrm, pos] + [vcf_line["INFO"]['DP']] + pop_size_stats + f_stats)) + "\n"
-
         if vcf_count == 1:
-            args.output.write(header_line)
-            args.output.write(out_line)
+            args.output.write(','.join(['chrm', 'pos', 'snp_count', 'total_depth_mean', 'total_depth_stdev'] \
+                       + map(str, pop_size_order + fstat_order + [pop + "_fixed" for pop in fixed_alleles_order])) + "\n")
+            args.output.write(','.join(map(str, [chrm, pos] + pop_size_stats + f_stats + fixed_alleles)) + "\n")
 
         else:
-            args.output.write(out_line)
+            args.output.write(','.join(map(str, [chrm, pos] + pop_size_stats + f_stats + fixed_alleles)) + "\n")
 
 
         #previous_update_time = progress_meter(previous_update_time, chrm, stop, bp_processed, total_bp_in_dataset)
