@@ -1,24 +1,7 @@
+#!/usr/bin/env python
+# encoding: utf-8
+
 import math
-
-# def calc_SNP_freqs(pops):
-
-#   def freq(value,total_count):
-#       """Avoid divide by zero errors"""
-#       if total_count == 0.0:
-#           return value
-#       else:
-#           return value/total_count
-
-#   frequencies = []
-#   coverage = []
-#   for pop in pops:
-#       counts =  [float(value) for value in pop.split(":")]
-#       total_count = float(sum(counts))
-#       coverage.append(total_count)
-#       freqs = [freq(value, total_count) for value in counts]
-#       frequencies.append(freqs)
-
-#   return (frequencies, coverage)
 
 
 def de_NaN_list(l):
@@ -89,7 +72,7 @@ def Ht_est(Ht_p_est, Hs_est, harm_mean, n):
 
 
 def Gst_est(Ht_est, Hs_est):
-    """Gst = (Ht-Hs)/Ht"""
+    """Basic Equation: Gst = (Ht-Hs)/Ht"""
 
     if Ht_est == 0.0:
         return 0.0
@@ -110,7 +93,7 @@ def G_prime_st_est(Ht_est, Hs_est, Gst_est, n):
 
 
 def G_double_prime_st_est(Ht_est, Hs_est, n):
-    """G''st = k*(HT-HS)/((k*HT-HS)*(1-HS)"""
+    """Basic Equation: G''st = k*(HT-HS)/((k*HT-HS)*(1-HS)"""
 
     n = float(n)
     if (n * Ht_est - Hs_est) * (1 - Hs_est) == 0.0:
@@ -121,7 +104,7 @@ def G_double_prime_st_est(Ht_est, Hs_est, n):
 
 
 def D_est(Ht_est, Hs_est, n):
-    """((Ht-Hs)/(1.0-Hs))*(n/(n-1))"""
+    """Basic Equation: ((Ht-Hs)/(1.0-Hs))*(n/(n-1))"""
 
     n = float(n)
     if ((1.0 - Hs_est)) * (n / (n - 1)) == 0.0:
@@ -130,8 +113,12 @@ def D_est(Ht_est, Hs_est, n):
         D_est = ((Ht_est - Hs_est) / (1.0 - Hs_est)) * (n / (n - 1))
         return D_est
 
+###########################################
+#
+#     MULTILOCUS FUNCTIONS:
+#
 
-# MULTILOCUS FUNCTIONS
+
 def multilocus_Gst_est(Ht_est, Hs_est):
     """Averages Ht_est and Hs_est across loci before calculating Gst."""
 

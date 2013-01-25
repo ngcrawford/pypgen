@@ -18,12 +18,12 @@ def default_args():
     """Parse sys.argv"""
     parser = argparse.ArgumentParser()
 
-    parser.add_argument('-i', '--input', 
+    parser.add_argument('-i', '--input',
                         required=True, 
                         type=str,
                         help='Path to VCF file.')
     
-    parser.add_argument('-o','--output', 
+    parser.add_argument('-o', '--output',
                         nargs='?', 
                         type=argparse.FileType('w'),
                         default=sys.stdout,
@@ -538,6 +538,7 @@ def generate_fstats_from_vcf_slices(slice_indicies, populations, header, args):
                chrm, start, stop, populations, header, 
                args.min_samples]
 
+
 def process_outgroup(vcf_line, populations):
     og = populations["Outgroup"]
 
@@ -549,16 +550,16 @@ def process_outgroup(vcf_line, populations):
 
     # Get unique genotypes and only return
     # genotypic information if the genotype is
-    # homozygous for both samples wit 
-    
+    # homozygous for both samples with
+
     gt = set(gt)
     if len(gt) == 1:
         gt = tuple(gt)[0]
-        gt = set(re.split(r"/|\|", gt)) # split on "/" or "|"
-        
+        gt = set(re.split(r"/|\|", gt))   # split on "/" or "|"
+
         if len(gt) == 1:
             return tuple(gt)[0]
-        else: 
+        else:
             return None
 
     else:
@@ -583,6 +584,9 @@ def identify_fixed_populations(allele_counts, order):
     return (fixed_pops, order)
 
 
+def vcf_line_to_snp_array(vcf_line_dict):
+    pass
+    
 
 def calc_slice_stats(data):
     """Main function for caculating statistics.
@@ -606,7 +610,6 @@ def calc_slice_stats(data):
 
         Hs_est_dict = {}
         Ht_est_dict = {}
-        ordered_list = None
         snp_count = 0
 
         for count, line in enumerate(tabix_slice):
@@ -652,6 +655,4 @@ def calc_slice_stats(data):
 
             return ([chrm, start, stop, snp_count, total_depth.mean(), total_depth.std()], \
                  pop_size_statistics, multilocus_f_statistics)
-
-
 
