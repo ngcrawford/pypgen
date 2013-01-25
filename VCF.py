@@ -303,38 +303,41 @@ def parse_vcf_line(pos, vcf_line_dict):
 
     return vcf_line_dict
 
+
 def get_population_sizes(vcfline, populations):
 
     sample_counts = {}
 
     for pop in populations.keys():
         sample_count = 0
-        
+
         for sample in populations[pop]:
             if vcfline[sample] is not None:
                 sample_count += 1
-    
+
         sample_counts[pop] = sample_count
 
     return sample_counts
+
 
 def summarize_population_sizes(dict_of_sizes):
     results = {}
     for pop, sizes, in dict_of_sizes.iteritems():
         sizes = np.array(sizes)
-        results[pop+'.sample_count.mean'] = sizes.mean()
-        results[pop+'.sample_count.stdev'] = np.std(sizes)
+        results[pop + '.sample_count.mean'] = sizes.mean()
+        results[pop + '.sample_count.stdev'] = np.std(sizes)
 
     return results
+
 
 def pop_size_statistics_2_sorted_list(pop_size_statistics, order):
 
     if len(order) == 0:
         order = pop_size_statistics.keys()
         order.sort()
-    
+
     stats = []
-    for key in order:  
+    for key in order:
         stat = pop_size_statistics[key]
         stats.append(stat)
 
