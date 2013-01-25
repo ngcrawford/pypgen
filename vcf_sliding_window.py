@@ -12,9 +12,11 @@ pachi:p516,p517,p518,p519,p520,p591,p596,p690,p694,p696 \
 -r Chr01:1-10001 | head
 """
 
+
 from VCF import *
 from helpers import *
 import multiprocessing
+import numpy
 
 
 def generate_fstats_from_vcf_slices(slice_indicies, populations, header, args):
@@ -28,6 +30,17 @@ def generate_fstats_from_vcf_slices(slice_indicies, populations, header, args):
 
         # if count > 1: break
 
+
+def float_2_string(value):
+
+    float_types = [float, numpy.float, numpy.float128, numpy.float16, numpy.float32, numpy.float64]
+    if type(value) in float_types:
+        value = str(round(value, 4))
+
+    else:
+        value = str(value)
+
+    return value
 
 def main():
     # get args.
@@ -78,16 +91,17 @@ def main():
         f_stats, fstat_order = f_statistics_2_sorted_list(fstats, order=fstat_order)
         pop_size_stats, pop_size_order = pop_size_statistics_2_sorted_list(pop_size_statistics, order=pop_size_order)
 
+        chrm_start_stop = [float_2_string(i) for i in chrm_start_stop]
+        pop_size_stats = [float_2_string(i) for i in pop_size_stats]
+        f_stats = [float_2_string(i) for i in f_stats]
+
         if count == 0:
             args.output.write(','.join(['chrm', 'start', 'stop', 'snp_count', 'total_depth_mean', 'total_depth_stdev'] \
                        + map(str, pop_size_order) + map(str, fstat_order)) + "\n")
-
-            args.output.write(','.join(map(str, chrm_start_stop) + map(str, pop_size_stats) + map(str, f_stats)) + "\n")
+            args.output.write(','.join(chrm_start_stop + pop_size_stats + f_stats) + "\n")
         else:
-            args.output.write(','.join(map(str, chrm_start_stop) + map(str, pop_size_stats) + map(str, f_stats)) + "\n")
+            args.output.write(','.join(chrm_start_stop + pop_size_stats + f_stats) + "\n")
 
-        chrm, start, stop = chrm_start_stop[0:3]
-        bp_processed += args.window_size
 
 if __name__ == '__main__':
     main()
