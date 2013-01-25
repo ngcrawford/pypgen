@@ -1,21 +1,32 @@
 Welcome to Pypgen (v0.2.0)
 --------------------------
 
-Pypgen provides various utilities for estimating standard genetic diversity measures such as Gst, G'st, G''st, and Jost's D from large genomic datasets (Hedrick, 2005; Jost, 2008; Masatoshi Nei, 1973; Nei & Chesser, 1983). Pypgen operates both on the level of individual SNPs as well as on user defined regions (e.g., five kilobases windows tiled across each chromosome). For the windowed analyses, pypgen estimates the multi-locus versions of each of the estimators. Pypgen operates on standard [VCF (Variant Call Format)][1] formatted SNP calls. Pypgen includes UnitTests and is written to take 
+Pypgen provides various utilities for estimating standard genetic diversity measures such as Gst, G'st, G''st, and Jost's D from large genomic datasets (Hedrick, 2005; Jost, 2008; Masatoshi Nei, 1973; Nei & Chesser, 1983). Pypgen operates both on the level of individual SNPs as well as on user defined regions (e.g., five kilobase windows tiled across each chromosome). For the windowed analyses, pypgen estimates the multi-locus versions of each of the estimators. Pypgen operates on standard [VCF (Variant Call Format)][1] formatted SNP calls.
 
-**NOTE:**
+### Features:
+- Takes advantage of multiple processor cores
+- Handles multiallelic SNP calls
+- Allows a single VCF file to contain multiple populations
+- Calculates additional summary statistics:
+	- snp_count 
+	- mean read depth and standard deviation 
+- UnitTests
+
+### Important Notes:
 PYPGEN IS STILL IN ACTIVE DEVELOPMENT AND ALMOST CERTAINLY CONTAINS BUGS. IF YOU FIND A BUG PLEASE FILE A REPORT IN THE 'ISSUES' SECTION AND I'LL ADDRESS IT AS SOON AS I CAN. 
 
-**Scripts:**
+### Enclosed Scripts:
 
 - Sliding window analysis (vcf_sliding_window.py) 
 - Per SNP analysis (vcf_snpwise_fstats.py)
 - UnitTests (vcf_tests.py)
 
-**Methods:**
+### Dependancies:
 
+- Python 2.7
+- Numpy 
 
-**Citations:**
+### Citations:
 
 - Crawford, N. G. (2009). SMOGD: software for the measurement of genetic diversity. Molecular Ecology Resources, 10, 556-557. doi:10.1111/j.1755-0998.2009.02801.x
 - Hedrick, P. W. (2005). A standardized genetic differentiation measure. Evolution; international journal of organic evolution, 59(8), 1633-1638.
