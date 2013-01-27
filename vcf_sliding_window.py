@@ -45,7 +45,6 @@ def main():
     # 2. process chrm sizes and return as
     #    slices and a zipped list (chrm, (start, stop))
     slice_indicies = get_slice_indicies(args.input, args.regions, args.window_size, args.regions_to_skip)
-    bp_processed = 0
 
     # Calculate the total size of the dataset
     # Get information about samples from the header.
@@ -60,6 +59,14 @@ def main():
     pop_size_order = []
 
     p = multiprocessing.Pool(processes=int(args.cores))
+
+    def truncate_decimals(value):
+        try:
+            result = "{:.4f}".format(value)
+        except:
+            result = str(value)
+        return result
+
 
     fstat_input_iterator = generate_fstats_from_vcf_slices(slice_indicies, populations, empty_vcf_line, args)
     for count, result in enumerate(p.map(calc_slice_stats, fstat_input_iterator)):
@@ -80,9 +87,12 @@ def main():
         f_stats, fstat_order = f_statistics_2_sorted_list(fstats, order=fstat_order)
         pop_size_stats, pop_size_order = pop_size_statistics_2_sorted_list(pop_size_statistics, order=pop_size_order)
 
-        chrm_start_stop = [float_2_string(i, places=4) for i in chrm_start_stop]
-        pop_size_stats = [float_2_string(i, places=4) for i in pop_size_stats]
-        f_stats = [float_2_string(i, places=4) for i in f_stats]
+        # REWRITE USING FORMAT STRINGS....
+
+
+        chrm_start_stop = [float_2_string(i) for i in chrm_start_stop]
+        pop_size_stats = [float_2_string(i) for i in pop_size_stats]
+        f_stats = [float_2_string(i) for i in f_stats]
 
         if count == 0:
             args.output.write(','.join(['chrm', 'start', 'stop', 'snp_count', 'total_depth_mean', 'total_depth_stdev'] \
