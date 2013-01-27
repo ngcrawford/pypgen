@@ -353,35 +353,35 @@ def format_output(chrm, start, stop, depth, stat_id, multilocus_f_statistics):
 
         if multilocus_f_statistics[pair][stat_id] == np.nan:
             value = 'NA'
-        
+
         else:
             value = str(multilocus_f_statistics[pair][stat_id])
-        
+
         line += "," + value
-    
+
     line += "\n"
     return (line)
 
 def calc_allele_counts(populations, vcf_line_dict):
 
     #allele_counts = defaultdict({0:0.0,1:0.0,2:0.0,3:0.0,4:0.0})
-    allele_counts = dict((key, {0:0.0,1:0.0,2:0.0,3:0.0}) for key in populations.keys())
-    
+    allele_counts = dict((key, {0:0.0, 1:0.0, 2:0.0, 3:0.0}) for key in populations.keys())
 
     for population in populations.keys():
         for sample_id in populations[population]:
 
             if vcf_line_dict[sample_id] != None:
-                
-                genotype = vcf_line_dict[sample_id]
-                genotype = genotype["GT"].split("/") # TODO add phased logic
 
-                if genotype == [".","."]: continue
+                genotype = vcf_line_dict[sample_id]
+                genotype = genotype["GT"].split("/")   # TODO add phased logic
+
+                if genotype == [".", "."]:
+                    continue
 
                 genotype = [int(item) for item in genotype]
-                
+
                 for allele in genotype:
-                    allele_counts[population][allele] += 1.0 
+                    allele_counts[population][allele] += 1.0
 
     return allele_counts
 
@@ -393,13 +393,13 @@ def calc_fstats(allele_counts):
     populations = allele_counts.keys()
 
     for population in allele_counts.keys():
-        counts =  allele_counts[population].values()
-        
+        counts = allele_counts[population].values()
+
         if sum(counts) == 0.0:
             freqs = [0.0] * 4
 
         else:
-            freqs =  [count/sum(counts) for count in counts]
+            freqs = [count / sum(counts) for count in counts]
 
         allele_freqs_dict[population] = freqs
 
@@ -408,20 +408,21 @@ def calc_fstats(allele_counts):
 
     # CACULATE PAIRWISE F-STATISTICS
     pairwise_results = {}
-    for population_pair in combinations(populations,2):
-        
-        pop1, pop2 =  population_pair
+
+    for population_pair in combinations(populations, 2):
+
+        pop1, pop2 = population_pair
         Ns = [sum(allele_counts[pop].values()) for pop in [pop1, pop2]]
 
-        if 0 in Ns: 
+        if 0 in Ns:
             values = [np.nan, np.nan, np.nan, np.nan, np.nan, np.nan]
-            values_dict = dict(zip(['Hs_est', 'Ht_est', 'Gst_est', 
-                                    'G_prime_st_est', 'G_double_prime_st_est', 
+            values_dict = dict(zip(['Hs_est', 'Ht_est', 'Gst_est',
+                                    'G_prime_st_est', 'G_double_prime_st_est',
                                     'D_est'],
                                     values))
             pairwise_results[population_pair] = values_dict
             continue
-        
+
         else:
 
             pop1 = allele_freqs_dict[pop1]
@@ -431,7 +432,6 @@ def calc_fstats(allele_counts):
 
             n = float(len(Ns))
             Ns_harm = fstats.harmonic_mean(Ns)
-            Ns_harm_chao = fstats.harmonic_mean_chao(Ns)
 
             # CALCULATE Hs AND Ht
             n = 2
@@ -445,18 +445,19 @@ def calc_fstats(allele_counts):
             G_prime_st_est_ = fstats.G_prime_st_est(Ht_est_, Hs_est_, Gst_est_, n)
             G_double_prime_st_est_ = fstats.G_double_prime_st_est(Ht_est_, Hs_est_, n)
             D_est_ = fstats.D_est(Ht_est_, Hs_est_, n)
-            
+
             # FORMAT
-            values = [Hs_est_, Ht_est_, Gst_est_, G_prime_st_est_, 
+            values = [Hs_est_, Ht_est_, Gst_est_, G_prime_st_est_,
                       G_double_prime_st_est_, D_est_]
             values_dict = dict(zip(['Hs_est', 'Ht_est', 'Gst_est', \
-                                    'G_prime_st_est', 'G_double_prime_st_est', 
+                                    'G_prime_st_est', 'G_double_prime_st_est',
                                     'D_est'],
                                     values))
 
             pairwise_results[population_pair] = values_dict
 
     return pairwise_results
+
 
 def calc_multilocus_f_statistics(Hs_est_dict, Ht_est_dict):
 
@@ -471,7 +472,7 @@ def calc_multilocus_f_statistics(Hs_est_dict, Ht_est_dict):
         pairs = [pair for pair in pairs if np.nan not in pair]
 
         multilocus_f_statistics[key] = None
-        
+
         if len(pairs) != 0:
 
             # THIS REMOVES NaNs FROM THE Ht and Hs LISTS
@@ -549,8 +550,8 @@ def generate_fstats_from_vcf_slices(slice_indicies, populations, header, args):
     for count, si in enumerate(slice_indicies):
         chrm, start, stop = si
 
-        yield [slice_vcf(args.input, chrm, start, stop), 
-               chrm, start, stop, populations, header, 
+        yield [slice_vcf(args.input, chrm, start, stop),
+               chrm, start, stop, populations, header,
                args.min_samples]
 
 
