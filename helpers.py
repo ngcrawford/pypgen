@@ -8,7 +8,7 @@ def float_2_string(value, places):
     """Convert value to string truncting the number
         of decimals at the number of places given by
         the places arguement. """
-    
+
     float_types = [float, numpy.float, numpy.float128, numpy.float16, numpy.float32, numpy.float64]
     if type(value) in float_types:
         value = str(round(value, places))

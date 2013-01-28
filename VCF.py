@@ -7,6 +7,7 @@ import sys
 import gzip
 import pysam
 import argparse
+import helpers
 import itertools
 import numpy as np
 from fstats import fstats
@@ -16,7 +17,9 @@ from itertools import combinations, izip_longest
 
 def default_args():
     """Parse sys.argv"""
-    parser = argparse.ArgumentParser()
+    parser = argparse.ArgumentParser(formatter_class=argparse.RawDescriptionHelpFormatter)
+
+
 
     parser.add_argument('-i', '--input',
                         required=True,
@@ -26,7 +29,7 @@ def default_args():
     parser.add_argument('-o', '--output',
                         nargs='?',
                         type=argparse.FileType('w'),
-                        default=sys.stdout,
+                        default=helpers.Unbuffered(sys.stdout),  # forces consistent writing to STOUT
                         help='Path to output csv file. \
                               If path is not set, defaults to STDOUT.')
 

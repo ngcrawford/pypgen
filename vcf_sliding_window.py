@@ -1,22 +1,11 @@
 #!/usr/bin/env python
 # encoding: utf-8
 
-"""
-python vcf_sliding_window.py \
--i test_data/butterfly.vcf.gz \
--p cydno:c511,c512,c513,c514,c515,c563,c614,c630,c639,c640 \
-outgroups:h665,i02-210 \
-melpo:m523,m524,m525,m589,m675,m676,m682,m683,m687,m689 \
-pachi:p516,p517,p518,p519,p520,p591,p596,p690,p694,p696 \
--c 2 \
--r Chr01:1-10001 | head
-"""
 
-
+import textwrap
 from VCF import *
 from helpers import *
 import multiprocessing
-import numpy
 
 
 def generate_fstats_from_vcf_slices(slice_indicies, populations, header, args):
@@ -31,9 +20,32 @@ def generate_fstats_from_vcf_slices(slice_indicies, populations, header, args):
         # if count > 1: break
 
 
+def truncate_decimals(value):
+    try:
+        result = "{:.4f}".format(value)
+    except:
+        result = str(value)
+    return result
+
+
 def main():
     # get args.
     args = default_args()
+
+    args.description  = textwrap.dedent("""\
+    vcf_sliding_window.py version 0.2.0 beta by Nicholas Crawford (ngcrawford@gmail.com)
+
+    Working Example:
+        python vcf_sliding_window.py \\
+        -i test_data/butterfly.vcf.gz \\
+        -p cydno:c511,c512,c513,c514,c515,c563,c614,c630,c639,c640 \\
+        outgroups:h665,i02-210 \\
+        melpo:m523,m524,m525,m589,m675,m676,m682,m683,m687,m689 \\
+        pachi:p516,p517,p518,p519,p520,p591,p596,p690,p694,p696 \\
+        -c 2 \\
+        -r Chr01:1-10001 | head
+    """)
+
     args = args.parse_args()
 
     # TODO:
@@ -58,18 +70,10 @@ def main():
     fstat_order = []   # store order of paired samples.
     pop_size_order = []
 
-    p = multiprocessing.Pool(processes=int(args.cores))
-
-    def truncate_decimals(value):
-        try:
-            result = "{:.4f}".format(value)
-        except:
-            result = str(value)
-        return result
-
+    p = multiprocessing.Pool(processes=int(args.cores), maxtasksperchild=10000)
 
     fstat_input_iterator = generate_fstats_from_vcf_slices(slice_indicies, populations, empty_vcf_line, args)
-    for count, result in enumerate(p.map(calc_slice_stats, fstat_input_iterator)):
+    for count, result in enumerate(p.imap(calc_slice_stats, fstat_input_iterator)):
 
         # TO DO: Figure out why some samples have no data (BUG?!)
         if result == None:
@@ -89,10 +93,9 @@ def main():
 
         # REWRITE USING FORMAT STRINGS....
 
-
-        chrm_start_stop = [float_2_string(i) for i in chrm_start_stop]
-        pop_size_stats = [float_2_string(i) for i in pop_size_stats]
-        f_stats = [float_2_string(i) for i in f_stats]
+        chrm_start_stop = [float_2_string(i, 4) for i in chrm_start_stop]
+        pop_size_stats = [float_2_string(i, 4) for i in pop_size_stats]
+        f_stats = [float_2_string(i, 4) for i in f_stats]
 
         if count == 0:
             args.output.write(','.join(['chrm', 'start', 'stop', 'snp_count', 'total_depth_mean', 'total_depth_stdev'] \
