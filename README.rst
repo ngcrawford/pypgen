@@ -22,9 +22,10 @@ Features:
 -  Allows a single VCF file to contain multiple populations
 -  Calculates additional metrics:
 
-   -  snp count
-   -  populations with fixed alleles (per SNP)
-   -  mean read depth (+/- STDEV)
+   -  snp count per window
+   -  mean read depth (+/- STDEV) per window
+
+   -  populations with fixed alleles per SNP
    -  more as I think of them
 
 Important Note:
@@ -39,7 +40,6 @@ Enclosed Scripts:
 
 -  Sliding window analysis (vcf\_sliding\_window.py)
 -  Per SNP analysis (vcf\_snpwise\_fstats.py)
--  UnitTests (vcf\_tests.py)
 
 Dependancies:
 ~~~~~~~~~~~~~
@@ -49,9 +49,6 @@ Dependancies:
 -  `Numpy <http://www.numpy.org>`_
 -  `pysam <http://wwwfgu.anat.ox.ac.uk/~andreas/documentation/samtools/contents.html>`_
    and `samtools <http://samtools.sourceforge.net/>`_
-
-Note: a *setup.py* script that will automate the installation of the
-depencancies will be forthcoming.
 
 Installation:
 ~~~~~~~~~~~~~
@@ -70,7 +67,13 @@ You should be able to run the UnitTests without any problems:
 
 ::
 
-        python vcf_tests.py
+        python scr/tests/tests.py
+
+or,
+
+::
+
+        nosetests
 
 Infomation about each script can be obtained by running:
 
