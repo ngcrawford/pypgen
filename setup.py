@@ -11,27 +11,33 @@ setup(
     license='LICENSE.txt',
     description='Genetic diversity metrics from popoulation genomic datasets.',
     long_description=open('README.rst').read(),
-    test_suite='tests',
-    install_requires=[
-        "numpy >= 1.6.1",
-        "pysam >= 0.6"
-    ],
+    test_suite='src/tests',
+    # install_requires=[
+    #     "numpy == 1.6.1",
+    #     "pysam == 0.7.2"
+    # ],
 
     packages=[
-            'fstats',
+            'src.fstats',
+            'src.parser',
+            'src.misc'
             ],
 
-    package_data = {
-            '': ['*.txt'],     # READMEs, etc
-            'test_data': [
+    package_data={
+            '': ['*.txt',
+                 '*.rst'],     # READMEs, etc
+            'src/data': [
                 'butterfly.vcf.gz',
                 'butterfly.vcf.gz.tbi',
             ]
         },
-    include_package_data = True,
-    scripts = [
-              'cloudforest/nexus2oneliner.py',
-              'cloudforest/phylip2oneliner.py',
-              'cloudforest/process.py'
-              ],
+
+    include_package_data=True,
+
+    scripts=[
+             'src/vcf2Dadi.py',
+             'src/vcf2phylip.py',
+             'src/vcf_sliding_window.py',
+             'src/vcf_snpwise_fstats.py',
+            ],
 )
