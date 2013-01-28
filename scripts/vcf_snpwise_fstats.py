@@ -5,8 +5,7 @@ import re
 import textwrap
 import multiprocessing
 from pypgen.parser.VCF import *
-from misc.helpers import *
-
+from pypgen.misc.helpers import *
 
 
 def process_header(tabix_file):

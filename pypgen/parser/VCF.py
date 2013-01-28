@@ -7,10 +7,10 @@ import sys
 import gzip
 import pysam
 import argparse
-from misc import helpers
 import itertools
 import numpy as np
-from fstats import fstats
+from pypgen.misc import helpers
+from pypgen.fstats import fstats
 from collections import OrderedDict, defaultdict
 from itertools import combinations, izip_longest
 

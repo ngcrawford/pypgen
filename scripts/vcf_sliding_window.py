@@ -2,9 +2,10 @@
 # encoding: utf-8
 
 import textwrap
-from pypgen.parser.VCF import *
-from misc.helpers import *
 import multiprocessing
+from pypgen.parser.VCF import *
+from pypgen.misc.helpers import *
+
 
 
 def generate_fstats_from_vcf_slices(slice_indicies, populations, header, args):
