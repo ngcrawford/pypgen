@@ -18,3 +18,4 @@ bayes_practice
 *.fstats.txt
 *.png
 *snps*
+build

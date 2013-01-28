@@ -11,16 +11,19 @@ setup(
     license='LICENSE.txt',
     description='Genetic diversity metrics from popoulation genomic datasets.',
     long_description=open('README.rst').read(),
-    test_suite='src/tests',
+    test_suite='nose.collector',
+    tests_require=['nose'],
     # install_requires=[
-    #     "numpy == 1.6.1",
-    #     "pysam == 0.7.2"
+    #     "pyrex",
+    #     'cython',
+    # #     "numpy == 1.6.1",
+    #      "pysam == 0.7.2"
     # ],
 
     packages=[
-            'src.fstats',
-            'src.parser',
-            'src.misc'
+            'pypgen.fstats',
+            'pypgen.parser',
+            'pypgen.misc'
             ],
 
     package_data={
@@ -35,9 +38,9 @@ setup(
     include_package_data=True,
 
     scripts=[
-             'src/vcf2Dadi.py',
-             'src/vcf2phylip.py',
-             'src/vcf_sliding_window.py',
-             'src/vcf_snpwise_fstats.py',
+             'scripts/vcf2Dadi.py',
+             'scripts/vcf2phylip.py',
+             'scripts/vcf_sliding_window.py',
+             'scripts/vcf_snpwise_fstats.py',
             ],
 )
