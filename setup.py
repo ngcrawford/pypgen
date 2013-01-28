@@ -29,9 +29,9 @@ setup(
     package_data={
             '': ['*.txt',
                  '*.rst'],     # READMEs, etc
-            'src/data': [
-                'butterfly.vcf.gz',
-                'butterfly.vcf.gz.tbi',
+            'pypgen/data': [
+                'example.vcf.gz',
+                'example.vcf.gz.tbi',
             ]
         },
 
