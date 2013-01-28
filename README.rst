@@ -69,7 +69,7 @@ You should be able to run the UnitTests without any problems:
 
         python scr/tests/tests.py
 
-or, install and run nose
+or, install and run nose:
 
 ::
 
