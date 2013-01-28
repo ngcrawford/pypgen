@@ -11,7 +11,7 @@ setup(
     license='LICENSE.txt',
     description='Genetic diversity metrics from popoulation genomic datasets.',
     long_description=open('README.rst').read(),
-    test_suite='vcf_tests.py',
+    test_suite='tests',
     install_requires=[
         "numpy >= 1.6.1",
         "pysam >= 0.6"
