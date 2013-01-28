@@ -69,10 +69,11 @@ You should be able to run the UnitTests without any problems:
 
         python scr/tests/tests.py
 
-or,
+or, install and run nose
 
 ::
 
+        pip install nose
         nosetests
 
 Infomation about each script can be obtained by running:
