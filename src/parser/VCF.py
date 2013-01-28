@@ -7,7 +7,7 @@ import sys
 import gzip
 import pysam
 import argparse
-import helpers
+from misc import helpers
 import itertools
 import numpy as np
 from fstats import fstats
@@ -18,8 +18,6 @@ from itertools import combinations, izip_longest
 def default_args():
     """Parse sys.argv"""
     parser = argparse.ArgumentParser(formatter_class=argparse.RawDescriptionHelpFormatter)
-
-
 
     parser.add_argument('-i', '--input',
                         required=True,
