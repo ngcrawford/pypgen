@@ -17,5 +17,6 @@ bayes_practice
 *dadi.txt
 *.fstats.txt
 *.png
-*snps*
+*snps*:
 build
+/dist/
