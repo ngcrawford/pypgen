@@ -78,7 +78,8 @@ More detailed documentation will be forthcoming, but in the meantime information
 
 ::
 
-        python [script name].py --help
+        [script name].py --help
+
 
 Output: 
 +++++++
