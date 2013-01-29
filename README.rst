@@ -112,16 +112,16 @@ Note: this will probably change.
 -  *chrm* = Name of chromosome
 -  *pos* = Position of SNP
 -  *outgroups* = Number of samples
--  *pop1* = Population ID
--  *pop1.outgroups.D\_est*\ = Multilocus Dest (Jost 2008)
--  *pop1.outgroups.G\_double\_prime\_st\_est* = (Meirmans & Hedrick
+-  *Pop1* = Population ID
+-  *Pop1.Pop2.D\_est*\ = Multilocus Dest (Jost 2008)
+-  *Pop1.Pop2.G\_double\_prime\_st\_est* = (Meirmans & Hedrick
    2011)
--  *pop1.outgroups.G\_prime\_st\_est* = Standardized Gst (Hedrick 2005)
--  *pop1.outgroups.Gst\_est* = Fst corrected for sample size and
+-  *Pop1.Pop2.G\_prime\_st\_est* = Standardized Gst (Hedrick 2005)
+-  *Pop1.Pop2.Gst\_est* = Fst corrected for sample size and
    allowing for multiallelic loci (Nei & Chesser 1983)
--  *pop1.outgroups.Hs\_est*
--  *pop1.outgroups.Ht\_est*
+-  *Pop1.Pop2.Hs\_est*
+-  *Pop1.Pop2.Ht\_est*
 -  cont...,
--  *outgroups\_fixed* = If a sample is fixed at a particular allele this
+-  *Pop1\_fixed* = If a sample is fixed at a particular allele this
    flag is set to 1 (= "True" in binary).
 -  cont...
