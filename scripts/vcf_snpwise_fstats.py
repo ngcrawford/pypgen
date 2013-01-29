@@ -36,8 +36,8 @@ def main():
     Nicholas Crawford (ngcrawford@gmail.com)
 
     Working Example:
-        python vcf_snpwise_fstats.py \\
-        -i data/example.vcf.gz \\
+        python scripts/vcf_snpwise_fstats.py \\
+        -i pypgen/data/example.vcf.gz \\
         -p outgroups:h665,i02-210 \\
         pop1:c511,c512,c513,c514,c515,c563,c614,c630,c639,c640 \\
         pop2:m523,m524,m525,m589,m675,m676,m682,m683,m687,m689 \\
