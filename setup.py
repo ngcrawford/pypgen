@@ -4,7 +4,7 @@ from setuptools import setup
 
 setup(
     name='pypgen',
-    version='0.2.0',
+    version='0.2.1',
     author='Nicholas G. Crawford',
     author_email='ngcrawford@gmail.com',
     url='http://pypi.python.org/pypi/pypgen/',
