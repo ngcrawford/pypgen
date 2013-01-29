@@ -73,6 +73,7 @@ def main():
     p = multiprocessing.Pool(processes=int(args.cores), maxtasksperchild=10000)
 
     fstat_input_iterator = generate_fstats_from_vcf_slices(slice_indicies, populations, empty_vcf_line, args)
+    #for count, result in enumerate(map(calc_slice_stats, fstat_input_iterator)):
     for count, result in enumerate(p.imap(calc_slice_stats, fstat_input_iterator)):
 
         # TO DO: Figure out why some samples have no data (BUG?!)

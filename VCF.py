@@ -486,7 +486,7 @@ def calc_multilocus_f_statistics(Hs_est_dict, Ht_est_dict):
             Gst_est = fstats.multilocus_Gst_est(Ht_est_list_no_NaN, Hs_est_list_no_NaN)
             G_prime_st_est = fstats.multilocus_G_prime_st_est(Ht_est_list_no_NaN, Hs_est_list_no_NaN, n)
             G_double_prime_st_est = fstats.multilocus_G_double_prime_st_est(Ht_est_list_no_NaN, Hs_est_list_no_NaN, n)
-            
+
             # NOTE that the Dest calculation handles NaN's better and
             # can use the raw Hs and Ht calls
             D_est = fstats.multilocus_D_est(Ht_est_list, Hs_est_list, n)
@@ -500,9 +500,9 @@ def calc_multilocus_f_statistics(Hs_est_dict, Ht_est_dict):
 
 
 def update_Hs_and_Ht_dicts(f_statistics, Hs_est_dict, Ht_est_dict):
-    
+
     for pop_pair in f_statistics.keys():
-    
+
         if Hs_est_dict.has_key(pop_pair) == True:
             Hs_est_dict[pop_pair].append(f_statistics[pop_pair]['Hs_est'])
         else:
@@ -512,25 +512,30 @@ def update_Hs_and_Ht_dicts(f_statistics, Hs_est_dict, Ht_est_dict):
             Ht_est_dict[pop_pair].append(f_statistics[pop_pair]['Ht_est'])
         else:
             Ht_est_dict[pop_pair] = [f_statistics[pop_pair]['Ht_est']]
-    
+
     return (Hs_est_dict, Ht_est_dict)
 
 def f_statistics_2_sorted_list(multilocus_f_statistics, order=[]):
-    
+
     if len(order) == 0:
-        
+
         for pair in multilocus_f_statistics.keys():
-            joined_pair = '.'.join(pair) 
+            joined_pair = '.'.join(pair)
             for stat in multilocus_f_statistics[pair].keys():
-                order.append('.'.join((joined_pair,stat)))
-        
+                order.append('.'.join((joined_pair, stat)))
+
         order.sort()
-    
+
+
     stats = []
     for key in order:
         pop1, pop2, stat = key.split(".")
-        stat = multilocus_f_statistics[(pop1,pop2)][stat]
-        stats.append(stat)
+
+        if stat == None:                # TO DO: figure out why this occurs
+            stats.append(np.nan)
+        else:
+            stat = multilocus_f_statistics[(pop1, pop2)][stat]
+            stats.append(stat)
 
     return (stats, order)
 
@@ -547,6 +552,7 @@ def process_header(tabix_file):
             chrm_lenghts_dict[chrm] = length
 
     return chrm_lenghts_dict
+
 
 def generate_fstats_from_vcf_slices(slice_indicies, populations, header, args):
 
@@ -584,6 +590,7 @@ def process_outgroup(vcf_line, populations):
     else:
         return None
 
+
 def identify_fixed_populations(allele_counts, order):
 
     if len(order) == 0:
@@ -605,7 +612,7 @@ def identify_fixed_populations(allele_counts, order):
 
 def vcf_line_to_snp_array(vcf_line_dict):
     pass
-    
+
 
 def calc_slice_stats(data):
     """Main function for caculating statistics.
@@ -617,7 +624,7 @@ def calc_slice_stats(data):
 
     #progress_meter(starting_time, chrm, stop, bp_processed, total_bp_in_dataset)
 
-    if len(tabix_slice) == 0:
+    if tabix_slice == None or len(tabix_slice) == 0:  # skip empty alignments
         return None
 
     else:
