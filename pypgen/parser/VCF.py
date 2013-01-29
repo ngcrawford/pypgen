@@ -260,13 +260,14 @@ def slice_vcf(vcf_bgzipped_file, chrm, start, stop):
 
 
 def parse_info_field(info_field):
-    
+
     info_dict = {}
     for item in info_field.split(';'):
-        pair = item.split("=") 
+        pair = item.split("=")
         if len(pair) == 2:
-            info_dict[pair[0]] = pair[1] # this could be improved on
+            info_dict[pair[0]] = pair[1]   # this could be improved on
     return info_dict
+
 
 def parse_vcf_line(pos, vcf_line_dict):
     """Read in VCF line and convert it to an OrderedDict"""
@@ -529,11 +530,11 @@ def f_statistics_2_sorted_list(multilocus_f_statistics, order=[]):
     for key in order:
         pop1, pop2, stat = key.split(".")
 
-        if stat == None:                # TO DO: figure out why this occurs
+        if multilocus_f_statistics[(pop1, pop2)] == None:                # TO DO: figure out why this occurs
             stats.append(np.nan)
         else:
-            stat = multilocus_f_statistics[(pop1, pop2)][stat]
-            stats.append(stat)
+            value = multilocus_f_statistics[(pop1, pop2)][stat]
+            stats.append(value)
 
     return (stats, order)
 

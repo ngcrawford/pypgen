@@ -1,6 +1,10 @@
 #!/usr/bin/env python
 # encoding: utf-8
 
+import sys; import os
+sys.path.insert(0, os.path.abspath('..'))  # Seriously?! This is fucking ugly.
+
+
 import textwrap
 import multiprocessing
 from pypgen.parser.VCF import *
@@ -36,8 +40,8 @@ def main():
     vcf_sliding_window.py version 0.2.0 beta by Nicholas Crawford (ngcrawford@gmail.com)
 
     Working Example:
-        python vcf_sliding_window.py \\
-        -i data/example.vcf.gz \\
+        python scripts/vcf_sliding_window.py \\
+        -i pypgen/data/example.vcf.gz \\
         -p cydno:c511,c512,c513,c514,c515,c563,c614,c630,c639,c640 \\
         outgroups:h665,i02-210 \\
         melpo:m523,m524,m525,m589,m675,m676,m682,m683,m687,m689 \\
