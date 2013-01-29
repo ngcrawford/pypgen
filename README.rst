@@ -10,7 +10,7 @@ across each chromosome). For the windowed analyses, pypgen estimates the
 multi-locus versions of each estimator.
 
 Features:
-~~~~~~~~~
++++++++++
 
 -  Handles multiallelic SNP calls
 -  Allows a single VCF file to contain multiple populations
@@ -28,29 +28,29 @@ Features:
    -  more as I think of them
 
 Important Note:
-~~~~~~~~~~~~~~~
++++++++++++++++
 
 PYPGEN IS STILL IN ACTIVE DEVELOPMENT AND ALMOST CERTAINLY CONTAINS
 BUGS. If you find a bug please file a report in the `issues section <https://github.com/ngcrawford/pypgen/issues>`_ of
 the github repository and I'll address it as soon as I can.
 
 Enclosed Scripts:
-~~~~~~~~~~~~~~~~~
++++++++++++++++++
 
 -  Sliding window analysis (vcf\_sliding\_window.py)
 -  Per SNP analysis (vcf\_snpwise\_fstats.py)
 
 Dependancies:
-~~~~~~~~~~~~~
++++++++++++++
 
 -  OSX or Linux
 -  `Python 2.7 <http://www.python.org/download/releases/2.7/>`_
 -  `Numpy <http://www.numpy.org>`_
--  `pysam <http://wwwfgu.anat.ox.ac.uk/~andreas/documentation/samtools/contents.html>`_
+-  `pysam <http://wwwfgu.anat.ox.ac.uk/+andreas/documentation/samtools/contents.html>`_
    and `samtools <http://samtools.sourceforge.net/>`_
 
 Installation:
-~~~~~~~~~~~~~
++++++++++++++
 
 First install samtools. On OS X I recommend using `homebrew <http://mxcl.github.com/homebrew/>`_ to do this. Once you have samtools installed and available in terminal you can use either pip or setuptools to install the current release of pypgen:
 
@@ -72,7 +72,7 @@ Alternately, if you like to live on the edge, you can clone and install version 
        pip install -e git+https://github.com/ngcrawford/pypgen.git
 
 Documentation:
-~~~~~~~~~~~~~~
+++++++++++++++
 
 More detailed documentation will be forthcoming, but in the meantime information about each script can be obtained by running:
 
@@ -81,7 +81,7 @@ More detailed documentation will be forthcoming, but in the meantime information
         python [script name].py --help
 
 Output: 
-~~~~~~~
++++++++
 
 Note: this will probably change.
 
