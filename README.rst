@@ -6,7 +6,7 @@ diversity measures including Gst, G'st, G''st, and Jost's D from large
 genomic datasets (Hedrick, 2005; Jost, 2008; Masatoshi Nei, 1973; Nei &
 Chesser, 1983). Pypgen operates both on individual SNPs as
 well as on user defined regions (e.g., five kilobase windows tiled
-across each chromosome). For the windowed analyses, pypgen estimates the
+across each chromosome). For the windowed analyses pypgen estimates the
 multi-locus versions of each estimator.
 
 Features:
@@ -52,7 +52,7 @@ Dependancies:
 Installation:
 +++++++++++++
 
-First install samtools. On OS X I recommend using `homebrew <http://mxcl.github.com/homebrew/>`_ to do this. Once you have samtools installed and available in terminal you can use either pip or setuptools to install the current release of pypgen:
+First install `samtools <http://samtools.sourceforge.net/>`_. On OS X I recommend using `homebrew <http://mxcl.github.com/homebrew/>`_ to do this. Once you have samtools installed and available in terminal you can use either pip or setuptools to install the current release of pypgen:
 
 ::
 
@@ -65,7 +65,7 @@ or,
         easy_install pypgen
 
 
-Alternately, if you like to live on the edge, you can clone and install version from github.
+Alternately, if you like to live on the edge, you can clone and install the current development version from github.
 
 ::
 
