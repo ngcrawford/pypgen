@@ -1,18 +1,21 @@
-import VCF
+
 import unittest
+import multiprocessing
+from pypgen.parser import VCF
+from pypgen.misc.helpers import *
 from collections import OrderedDict
 
 class TestSlicing(unittest.TestCase):
 
     def setUp(self):
-        self.bgzip_path = "test_data/butterfly.vcf.gz"
+        self.bgzip_path = "pypgen/data/example.vcf.gz"
 
     def test_make_slices_default_settings(self):
         """Test slicing function with default settings: 500 bp slices"""
- 
+
         for count, i in enumerate(VCF.get_slice_indicies(self.bgzip_path, regions=None, window_size=500)):
             if count > 10: break
-        
+
         self.assertEqual(i, ('Chr01', 5501, 6000))
     
     def test_make_slices_default_with_params_set(self):
@@ -32,7 +35,7 @@ class TestSlicing(unittest.TestCase):
 class TestVCFInfoParsing(unittest.TestCase):
 
     def setUp(self):
-        self.bgzip_path = "test_data/butterfly.vcf.gz"
+        self.bgzip_path = "pypgen/data/example.vcf.gz"
         
         self.populations_list = [
             "cydno:c511,c512,c513,c514,c515,c563,c614,c630,c639,c640",
@@ -52,9 +55,9 @@ class TestVCFInfoParsing(unittest.TestCase):
             ('p519', None), ('p520', None), ('p591', None), ('p596', None), \
             ('p690', None), ('p694', None), ('p696', None)])
 
-        self.allle_counts = {'melpo': {0: 12.0, 1: 0.0, 2: 0.0, 3: 0.0, 4: 0.0}, 
-                            'cydno': {0: 20.0, 1: 0.0, 2: 0.0, 3: 0.0, 4: 0.0}, 
-                            'pachi': {0: 18.0, 1: 0.0, 2: 0.0, 3: 0.0, 4: 0.0}, 
+        self.allle_counts = {'melpo': {0: 12.0, 1: 0.0, 2: 0.0, 3: 0.0, 4: 0.0},
+                            'cydno': {0: 20.0, 1: 0.0, 2: 0.0, 3: 0.0, 4: 0.0},
+                            'pachi': {0: 18.0, 1: 0.0, 2: 0.0, 3: 0.0, 4: 0.0},
                             'outgroups': {0: 2.0, 1: 2.0, 2: 0.0, 3: 0.0, 4: 0.0}}
 
     def test_population_string_parsing(self):

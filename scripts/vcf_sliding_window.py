@@ -1,11 +1,11 @@
 #!/usr/bin/env python
 # encoding: utf-8
 
-
 import textwrap
-from VCF import *
-from helpers import *
 import multiprocessing
+from pypgen.parser.VCF import *
+from pypgen.misc.helpers import *
+
 
 
 def generate_fstats_from_vcf_slices(slice_indicies, populations, header, args):
@@ -37,7 +37,7 @@ def main():
 
     Working Example:
         python vcf_sliding_window.py \\
-        -i test_data/butterfly.vcf.gz \\
+        -i data/example.vcf.gz \\
         -p cydno:c511,c512,c513,c514,c515,c563,c614,c630,c639,c640 \\
         outgroups:h665,i02-210 \\
         melpo:m523,m524,m525,m589,m675,m676,m682,m683,m687,m689 \\

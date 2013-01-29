@@ -1,20 +1,11 @@
 #!/usr/bin/env python
 # encoding: utf-8
 
-"""
-python vcf_snpwise_fstats.py \
--i test_data/butterfly.vcf.gz \
--p outgroups:h665,i02-210 \
-pop1:c511,c512,c513,c514,c515,c563,c614,c630,c639,c640 \
-pop2:m523,m524,m525,m589,m675,m676,m682,m683,m687,m689 \
--o bayesscan.snps \
-"""
-
 import re
-import datetime
-from VCF import *
-from helpers import *
+import textwrap
 import multiprocessing
+from pypgen.parser.VCF import *
+from pypgen.misc.helpers import *
 
 
 def process_header(tabix_file):
@@ -35,6 +26,22 @@ def process_header(tabix_file):
 def main():
     # get args.
     args = default_args()
+
+
+    args.description  = textwrap.dedent("""\
+    vcf_snpwise_fstats.py version 0.2.0 beta by 
+    Nicholas Crawford (ngcrawford@gmail.com)
+
+    Working Example:
+        python vcf_snpwise_fstats.py \\
+        -i data/example.vcf.gz \\
+        -p outgroups:h665,i02-210 \\
+        pop1:c511,c512,c513,c514,c515,c563,c614,c630,c639,c640 \\
+        pop2:m523,m524,m525,m589,m675,m676,m682,m683,m687,m689 \\
+        -c 2 \\
+        -r Chr01:1-10001 | head
+    """)
+
     args = args.parse_args()
 
 
