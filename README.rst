@@ -1,4 +1,4 @@
-Welcome to Pypgen (v0.2.0) *BETA*
+Welcome to Pypgen (v0.2.1) *BETA*
 ---------------------------------
 
 Pypgen provides various utilities for estimating standard genetic
@@ -82,17 +82,24 @@ More detailed documentation will be forthcoming, but in the meantime information
 
 Output: 
 +++++++
+A few notes:
 
-Note: this will probably change.
+-  The format is loosely based on the `BED specification <http://genome.ucsc.edu/FAQ/FAQformat.html#format1>`_. Although the first three column IDs will remain static for the foreseeable future, I expect to add more fields as I add additional functionality to pypgen. 
+
+- Currently positional values are one based, but this may change as this is not 'BED-like' (not zero based). 
+
+- The population IDs and the total number of populations come from those defined by the user. This means the number of pairwise population comparisons and hence the total number of columns is conditional on the number of defined populations. 
 
 **vcf\_sliding\_window.py:**
 
 +---------------------------------------+-------------------------------------------------+
-| *chrm*                                | Name of chromosome                              |
+| Label:                                | Definition:                                     |
++=======================================+=================================================+
+| *chrom*                               | Name of chromosome                              |
 +---------------------------------------+-------------------------------------------------+
-| *start*                               | Starting position of window                     |
+| *chromStart*                          | Starting position of window                     |
 +---------------------------------------+-------------------------------------------------+
-| *stop*                                | Ending position of window                       |
+| *chromEnd*                            | Ending position of window                       |
 +---------------------------------------+-------------------------------------------------+
 | *snp\_count*                          | Total Number of SNPs in window                  |
 +---------------------------------------+-------------------------------------------------+
