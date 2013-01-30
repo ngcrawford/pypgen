@@ -103,7 +103,7 @@ def main():
         f_stats = [float_2_string(i, 4) for i in f_stats]
 
         if count == 0:
-            args.output.write(','.join(['chrm', 'start', 'stop', 'snp_count', 'total_depth_mean', 'total_depth_stdev'] \
+            args.output.write(','.join(['chrom', 'chromStart', 'chromEnd', 'snp_count', 'total_depth_mean', 'total_depth_stdev'] \
                        + map(str, pop_size_order) + map(str, fstat_order)) + "\n")
             args.output.write(','.join(chrm_start_stop + pop_size_stats + f_stats) + "\n")
         else:

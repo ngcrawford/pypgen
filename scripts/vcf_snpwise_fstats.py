@@ -98,6 +98,9 @@ def main():
         f_stats, fstat_order = f_statistics_2_sorted_list(fstats, order=fstat_order)
         pop_size_stats, pop_size_order = pop_size_statistics_2_sorted_list(pop_size_stats, order=pop_size_order)
 
+        pop_size_order_labels = [pop + ".sample_count" for pop in pop_size_order]
+        fixed_alleles_order_labels = [pop + ".fixed" for pop in fixed_alleles_order]
+
         chrm = vcf_line['CHROM']
         pos = vcf_line['POS']
 
@@ -105,8 +108,7 @@ def main():
         f_stats = [float_2_string(i, places=4) for i in f_stats]
 
         if vcf_count == 1:
-            args.output.write(','.join(['chrm', 'pos'] \
-                       + map(str, pop_size_order + fstat_order + [pop + "_fixed" for pop in fixed_alleles_order])) + "\n")
+            args.output.write(','.join(['chrom', 'pos'] + pop_size_order_labels + fstat_order + fixed_alleles_order_labels) + "\n")
             args.output.write(','.join(map(str, [chrm, pos] + pop_size_stats + f_stats + fixed_alleles)) + "\n")
 
         else:
