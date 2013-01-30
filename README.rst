@@ -78,7 +78,7 @@ More detailed documentation will be forthcoming, but in the meantime information
 
 ::
 
-        [script name].py --help| 
+        [script name].py --help 
 
 Output: 
 +++++++
@@ -86,7 +86,7 @@ A few notes:
 
 -  The format is loosely based on the `BED specification <http://genome.ucsc.edu/FAQ/FAQformat.html#format1>`_. Although the first three column IDs will remain static for the foreseeable future, I expect to add more fields as I add additional functionality to pypgen. 
 
-- Currently positional values are one based, but this may change as this is not 'BED-like' (no zero based). 
+- Currently positional values are one based, but this may change as this is not 'BED-like' (not zero based). 
 
 - The population IDs and the total number of populations come from those defined by the user. This means the number of pairwise population comparisons and hence the total number of columns is conditional on the number of defined populations. 
 
@@ -115,9 +115,10 @@ A few notes:
 +---------------------------------------+-------------------------------------------------+
 | *Pop2.sample\_count.stdev*            | Standard deviation of samples per snp for 'Pop2'|
 +---------------------------------------+-------------------------------------------------+
-| *Pop2.Pop1.D\_est*                    | Multilocus Dest (Jost 2008)                     |
+| *Pop2.Pop1.D\_est*                    | Multilocus D (Jost 2008)                        |
 +---------------------------------------+-------------------------------------------------+
-| *Pop2.Pop1.G\_double\_prime\_st\_est* | (Meirmans & Hedrick 2011)                       |
+| *Pop2.Pop1.G\_double\_prime\_st\_est* | Corrected Hedrick’s G'st                        |
+|                                       | (Meirmans & Hedrick 2011)                       |
 +---------------------------------------+-------------------------------------------------+
 | *Pop2.Pop1.G\_prime\_st\_est*         | Standardized Gst (Hedrick 2005)                 |
 +---------------------------------------+-------------------------------------------------+
@@ -125,7 +126,7 @@ A few notes:
 |                                       | allowing for multiallelic loci                  |
 |                                       | (Nei & Chesser 1983)                            |
 +---------------------------------------+-------------------------------------------------+
-| cont...                               |                                                 |
+| cont...                               | The rest of the pairwise comparisons follow...  |
 +---------------------------------------+-------------------------------------------------+
 
 **vcf\_snpwise\_fstats.py:**
@@ -141,18 +142,20 @@ A few notes:
 +---------------------------------------+-------------------------------------------------+
 | *Pop1*                                | Population ID                                   |
 +---------------------------------------+-------------------------------------------------+
-| *Pop1.Pop2.D\_est*\                   | Multilocus Dest (Jost 2008)                     |
+| *Pop1.Pop2.D\_est*\                   | D (Jost 2008)                                   |
 +---------------------------------------+-------------------------------------------------+
-| *Pop1.Pop2.G\_double\_prime\_st\_est* |  (Meirmans & Hedrick 2011)                      |
+| *Pop1.Pop2.G\_double\_prime\_st\_est* | Corrected Hedrick’s G'st                        |
+|                                       | (Meirmans & Hedrick 2011)                       |
 +---------------------------------------+-------------------------------------------------+
 | *Pop1.Pop2.G\_prime\_st\_est*         | Standardized Gst (Hedrick 2005)                 |
 +---------------------------------------+-------------------------------------------------+
 | *Pop1.Pop2.Gst\_est*                  | Fst corrected for sample size and allowing for  |
 |                                       | multiallelic loci (Nei & Chesser 1983)          |
 +---------------------------------------+-------------------------------------------------+
-| *Pop1.Pop2.Hs\_est*                   |                                                 |
+| *Pop1.Pop2.Hs\_est*                   | Within-population gene/locus diversity          |
+|                                       | (e.g., expected heterozygosity)                 |
 +---------------------------------------+-------------------------------------------------+
-| *Pop1.Pop2.Ht\_est*                   |                                                 |
+| *Pop1.Pop2.Ht\_est*                   | Total gene/locus diversity                      |
 +---------------------------------------+-------------------------------------------------+
 | cont...                               |                                                 |
 +---------------------------------------+-------------------------------------------------+
