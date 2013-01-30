@@ -78,8 +78,7 @@ More detailed documentation will be forthcoming, but in the meantime information
 
 ::
 
-        [script name].py --help
-
+        [script name].py --help| 
 
 Output: 
 +++++++
@@ -88,30 +87,39 @@ Note: this will probably change.
 
 **vcf\_sliding\_window.py:**
 
-+---------+--------------------------------------------------------------+
-| *chrm*  | Name of chromosome                                           |
-+---------+--------------------------------------------------------------+
-| *start* | Starting position of window                                  |
-+---------+--------------------------------------------------------------+
--  *chrm* = Name of chromosome
--  *start* = Starting position of window
--  *stop* = Ending position of window
--  *snp\_count* = Total Number of SNPs in window
--  *total\_depth\_mean* = Mean read depth across window
--  *total\_depth\_stdev* = Standard deviation of read depth across
-   window
--  *Pop1.sample\_count.mean* = Mean number of samples per snp for 'Pop1'
--  *Pop1.sample\_count.stdev* = Standard deviation of samples per snp
-   for - 'Pop1'
--  *Pop2.sample\_count.mean* = Mean number of samples per snp for 'Pop2'
--  *Pop2.sample\_count.stdev* = Standard deviation of samples per snp
-   for 'Pop2'
--  *Pop2.Pop1.D\_est* = Multilocus Dest (Jost 2008)
--  *Pop2.Pop1.G\_double\_prime\_st\_est* = (Meirmans & Hedrick 2011)
--  *Pop2.Pop1.G\_prime\_st\_est* = Standardized Gst (Hedrick 2005)
--  *Pop2.Pop1.Gst\_est* = Fst corrected for sample size and allowing for
-   multiallelic loci (Nei & Chesser 1983)
--  cont...
++---------------------------------------+-------------------------------------------------+
+| *chrm*                                | Name of chromosome                              |
++---------------------------------------+-------------------------------------------------+
+| *start*                               | Starting position of window                     |
++---------------------------------------+-------------------------------------------------+
+| *stop*                                | Ending position of window                       |
++---------------------------------------+-------------------------------------------------+
+| *snp\_count*                          | Total Number of SNPs in window                  |
++---------------------------------------+-------------------------------------------------+
+| *total\_depth\_mean*                  | Mean read depth across window                   |
++---------------------------------------+-------------------------------------------------+
+| *total\_depth\_stdev*                 | Standard deviation of read depth across window  |
++---------------------------------------+-------------------------------------------------+
+| *Pop1.sample\_count.mean*             | Mean number of samples per snp for 'Pop1'       |
++---------------------------------------+-------------------------------------------------+
+| *Pop1.sample\_count.stdev*            | Standard deviation of samples per snp for 'Pop1'|
++---------------------------------------+-------------------------------------------------+
+| *Pop2.sample\_count.mean*             | Mean number of samples per snp for 'Pop2'       |
++---------------------------------------+-------------------------------------------------+
+| *Pop2.sample\_count.stdev*            | Standard deviation of samples per snp for 'Pop2'|
++---------------------------------------+-------------------------------------------------+
+| *Pop2.Pop1.D\_est*                    |  Multilocus Dest (Jost 2008)                    |
++---------------------------------------+-------------------------------------------------+
+| *Pop2.Pop1.G\_double\_prime\_st\_est* |  (Meirmans & Hedrick 2011)                      |
++---------------------------------------+-------------------------------------------------+
+| *Pop2.Pop1.G\_prime\_st\_est*         | Standardized Gst (Hedrick 2005)                 |
++---------------------------------------+-------------------------------------------------+
+| *Pop2.Pop1.Gst\_est*                  | Fst corrected for sample size and               |
+|                                       | allowing for multiallelic loci                  |
+|                                       | (Nei & Chesser 1983)                            |
++---------------------------------------+-------------------------------------------------+
+| cont...                               |                                                 |
++---------------------------------------+-------------------------------------------------+
 
 **vcf\_snpwise\_fstats.py:**
 
