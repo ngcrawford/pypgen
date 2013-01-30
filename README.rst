@@ -88,6 +88,11 @@ Note: this will probably change.
 
 **vcf\_sliding\_window.py:**
 
++---------+--------------------------------------------------------------+
+| *chrm*  | Name of chromosome                                           |
++---------+--------------------------------------------------------------+
+| *start* | Starting position of window                                  |
++---------+--------------------------------------------------------------+
 -  *chrm* = Name of chromosome
 -  *start* = Starting position of window
 -  *stop* = Ending position of window
