@@ -76,7 +76,7 @@ Alternately, if you like to live on the edge, you can clone and install the curr
 
 ::
 
-       pip install -e git+https://github.com/ngcrawford/pypgen.git
+       pip install -e git+https://github.com/ngcrawford/pypgen.git#egg=Package
 
 Documentation:
 ++++++++++++++
