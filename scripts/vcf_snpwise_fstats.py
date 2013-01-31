@@ -46,8 +46,7 @@ def main():
     """)
 
     args = args.parse_args()
-
-
+    print args
     # TODO:
     # test that pysam is installed.
     # bgzip check. MDSum?
@@ -103,6 +102,11 @@ def main():
 
         chrm = vcf_line['CHROM']
         pos = vcf_line['POS']
+
+                # Update postions if zero-based flag is set
+        if args.zero_based == True:
+            pos -= 1
+
 
         pop_size_stats = [float_2_string(i, places=4) for i in pop_size_stats]
         f_stats = [float_2_string(i, places=4) for i in f_stats]

@@ -1,7 +1,8 @@
 #!/usr/bin/env python
 # encoding: utf-8
 
-import sys; import os
+import os
+import sys
 sys.path.insert(0, os.path.abspath('..'))  # Seriously?! This is fucking ugly.
 
 
@@ -96,18 +97,22 @@ def main():
         f_stats, fstat_order = f_statistics_2_sorted_list(fstats, order=fstat_order)
         pop_size_stats, pop_size_order = pop_size_statistics_2_sorted_list(pop_size_statistics, order=pop_size_order)
 
-        # REWRITE USING FORMAT STRINGS....
+        # Update postions if zero-based flag is set
+        if args.zero_based == True:
+            chrm_start_stop[1] -= 1
+            chrm_start_stop[2] -= 1
 
+        # REWRITE USING FORMAT STRINGS....
         chrm_start_stop = [float_2_string(i, 4) for i in chrm_start_stop]
         pop_size_stats = [float_2_string(i, 4) for i in pop_size_stats]
         f_stats = [float_2_string(i, 4) for i in f_stats]
 
         if count == 0:
-            args.output.write(','.join(['chrom', 'chromStart', 'chromEnd', 'snp_count', 'total_depth_mean', 'total_depth_stdev'] \
+            args.output.write(args.sep.join(['chrom', 'chromStart', 'chromEnd', 'snp_count', 'total_depth_mean', 'total_depth_stdev'] \
                        + map(str, pop_size_order) + map(str, fstat_order)) + "\n")
-            args.output.write(','.join(chrm_start_stop + pop_size_stats + f_stats) + "\n")
+            args.output.write(args.sep.join(chrm_start_stop + pop_size_stats + f_stats) + "\n")
         else:
-            args.output.write(','.join(chrm_start_stop + pop_size_stats + f_stats) + "\n")
+            args.output.write(args.sep.join(chrm_start_stop + pop_size_stats + f_stats) + "\n")
 
 
 if __name__ == '__main__':

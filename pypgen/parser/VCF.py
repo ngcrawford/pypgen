@@ -36,7 +36,7 @@ def default_args():
                         type=int,
                         help='Number of cores to use.')
 
-    parser.add_argument('-r', '--regions',
+    parser.add_argument('-r', '-R', '--regions',
                         required=False,
                         # action=FooAction, # TODO: fix this!
                         nargs='+',
@@ -50,9 +50,25 @@ def default_args():
                               format as SAMTOOLs/GATK, example text largely cribbed from \
                               SAMTOOLs]")
 
-    parser.add_argument('-f', '--filter-string',
+    parser.add_argument('-s', '--column-seperator',
                         required=False,
-                        default="FILTER == PASS")
+                        type=str,
+                        default=',',
+                        dest='sep',
+                        help='Set column seperator. Default is comma (,).')
+
+    parser.add_argument('--zero-based',
+                        action="store_true",
+                        default=False,
+                        help="If set then output positions are zero-based.")
+
+    #  ADDING GATK STYLE FILTERING IS MORE CHALLENGING THAN I THOUGHT IT WOULD BE.
+    #
+    #    - A project for a rainy day.
+
+    # parser.add_argument('-f', '--filter-string',
+    #                     required=False,
+    #                     default="FILTER == PASS")
 
     parser.add_argument('--regions-to-skip',
                         default=[],
@@ -91,16 +107,16 @@ def process_snp_call(snp_call, ref, alt, IUPAC_ambiguities=False):
         IUPAC ambiguity codes."""
 
     # IUPAC ambiguity codes
-    IUPAC_dict = {('A','C'):'M',
-                  ('A','G'):'R',
-                  ('A','T'):'W',
-                  ('C','G'):'S',
-                  ('C','T'):'Y',
-                  ('G','T'):'K',
-                  ('A','C','G'):'V',
-                  ('A','C','T'):'H',
-                  ('A','G','T'):'D',
-                  ('C','G','T'):'B'}
+    IUPAC_dict = {('A', 'C'): 'M',
+                  ('A', 'G'): 'R',
+                  ('A', 'T'): 'W',
+                  ('C', 'G'): 'S',
+                  ('C', 'T'): 'Y',
+                  ('G', 'T'): 'K',
+                  ('A', 'C', 'G'): 'V',
+                  ('A', 'C', 'T'): 'H',
+                  ('A', 'G', 'T'): 'D',
+                  ('C', 'G', 'T'): 'B'}
 
     #called_base = ""
     snp_call = snp_call.split(":")
@@ -132,7 +148,7 @@ def process_snp_call(snp_call, ref, alt, IUPAC_ambiguities=False):
                 called_base = IUPAC_dict[call]
 
         # process "2/2, 1/2, etc."
-        if int(allele1) >= 1 and int(allele2) > 1 :
+        if int(allele1) >= 1 and int(allele2) > 1:
 
             # deal with homozygotes
             if allele1 == allele2:
@@ -154,10 +170,11 @@ def process_snp_call(snp_call, ref, alt, IUPAC_ambiguities=False):
 
     return called_base
 
+
 def make_empty_vcf_ordered_dict(vcf_path):
     """Open VCF file and read in header line as Ordered Dict"""
 
-    vcf_file = gzip.open(vcf_path,'rb')
+    vcf_file = gzip.open(vcf_path, 'rb')
     header_dict = None
     for line in vcf_file:
         if line.startswith("#CHROM"):
