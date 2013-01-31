@@ -542,12 +542,12 @@ def process_header(tabix_file):
 
     chrm_lenghts_dict = {}
     tabix_file = pysam.Tabixfile(tabix_file)
-    
+
     for line in tabix_file.header:
-        
-        if line.startswith("##contig") == True: 
+
+        if line.startswith("##contig") == True:
             chrm, length = re.split(r"<ID=|,length=", line)[1:]
-            length =  int(length.strip(">"))
+            length = int(length.strip(">"))
             chrm_lenghts_dict[chrm] = length
 
     return chrm_lenghts_dict
