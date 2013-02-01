@@ -1,18 +1,16 @@
 #!/usr/bin/env python
 # encoding: utf-8
 
-import os
 import re
 import sys
 import gzip
 import pysam
 import argparse
 import itertools
-import numpy as np
 from pypgen.misc import helpers
 from pypgen.fstats import fstats
 from collections import OrderedDict, defaultdict
-from itertools import combinations, izip_longest
+from itertools import combinations
 
 
 def default_args():
@@ -103,7 +101,7 @@ def process_snp_call(snp_call, ref, alt, IUPAC_ambiguities=False):
     """Process VCF genotype fields.
         The current version is very basic and
         doesn't directly take into account the
-        quality of the call or call hets with 
+        quality of the call or call hets with
         IUPAC ambiguity codes."""
 
     # IUPAC ambiguity codes
@@ -342,9 +340,8 @@ def get_population_sizes(vcfline, populations):
 def summarize_population_sizes(dict_of_sizes):
     results = {}
     for pop, sizes, in dict_of_sizes.iteritems():
-        sizes = np.array(sizes)
-        results[pop + '.sample_count.mean'] = sizes.mean()
-        results[pop + '.sample_count.stdev'] = np.std(sizes)
+        results[pop + '.sample_count.mean'] = fstats._mean_(sizes)
+        results[pop + '.sample_count.stdev'] = fstats._stdev_(sizes)
 
     return results
 
@@ -370,7 +367,7 @@ def format_output(chrm, start, stop, depth, stat_id, multilocus_f_statistics):
         if multilocus_f_statistics[pair] == None:
             continue
 
-        if multilocus_f_statistics[pair][stat_id] == np.nan:
+        if multilocus_f_statistics[pair][stat_id] == float('NaN'):
             value = 'NA'
 
         else:
@@ -434,7 +431,7 @@ def calc_fstats(allele_counts):
         Ns = [sum(allele_counts[pop].values()) for pop in [pop1, pop2]]
 
         if 0 in Ns:
-            values = [np.nan, np.nan, np.nan, np.nan, np.nan, np.nan]
+            values = [float('NaN')] * 6
             values_dict = dict(zip(['Hs_est', 'Ht_est', 'Gst_est',
                                     'G_prime_st_est', 'G_double_prime_st_est',
                                     'D_est'],
@@ -488,7 +485,7 @@ def calc_multilocus_f_statistics(Hs_est_dict, Ht_est_dict):
         Ht_est_list = Ht_est_dict[key]
 
         pairs = zip(Hs_est_list, Ht_est_list)
-        pairs = [pair for pair in pairs if np.nan not in pair]
+        pairs = [pair for pair in pairs if float('NaN') not in pair]
 
         multilocus_f_statistics[key] = None
 
@@ -553,7 +550,7 @@ def f_statistics_2_sorted_list(multilocus_f_statistics, order=[]):
         pop1, pop2, stat = key.split(".")
 
         if multilocus_f_statistics[(pop1, pop2)] == None:                # TO DO: figure out why this occurs
-            stats.append(np.nan)
+            stats.append(float('NaN'))
         else:
             value = multilocus_f_statistics[(pop1, pop2)][stat]
             stats.append(value)
@@ -613,23 +610,19 @@ def process_outgroup(vcf_line, populations):
         return None
 
 
-def identify_fixed_populations(allele_counts, order):
+def identify_fixed_populations(allele_counts):
 
-    if len(order) == 0:
-        order = allele_counts.keys()
-        order.sort()
-
-    fixed_pops = []
-    for pop in order:
+    fixed_populations_dict = {}
+    for pop in allele_counts.keys():
         a_values = allele_counts[pop].values()
         non_zero_a = set([a for a in a_values if a != 0])
 
         if len(non_zero_a) == 1:
-            fixed_pops.append(1)
+            fixed_populations_dict[pop] = 1
         else:
-            fixed_pops.append(0)
+            fixed_populations_dict[pop] = 0
 
-    return (fixed_pops, order)
+    return fixed_populations_dict
 
 
 def vcf_line_to_snp_array(vcf_line_dict):
@@ -698,9 +691,8 @@ def calc_slice_stats(data):
 
         else:
             # UPDATE OUTPUT LINE WITH DEPTH INFO
-            total_depth = np.array(total_depth)
-            output_line += [snp_count, total_depth.mean(), total_depth.std()]
+            output_line += [snp_count, fstats._mean_(total_depth), fstats._stdev_(total_depth)]
 
-            return ([chrm, start, stop, snp_count, total_depth.mean(), total_depth.std()], \
+            return ([chrm, start, stop, snp_count, fstats._mean_(total_depth), fstats._stdev_(total_depth)], \
                  pop_size_statistics, multilocus_f_statistics)
 
