@@ -10,7 +10,6 @@ import itertools
 from pypgen.misc import helpers
 from pypgen.fstats import fstats
 from collections import OrderedDict, defaultdict
-from itertools import combinations
 
 
 def default_args():
@@ -425,7 +424,7 @@ def calc_fstats(allele_counts):
     # CACULATE PAIRWISE F-STATISTICS
     pairwise_results = {}
 
-    for population_pair in combinations(populations, 2):
+    for population_pair in itertools.combinations(populations, 2):
 
         pop1, pop2 = population_pair
         Ns = [sum(allele_counts[pop].values()) for pop in [pop1, pop2]]
