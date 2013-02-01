@@ -50,18 +50,6 @@ def default_args():
                               format as SAMTOOLs/GATK, example text largely cribbed from \
                               SAMTOOLs]")
 
-    parser.add_argument('-s', '--column-seperator',
-                        required=False,
-                        type=str,
-                        default=',',
-                        dest='sep',
-                        help='Set column seperator. Default is comma (,).')
-
-    parser.add_argument('--zero-based',
-                        action="store_true",
-                        default=False,
-                        help="If set then output positions are zero-based.")
-
     #  ADDING GATK STYLE FILTERING IS MORE CHALLENGING THAN I THOUGHT IT WOULD BE.
     #
     #    - A project for a rainy day.
@@ -95,6 +83,18 @@ def default_args():
                         type=int,
                         default=5,
                         help="Minimum number of samples per population.")
+
+    parser.add_argument('-s', '--column-seperator',
+                        required=False,
+                        type=str,
+                        default=',',
+                        dest='sep',
+                        help='Set column seperator. Default is comma (,).')
+
+    parser.add_argument('--zero-based',
+                        action="store_true",
+                        default=False,
+                        help="If set then output positions are zero-based.")
 
     return parser
 
@@ -314,7 +314,7 @@ def parse_vcf_line(pos, vcf_line_dict):
                 genotype['PL'] = tuple(int(ad) for ad in genotype['PL'].split(","))
 
                 vcf_line_dict[item] = genotype
-    
+
     vcf_line_dict['POS'] = int(vcf_line_dict['POS'])
     vcf_line_dict['QUAL'] = float(vcf_line_dict['QUAL'])
 
@@ -381,10 +381,11 @@ def format_output(chrm, start, stop, depth, stat_id, multilocus_f_statistics):
     line += "\n"
     return (line)
 
+
 def calc_allele_counts(populations, vcf_line_dict):
 
     #allele_counts = defaultdict({0:0.0,1:0.0,2:0.0,3:0.0,4:0.0})
-    allele_counts = dict((key, {0:0.0, 1:0.0, 2:0.0, 3:0.0}) for key in populations.keys())
+    allele_counts = dict((key, {0: 0.0, 1: 0.0, 2: 0.0, 3: 0.0}) for key in populations.keys())
 
     for population in populations.keys():
         for sample_id in populations[population]:
@@ -423,7 +424,6 @@ def calc_fstats(allele_counts):
         allele_freqs_dict[population] = freqs
 
     allele_freqs = allele_freqs_dict.values()
-
 
     # CACULATE PAIRWISE F-STATISTICS
     pairwise_results = {}
@@ -498,7 +498,7 @@ def calc_multilocus_f_statistics(Hs_est_dict, Ht_est_dict):
             Ht_est_list_no_NaN = fstats.de_NaN_list(Ht_est_list)
             Hs_est_list_no_NaN = fstats.de_NaN_list(Hs_est_list)
 
-            n = 2 # fix this, assumes pairs = paired population
+            n = 2  # Assumes pairs = paired population
             Gst_est = fstats.multilocus_Gst_est(Ht_est_list_no_NaN, Hs_est_list_no_NaN)
             G_prime_st_est = fstats.multilocus_G_prime_st_est(Ht_est_list_no_NaN, Hs_est_list_no_NaN, n)
             G_double_prime_st_est = fstats.multilocus_G_double_prime_st_est(Ht_est_list_no_NaN, Hs_est_list_no_NaN, n)
@@ -507,8 +507,13 @@ def calc_multilocus_f_statistics(Hs_est_dict, Ht_est_dict):
             # can use the raw Hs and Ht calls
             D_est = fstats.multilocus_D_est(Ht_est_list, Hs_est_list, n)
 
-            values_dict = dict(zip(['Gst_est', 'G_prime_st_est', 'G_double_prime_st_est', 'D_est'],\
-                          [Gst_est, G_prime_st_est, G_double_prime_st_est, D_est]))
+            values_dict = {}
+            pairs = zip(['Gst_est', 'G_prime_st_est', 'G_double_prime_st_est', 'D_est'],\
+                        [Gst_est, G_prime_st_est, G_double_prime_st_est, D_est])
+
+            for i, p in pairs:
+                values_dict[i] = p[0]
+                values_dict[i + '_stdev'] = p[1]
 
             multilocus_f_statistics[key] = values_dict
 
@@ -531,6 +536,7 @@ def update_Hs_and_Ht_dicts(f_statistics, Hs_est_dict, Ht_est_dict):
 
     return (Hs_est_dict, Ht_est_dict)
 
+
 def f_statistics_2_sorted_list(multilocus_f_statistics, order=[]):
 
     if len(order) == 0:
@@ -541,7 +547,6 @@ def f_statistics_2_sorted_list(multilocus_f_statistics, order=[]):
                 order.append('.'.join((joined_pair, stat)))
 
         order.sort()
-
 
     stats = []
     for key in order:
@@ -554,6 +559,7 @@ def f_statistics_2_sorted_list(multilocus_f_statistics, order=[]):
             stats.append(value)
 
     return (stats, order)
+
 
 def process_header(tabix_file):
 
