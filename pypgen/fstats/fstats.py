@@ -136,7 +136,7 @@ def Hs_prime_est(allele_freqs, n):
     ----------
     allele_freqs : array_like
         These values contain the allele freqeuncies
-    
+
     n : int,float
         The number of populations
 
@@ -188,6 +188,8 @@ def Gst_est(Ht_est, Hs_est):
 
 
 def G_prime_st_est(Ht_est, Hs_est, Gst_est, n):
+    """Basic Equation: G'st = Gst/Gst max = (Gst*(k-1+Hs))/((k-1)*(1-Hs))
+       from Hedrick 2005)"""
 
     n = float(n)
     if (n - 1.0) * (1.0 - Hs_est) == 0:
@@ -199,7 +201,8 @@ def G_prime_st_est(Ht_est, Hs_est, Gst_est, n):
 
 
 def G_double_prime_st_est(Ht_est, Hs_est, n):
-    """Basic Equation: G''st = k*(HT-HS)/((k*HT-HS)*(1-HS)"""
+    """Basic Equation: G''st = k*(HT-HS)/((k*HT-HS)*(1-HS)
+        from Meirmans and Hedrick (2011)"""
 
     n = float(n)
     if (n * Ht_est - Hs_est) * (1 - Hs_est) == 0.0:
