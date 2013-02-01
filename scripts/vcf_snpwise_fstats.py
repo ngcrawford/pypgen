@@ -101,6 +101,7 @@ def main():
         if args.zero_based == True:
             pos -= 1
 
+        # Get all the values propperly sorted.
         fstats, fstat_order = f_statistics_2_sorted_list(fstats, order=fstat_order)
         pop_size_stats, pop_size_order = pop_size_statistics_2_sorted_list(pop_size_stats, order=pop_size_order)
         fixed_alleles, fixed_alleles_order = pop_size_statistics_2_sorted_list(fixed_alleles, order=fixed_alleles_order)
