@@ -38,8 +38,8 @@ class TestSlicing(unittest.TestCase):
     # def test_make_vcf_slices(self):
     #     print VCF.slice_vcf(self.bgzip_path, 'Chr01', 5501, 6000)
 
-    def test_check_length_of_first_ten_slices(self):
-        pass
+    # def test_check_length_of_first_ten_slices(self):
+    #     pass
 
 class TestVCFInfoParsing(unittest.TestCase):
 
