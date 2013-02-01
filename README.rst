@@ -45,14 +45,19 @@ Dependancies:
 
 -  OSX or Linux
 -  `Python 2.7 <http://www.python.org/download/releases/2.7/>`_
--  `Numpy <http://www.numpy.org>`_
 -  `pysam <http://wwwfgu.anat.ox.ac.uk/+andreas/documentation/samtools/contents.html>`_
    and `samtools <http://samtools.sourceforge.net/>`_
 
 Installation:
 +++++++++++++
 
-First install `samtools <http://samtools.sourceforge.net/>`_. On OS X I recommend using `homebrew <http://mxcl.github.com/homebrew/>`_ to do this. Once you have samtools installed and available in terminal you can use either pip or setuptools to install the current release of pypgen:
+First install `samtools <http://samtools.sourceforge.net/>`_. On OS X I recommend using `homebrew <http://mxcl.github.com/homebrew/>`_ to do this. 
+
+::
+
+        brew install samtools
+
+Once you have samtools installed and available in terminal you can use either pip or setuptools to install the current release of pypgen:
 
 ::
 
@@ -63,7 +68,6 @@ or,
 ::
 
         easy_install pypgen
-
 
 of course it is still possible to install directly from the source via:
 
