@@ -14,7 +14,6 @@ setup(
     test_suite='nose.collector',
     tests_require=['nose'],
     install_requires=[
-        "numpy >= 1.6.1",
         "pysam >= 0.7.2"
     ],
 
