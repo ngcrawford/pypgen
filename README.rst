@@ -136,7 +136,7 @@ Output:
 
 **vcf\_snpwise\_fstats.py:**
 
-- The chrom and pos column are fixed in positions 1 and 2, but the rest of the columns are 
+- The chrom and pos column are fixed in positions 1 and 2, but the rest of the columns are [more]
 
 
 +---------------------------------------+-------------------------------------------------+
