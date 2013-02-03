@@ -67,7 +67,7 @@ or,
 
 ::
 
-        easy_install pypgen
+        easy_install -U pypgen
 
 of course it is still possible to install directly from the source via:
 
