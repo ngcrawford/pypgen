@@ -76,13 +76,13 @@ Installing pysam can be a bit tricky. The first thing to try is pip/easy_install
 
 	::
 
-		pip install pysam
+		$ [sudo] pip install pysam
 
 or, 
 
 	::
 
-		easy_install -U pysam
+		$ [sudo] easy_install -U pysam
 
 If that doesn't work you'll want to try installing it from source:
 
@@ -107,20 +107,20 @@ Pypgen can be installed from `PyPi <http://pypi.python.org/pypi/pypgen>`_  using
 
 	::
 
-		pip install pypgen
+		$ [sudo] pip install pypgen
 
 or, 
 
 	::
 
-		easy_install -U pypgen
+		$ [sudo] easy_install -U pypgen
 
 However, it's recommended, at least in these early days of pypgen, to install it directly from the github repository:
 
 
 	::
 
-		pip install -e git+https://github.com/ngcrawford/pypgen.git#egg=Package
+		$ [sudo] pip install -e git+https://github.com/ngcrawford/pypgen.git#egg=Package
 	   
 	
 Test installation:
