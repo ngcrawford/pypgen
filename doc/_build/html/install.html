@@ -1,0 +1,231 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Detailed Installation: &mdash; pypgen 0.2.2 beta documentation</title>
+    
+    <link rel="stylesheet" href="_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '',
+        VERSION:     '0.2.2 beta',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="top" title="pypgen 0.2.2 beta documentation" href="index.html" />
+    <link rel="prev" title="Welcome to pypgen’s documentation!" href="index.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="index.html" title="Welcome to pypgen’s documentation!"
+             accesskey="P">previous</a> |</li>
+        <li><a href="index.html">pypgen 0.2.2 beta documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="detailed-installation">
+<h1>Detailed Installation:<a class="headerlink" href="#detailed-installation" title="Permalink to this headline">¶</a></h1>
+<p>Installing pypgen is very straightforward especially if you are familiar with installing python packages. Just follow the instructions below entering the appropriate commands in terminal.</p>
+<div class="section" id="install-samtools-and-tabix">
+<h2>Install samtools and tabix:<a class="headerlink" href="#install-samtools-and-tabix" title="Permalink to this headline">¶</a></h2>
+<p><strong>In OS X:</strong></p>
+<ol class="arabic">
+<li><p class="first">Install <a class="reference external" href="http://itunes.apple.com/us/app/xcode/id497799835">Xcode</a> or <a class="reference external" href="https://developer.apple.com/downloads">Xcode Command Line Tools</a>. The CLI tools take up less space, but are an optional install under Xcode. Details on how to do this may be found in the <a class="reference external" href="https://github.com/mxcl/homebrew/wiki/Installation#wiki-fn3">homebrew documenation</a>.</p>
+</li>
+<li><p class="first">Once xcode is installed, install the <a class="reference external" href="http://mxcl.github.com/homebrew/">homebrew</a> package installer:</p>
+<blockquote>
+<div><div class="highlight-python"><pre>$ ruby -e "$(curl -fsSkL raw.github.com/mxcl/homebrew/go)"</pre>
+</div>
+</div></blockquote>
+</li>
+<li><p class="first">Then install samtools using homebrew:</p>
+<blockquote>
+<div><div class="highlight-python"><pre>$ brew install homebrew/science/samtools
+$ brew install homebrew/science/tabix</pre>
+</div>
+</div></blockquote>
+</li>
+</ol>
+<blockquote>
+<div><p>While you&#8217;re at it you might want to use brew to install <tt class="docutils literal"><span class="pre">wget</span></tt>.</p>
+<blockquote>
+<div><div class="highlight-python"><pre>$ brew install wget</pre>
+</div>
+</div></blockquote>
+</div></blockquote>
+<p><strong>From source code</strong> (e.g., on linux):</p>
+<ol class="arabic">
+<li><p class="first">Download the latest version of samtools and tabix.</p>
+<blockquote>
+<div><div class="highlight-python"><pre># replace the ###version### with the appropriate version number (e.g., 0.2.6)
+
+$ wget http://sourceforge.net/projects/samtools/files/tabix/tabix-###version###.tar.bz2
+$ wget http://sourceforge.net/projects/samtools/files/samtools/0.1.18/samtools-0.1.18.tar.bz2</pre>
+</div>
+</div></blockquote>
+</li>
+<li><p class="first">Extract the tar.bz2 files</p>
+<blockquote>
+<div><div class="highlight-python"><pre>tar jxf *.tar.bz2</pre>
+</div>
+</div></blockquote>
+</li>
+<li><p class="first">Then run <tt class="docutils literal"><span class="pre">make</span></tt> in each directory</p>
+</li>
+</ol>
+</div>
+<div class="section" id="install-pip-or-setuptools">
+<h2>Install pip or setuptools:<a class="headerlink" href="#install-pip-or-setuptools" title="Permalink to this headline">¶</a></h2>
+<p>Pip is the the <em>replacement</em> for easy_install and is the recommended path forward.</p>
+<ol class="arabic">
+<li><p class="first">Install pip:</p>
+<blockquote>
+<div><div class="highlight-python"><pre>$ curl -O https://raw.github.com/pypa/pip/master/contrib/get-pip.py
+$ [sudo] python get-pip.py</pre>
+</div>
+</div></blockquote>
+</li>
+<li><p class="first">But, if you must, you can use easy_install. You&#8217;ll need to download the appropriate <a class="reference external" href="http://pypi.python.org/pypi/setuptools#files">python .egg file</a>. Then you can run the installation script.</p>
+<blockquote>
+<div><div class="highlight-python"><pre>$ [sudo] sh setuptools-0.6c9-py2.4.egg</pre>
+</div>
+</div></blockquote>
+</li>
+</ol>
+</div>
+<div class="section" id="install-pysam">
+<h2>Install pysam:<a class="headerlink" href="#install-pysam" title="Permalink to this headline">¶</a></h2>
+<p>Installing pysam can be a bit tricky. The first thing to try is pip/easy_install.</p>
+<blockquote>
+<div><div class="highlight-python"><pre>pip install pysam</pre>
+</div>
+</div></blockquote>
+<p>or,</p>
+<blockquote>
+<div><div class="highlight-python"><pre>easy_install -U pysam</pre>
+</div>
+</div></blockquote>
+<p>If that doesn&#8217;t work you&#8217;ll want to try installing it from source:</p>
+<blockquote>
+<div><div class="highlight-python"><pre># replace the ###version### with the appropriate version number (e.g., 0.7.4)
+
+$ wget http://pysam.googlecode.com/files/pysam-###version###.tar.gz
+$ tar xzf pysam-###version###.tar.gz</pre>
+</div>
+</div></blockquote>
+<p>then <tt class="docutils literal"><span class="pre">cd</span></tt> into the directory and run:</p>
+<blockquote>
+<div><div class="highlight-python"><pre>$ [sudo] python setup.py</pre>
+</div>
+</div></blockquote>
+</div>
+<div class="section" id="install-pypgen">
+<h2>Install pypgen:<a class="headerlink" href="#install-pypgen" title="Permalink to this headline">¶</a></h2>
+<p>Pypgen can be installed from <a class="reference external" href="http://pypi.python.org/pypi/pypgen">PyPi</a>  using <a class="reference external" href="http://pypi.python.org/pypi/pip">pip</a> or <a class="reference external" href="http://pypi.python.org/pypi/setuptools">setuptools</a>:</p>
+<blockquote>
+<div><div class="highlight-python"><pre>pip install pypgen</pre>
+</div>
+</div></blockquote>
+<p>or,</p>
+<blockquote>
+<div><div class="highlight-python"><pre>easy_install -U pypgen</pre>
+</div>
+</div></blockquote>
+<p>However, it&#8217;s recommended, at least in these early days of pypgen, to install it directly from the github repository:</p>
+<blockquote>
+<div><div class="highlight-python"><pre>pip install -e git+https://github.com/ngcrawford/pypgen.git#egg=Package</pre>
+</div>
+</div></blockquote>
+</div>
+<div class="section" id="test-installation">
+<h2>Test installation:<a class="headerlink" href="#test-installation" title="Permalink to this headline">¶</a></h2>
+<p>UnitTests are in <tt class="docutils literal"><span class="pre">pygen/tests/tests.py</span></tt></p>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Detailed Installation:</a><ul>
+<li><a class="reference internal" href="#install-samtools-and-tabix">Install samtools and tabix:</a></li>
+<li><a class="reference internal" href="#install-pip-or-setuptools">Install pip or setuptools:</a></li>
+<li><a class="reference internal" href="#install-pysam">Install pysam:</a></li>
+<li><a class="reference internal" href="#install-pypgen">Install pypgen:</a></li>
+<li><a class="reference internal" href="#test-installation">Test installation:</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="index.html"
+                        title="previous chapter">Welcome to pypgen&#8217;s documentation!</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="_sources/install.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="index.html" title="Welcome to pypgen’s documentation!"
+             >previous</a> |</li>
+        <li><a href="index.html">pypgen 0.2.2 beta documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2013, Nicholas Crawford.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.1.2.
+    </div>
+  </body>
+</html>

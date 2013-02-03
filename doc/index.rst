@@ -37,8 +37,9 @@ Prerequisites:
 
 Pypgen is written in Python 2.7. It may run under Python 2.6, but I haven't tested it. It doesn't run under Python 3. In order to interact with bgziped files it requires `samtools <http://samtools.sourceforge.net/>`_ and `pysam <http://www.cgat.org/~andreas/documentation/pysam/contents.html>`_ to be installed.
 
-Installation:
-+++++++++++++
+
+Quick Installation:
++++++++++++++++++++
 
 Pypgen can be installed from `PyPi <http://pypi.python.org/pypi/pypgen>`_  using `pip <http://pypi.python.org/pypi/pip>`_ or `setuptools <http://pypi.python.org/pypi/setuptools>`_:
 
@@ -60,15 +61,13 @@ However, it's recommended, at least in these early days of pypgen, to install it
        pip install -e git+https://github.com/ngcrawford/pypgen.git#egg=Package
 
  
-
-
 Contents:
 +++++++++
 
-.. toctree::
-   :maxdepth: 2
+	.. toctree::
+   	   :maxdepth: 2
 
-   tutorial
+   	   install
 
 
 Indices and tables

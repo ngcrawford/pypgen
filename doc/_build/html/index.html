@@ -8,7 +8,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Welcome to pypgen’s documentation! &mdash; pypgen 0.2.2 documentation</title>
+    <title>Welcome to pypgen’s documentation! &mdash; pypgen 0.2.2 beta documentation</title>
     
     <link rel="stylesheet" href="_static/default.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
@@ -16,7 +16,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '',
-        VERSION:     '0.2.2',
+        VERSION:     '0.2.2 beta',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -26,7 +26,8 @@
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
     <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
-    <link rel="top" title="pypgen 0.2.2 documentation" href="#" /> 
+    <link rel="top" title="pypgen 0.2.2 beta documentation" href="#" />
+    <link rel="next" title="Detailed Installation:" href="install.html" /> 
   </head>
   <body>
     <div class="related">
@@ -35,7 +36,10 @@
         <li class="right" style="margin-right: 10px">
           <a href="genindex.html" title="General Index"
              accesskey="I">index</a></li>
-        <li><a href="#">pypgen 0.2.2 documentation</a> &raquo;</li> 
+        <li class="right" >
+          <a href="install.html" title="Detailed Installation:"
+             accesskey="N">next</a> |</li>
+        <li><a href="#">pypgen 0.2.2 beta documentation</a> &raquo;</li> 
       </ul>
     </div>  
 
@@ -46,13 +50,11 @@
             
   <div class="section" id="welcome-to-pypgen-s-documentation">
 <h1>Welcome to pypgen&#8217;s documentation!<a class="headerlink" href="#welcome-to-pypgen-s-documentation" title="Permalink to this headline">¶</a></h1>
-<p>Pypgen provides various utilities for estimating standard genetic
-diversity measures including Gst, G&#8217;st, G&#8217;&#8216;st, and Jost&#8217;s D from large
-genomic datasets (Hedrick, 2005; Jost, 2008; Masatoshi Nei, 1973; Nei &amp;
-Chesser, 1983). Pypgen operates both on individual SNPs as
-well as on user defined regions (e.g., five kilobase windows tiled
-across each chromosome). For the windowed analyses pypgen estimates the
-multi-locus versions of each estimator.</p>
+<p>Pypgen provides various utilities for estimating standard genetic diversity measures including Gst,
+G&#8217;st, G&#8217;&#8216;st, and Jost&#8217;s D from large genomic datasets (Hedrick, 2005; Jost, 2008; Masatoshi Nei,
+1973; Nei &amp; Chesser, 1983). Pypgen operates both on individual SNPs as well as on user defined
+regions (e.g., five kilobase windows tiled across each chromosome). For the windowed analyses
+pypgen estimates the multi-locus versions of each estimator.</p>
 <div class="section" id="features">
 <h2>Features:<a class="headerlink" href="#features" title="Permalink to this headline">¶</a></h2>
 <ul class="simple">
@@ -72,11 +74,39 @@ for fast random access</li>
 </ul>
 </li>
 </ul>
-<p>Contents:</p>
-<div class="toctree-wrapper compound">
-<ul class="simple">
+</div>
+<div class="section" id="prerequisites">
+<h2>Prerequisites:<a class="headerlink" href="#prerequisites" title="Permalink to this headline">¶</a></h2>
+<p>Pypgen is written in Python 2.7. It may run under Python 2.6, but I haven&#8217;t tested it. It doesn&#8217;t run under Python 3. In order to interact with bgziped files it requires <a class="reference external" href="http://samtools.sourceforge.net/">samtools</a> and <a class="reference external" href="http://www.cgat.org/~andreas/documentation/pysam/contents.html">pysam</a> to be installed.</p>
+</div>
+<div class="section" id="quick-installation">
+<h2>Quick Installation:<a class="headerlink" href="#quick-installation" title="Permalink to this headline">¶</a></h2>
+<p>Pypgen can be installed from <a class="reference external" href="http://pypi.python.org/pypi/pypgen">PyPi</a>  using <a class="reference external" href="http://pypi.python.org/pypi/pip">pip</a> or <a class="reference external" href="http://pypi.python.org/pypi/setuptools">setuptools</a>:</p>
+<div class="highlight-python"><pre>pip install pypgen</pre>
+</div>
+<p>or,</p>
+<div class="highlight-python"><pre>easy_install -U pypgen</pre>
+</div>
+<p>However, it&#8217;s recommended, at least in these early days of pypgen, to install it directly from the github repository:</p>
+<div class="highlight-python"><pre>pip install -e git+https://github.com/ngcrawford/pypgen.git#egg=Package</pre>
+</div>
+</div>
+<div class="section" id="contents">
+<h2>Contents:<a class="headerlink" href="#contents" title="Permalink to this headline">¶</a></h2>
+<blockquote>
+<div><div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="install.html">Detailed Installation:</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="install.html#install-samtools-and-tabix">Install samtools and tabix:</a></li>
+<li class="toctree-l2"><a class="reference internal" href="install.html#install-pip-or-setuptools">Install pip or setuptools:</a></li>
+<li class="toctree-l2"><a class="reference internal" href="install.html#install-pysam">Install pysam:</a></li>
+<li class="toctree-l2"><a class="reference internal" href="install.html#install-pypgen">Install pypgen:</a></li>
+<li class="toctree-l2"><a class="reference internal" href="install.html#test-installation">Test installation:</a></li>
+</ul>
+</li>
 </ul>
 </div>
+</div></blockquote>
 </div>
 </div>
 <div class="section" id="indices-and-tables">
@@ -97,7 +127,10 @@ for fast random access</li>
   <h3><a href="#">Table Of Contents</a></h3>
   <ul>
 <li><a class="reference internal" href="#">Welcome to pypgen&#8217;s documentation!</a><ul>
-<li><a class="reference internal" href="#features">Features:</a><ul>
+<li><a class="reference internal" href="#features">Features:</a></li>
+<li><a class="reference internal" href="#prerequisites">Prerequisites:</a></li>
+<li><a class="reference internal" href="#quick-installation">Quick Installation:</a></li>
+<li><a class="reference internal" href="#contents">Contents:</a><ul>
 </ul>
 </li>
 </ul>
@@ -105,6 +138,9 @@ for fast random access</li>
 <li><a class="reference internal" href="#indices-and-tables">Indices and tables</a></li>
 </ul>
 
+  <h4>Next topic</h4>
+  <p class="topless"><a href="install.html"
+                        title="next chapter">Detailed Installation:</a></p>
   <h3>This Page</h3>
   <ul class="this-page-menu">
     <li><a href="_sources/index.txt"
@@ -133,7 +169,10 @@ for fast random access</li>
         <li class="right" style="margin-right: 10px">
           <a href="genindex.html" title="General Index"
              >index</a></li>
-        <li><a href="#">pypgen 0.2.2 documentation</a> &raquo;</li> 
+        <li class="right" >
+          <a href="install.html" title="Detailed Installation:"
+             >next</a> |</li>
+        <li><a href="#">pypgen 0.2.2 beta documentation</a> &raquo;</li> 
       </ul>
     </div>
     <div class="footer">
