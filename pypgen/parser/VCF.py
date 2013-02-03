@@ -509,7 +509,7 @@ def calc_multilocus_f_statistics(Hs_est_dict, Ht_est_dict):
 
             for i, p in pairs:
                 values_dict[i] = p[0]
-                values_dict[i + '_stdev'] = p[1]
+                values_dict[i + '.stdev'] = p[1]
 
             multilocus_f_statistics[key] = values_dict
 
@@ -546,7 +546,12 @@ def f_statistics_2_sorted_list(multilocus_f_statistics, order=[]):
 
     stats = []
     for key in order:
-        pop1, pop2, stat = key.split(".")
+        key_parts = key.split(".")
+
+        if len(key_parts) == 3:
+            pop1, pop2, stat = key_parts
+        else:
+            pop1, pop2, stat, info = key_parts
 
         if multilocus_f_statistics[(pop1, pop2)] == None:                # TO DO: figure out why this occurs
             stats.append(float('NaN'))
