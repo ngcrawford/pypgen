@@ -3,9 +3,8 @@ Detailed Installation:
 
 Installing pypgen is very straightforward especially if you are familiar with installing python packages. Just follow the instructions below entering the appropriate commands in terminal.
 
-
-Install samtools and tabix:
-+++++++++++++++++++++++++++
+Samtools and tabix:
++++++++++++++++++++
 
 **In OS X:**
 
@@ -49,11 +48,15 @@ Install samtools and tabix:
 
 #. Then run ``make`` in each directory
 
+#. You'll need to add these directories to your system profile files (e.g., ``.bashrc`` or ``.bash_profile``)
 
-Install pip or setuptools:
-++++++++++++++++++++++++++
+# You can check that everything is working by opening a fresh shell. The commands ``samtools`` and ``tabix`` should now be available from anywhere in the file system.
 
-Pip is the the *replacement* for easy_install and is the recommended path forward.
+
+Pip or Setuptools:
+++++++++++++++++++
+
+Note: Pip is the the replacement for setuptools and is the recommended approach.
 
 #. Install pip:
 
@@ -62,15 +65,15 @@ Pip is the the *replacement* for easy_install and is the recommended path forwar
 		$ curl -O https://raw.github.com/pypa/pip/master/contrib/get-pip.py
 		$ [sudo] python get-pip.py
 
-#. But, if you must, you can use easy_install. You'll need to download the appropriate `python .egg file <http://pypi.python.org/pypi/setuptools#files>`_. Then you can run the installation script. 
+#. But, if you must, you can use setuptools. You'll need to download the appropriate `python .egg file <http://pypi.python.org/pypi/setuptools#files>`_. Then you can run it as an installation script. 
 
 	::
 	
 		$ [sudo] sh setuptools-0.6c9-py2.4.egg
 
 
-Install pysam:
-++++++++++++++
+Pysam:
+++++++
 
 Installing pysam can be a bit tricky. The first thing to try is pip/easy_install.
 
@@ -99,9 +102,8 @@ then ``cd`` into the directory and run:
 	
 		$ [sudo] python setup.py
 
-
-Install pypgen:
-+++++++++++++++
+Pypgen:
++++++++
 
 Pypgen can be installed from `PyPi <http://pypi.python.org/pypi/pypgen>`_  using `pip <http://pypi.python.org/pypi/pip>`_ or `setuptools <http://pypi.python.org/pypi/setuptools>`_:
 
@@ -115,7 +117,7 @@ or,
 
 		$ [sudo] easy_install -U pypgen
 
-However, it's recommended, at least in these early days of pypgen, to install it directly from the github repository:
+However, it's recommended, at least in these early days of pypgen when I'm actively fixing bugs, to install it directly from the github repository:
 
 
 	::
@@ -123,8 +125,8 @@ However, it's recommended, at least in these early days of pypgen, to install it
 		$ [sudo] pip install -e git+https://github.com/ngcrawford/pypgen.git#egg=Package
 	   
 	
-Test installation:
-++++++++++++++++++
+Run UnitTests:
+++++++++++++++
 
 UnitTests are in ``pygen/tests/tests.py``
 

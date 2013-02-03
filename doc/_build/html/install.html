@@ -51,8 +51,8 @@
   <div class="section" id="detailed-installation">
 <h1>Detailed Installation:<a class="headerlink" href="#detailed-installation" title="Permalink to this headline">¶</a></h1>
 <p>Installing pypgen is very straightforward especially if you are familiar with installing python packages. Just follow the instructions below entering the appropriate commands in terminal.</p>
-<div class="section" id="install-samtools-and-tabix">
-<h2>Install samtools and tabix:<a class="headerlink" href="#install-samtools-and-tabix" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="samtools-and-tabix">
+<h2>Samtools and tabix:<a class="headerlink" href="#samtools-and-tabix" title="Permalink to this headline">¶</a></h2>
 <p><strong>In OS X:</strong></p>
 <ol class="arabic">
 <li><p class="first">Install <a class="reference external" href="http://itunes.apple.com/us/app/xcode/id497799835">Xcode</a> or <a class="reference external" href="https://developer.apple.com/downloads">Xcode Command Line Tools</a>. The CLI tools take up less space, but are an optional install under Xcode. Details on how to do this may be found in the <a class="reference external" href="https://github.com/mxcl/homebrew/wiki/Installation#wiki-fn3">homebrew documenation</a>.</p>
@@ -97,11 +97,14 @@ $ wget http://sourceforge.net/projects/samtools/files/samtools/0.1.18/samtools-0
 </li>
 <li><p class="first">Then run <tt class="docutils literal"><span class="pre">make</span></tt> in each directory</p>
 </li>
+<li><p class="first">You&#8217;ll need to add these directories to your system profile files (e.g., <tt class="docutils literal"><span class="pre">.bashrc</span></tt> or <tt class="docutils literal"><span class="pre">.bash_profile</span></tt>)</p>
+</li>
 </ol>
+<p># You can check that everything is working by opening a fresh shell. The commands <tt class="docutils literal"><span class="pre">samtools</span></tt> and <tt class="docutils literal"><span class="pre">tabix</span></tt> should now be available from anywhere in the file system.</p>
 </div>
-<div class="section" id="install-pip-or-setuptools">
-<h2>Install pip or setuptools:<a class="headerlink" href="#install-pip-or-setuptools" title="Permalink to this headline">¶</a></h2>
-<p>Pip is the the <em>replacement</em> for easy_install and is the recommended path forward.</p>
+<div class="section" id="pip-or-setuptools">
+<h2>Pip or Setuptools:<a class="headerlink" href="#pip-or-setuptools" title="Permalink to this headline">¶</a></h2>
+<p>Note: Pip is the the replacement for setuptools and is the recommended approach.</p>
 <ol class="arabic">
 <li><p class="first">Install pip:</p>
 <blockquote>
@@ -110,7 +113,7 @@ $ [sudo] python get-pip.py</pre>
 </div>
 </div></blockquote>
 </li>
-<li><p class="first">But, if you must, you can use easy_install. You&#8217;ll need to download the appropriate <a class="reference external" href="http://pypi.python.org/pypi/setuptools#files">python .egg file</a>. Then you can run the installation script.</p>
+<li><p class="first">But, if you must, you can use setuptools. You&#8217;ll need to download the appropriate <a class="reference external" href="http://pypi.python.org/pypi/setuptools#files">python .egg file</a>. Then you can run it as an installation script.</p>
 <blockquote>
 <div><div class="highlight-python"><pre>$ [sudo] sh setuptools-0.6c9-py2.4.egg</pre>
 </div>
@@ -118,8 +121,8 @@ $ [sudo] python get-pip.py</pre>
 </li>
 </ol>
 </div>
-<div class="section" id="install-pysam">
-<h2>Install pysam:<a class="headerlink" href="#install-pysam" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="pysam">
+<h2>Pysam:<a class="headerlink" href="#pysam" title="Permalink to this headline">¶</a></h2>
 <p>Installing pysam can be a bit tricky. The first thing to try is pip/easy_install.</p>
 <blockquote>
 <div><div class="highlight-python"><pre>$ [sudo] pip install pysam</pre>
@@ -144,8 +147,8 @@ $ tar xzf pysam-###version###.tar.gz</pre>
 </div>
 </div></blockquote>
 </div>
-<div class="section" id="install-pypgen">
-<h2>Install pypgen:<a class="headerlink" href="#install-pypgen" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="pypgen">
+<h2>Pypgen:<a class="headerlink" href="#pypgen" title="Permalink to this headline">¶</a></h2>
 <p>Pypgen can be installed from <a class="reference external" href="http://pypi.python.org/pypi/pypgen">PyPi</a>  using <a class="reference external" href="http://pypi.python.org/pypi/pip">pip</a> or <a class="reference external" href="http://pypi.python.org/pypi/setuptools">setuptools</a>:</p>
 <blockquote>
 <div><div class="highlight-python"><pre>$ [sudo] pip install pypgen</pre>
@@ -156,14 +159,14 @@ $ tar xzf pysam-###version###.tar.gz</pre>
 <div><div class="highlight-python"><pre>$ [sudo] easy_install -U pypgen</pre>
 </div>
 </div></blockquote>
-<p>However, it&#8217;s recommended, at least in these early days of pypgen, to install it directly from the github repository:</p>
+<p>However, it&#8217;s recommended, at least in these early days of pypgen when I&#8217;m actively fixing bugs, to install it directly from the github repository:</p>
 <blockquote>
 <div><div class="highlight-python"><pre>$ [sudo] pip install -e git+https://github.com/ngcrawford/pypgen.git#egg=Package</pre>
 </div>
 </div></blockquote>
 </div>
-<div class="section" id="test-installation">
-<h2>Test installation:<a class="headerlink" href="#test-installation" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="run-unittests">
+<h2>Run UnitTests:<a class="headerlink" href="#run-unittests" title="Permalink to this headline">¶</a></h2>
 <p>UnitTests are in <tt class="docutils literal"><span class="pre">pygen/tests/tests.py</span></tt></p>
 </div>
 </div>
@@ -177,11 +180,11 @@ $ tar xzf pysam-###version###.tar.gz</pre>
   <h3><a href="index.html">Table Of Contents</a></h3>
   <ul>
 <li><a class="reference internal" href="#">Detailed Installation:</a><ul>
-<li><a class="reference internal" href="#install-samtools-and-tabix">Install samtools and tabix:</a></li>
-<li><a class="reference internal" href="#install-pip-or-setuptools">Install pip or setuptools:</a></li>
-<li><a class="reference internal" href="#install-pysam">Install pysam:</a></li>
-<li><a class="reference internal" href="#install-pypgen">Install pypgen:</a></li>
-<li><a class="reference internal" href="#test-installation">Test installation:</a></li>
+<li><a class="reference internal" href="#samtools-and-tabix">Samtools and tabix:</a></li>
+<li><a class="reference internal" href="#pip-or-setuptools">Pip or Setuptools:</a></li>
+<li><a class="reference internal" href="#pysam">Pysam:</a></li>
+<li><a class="reference internal" href="#pypgen">Pypgen:</a></li>
+<li><a class="reference internal" href="#run-unittests">Run UnitTests:</a></li>
 </ul>
 </li>
 </ul>
