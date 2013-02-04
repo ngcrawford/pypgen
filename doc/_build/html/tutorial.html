@@ -27,6 +27,7 @@
     <script type="text/javascript" src="_static/doctools.js"></script>
     <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
     <link rel="top" title="pypgen 0.2.2 beta documentation" href="index.html" />
+    <link rel="next" title="API" href="fstats.html" />
     <link rel="prev" title="Detailed Installation:" href="install.html" /> 
   </head>
   <body>
@@ -36,6 +37,12 @@
         <li class="right" style="margin-right: 10px">
           <a href="genindex.html" title="General Index"
              accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="fstats.html" title="API"
+             accesskey="N">next</a> |</li>
         <li class="right" >
           <a href="install.html" title="Detailed Installation:"
              accesskey="P">previous</a> |</li>
@@ -52,30 +59,43 @@
 <h1>Quick Tutorial:<a class="headerlink" href="#quick-tutorial" title="Permalink to this headline">¶</a></h1>
 <p>Once pygen is installed two scripts, <tt class="docutils literal"><span class="pre">vcf_sliding_window.py</span></tt> and <tt class="docutils literal"><span class="pre">vcf_snpwise_fstats.py</span></tt> should be available at the commandline.</p>
 <p>Running [script name].py will print out a short list of commands and adding the <tt class="docutils literal"><span class="pre">--help</span></tt> or <tt class="docutils literal"><span class="pre">-h</span></tt> prints out a more detailed list.</p>
-</div>
 <div class="section" id="vcf-snpwise-fstats">
-<h1>vcf_snpwise_fstats:<a class="headerlink" href="#vcf-snpwise-fstats" title="Permalink to this headline">¶</a></h1>
+<h2>vcf_snpwise_fstats<a class="headerlink" href="#vcf-snpwise-fstats" title="Permalink to this headline">¶</a></h2>
 <p>This script calculates <em>F</em>-statistics for each pair of populations at each SNP in the supplied region.</p>
 </div>
 <div class="section" id="vcf-sliding-window">
-<h1>vcf_sliding_window:<a class="headerlink" href="#vcf-sliding-window" title="Permalink to this headline">¶</a></h1>
+<h2>vcf_sliding_window<a class="headerlink" href="#vcf-sliding-window" title="Permalink to this headline">¶</a></h2>
 <p>This script calculates <em>F</em>-statistics for each pair of populations at each window in the supplied region. This script requires that the input VCF file be bgzipped because it uses <tt class="docutils literal"><span class="pre">tabix</span></tt> to extract the windows.</p>
-<p>Input: [ -i, &#8211;input ]</p>
+<p><strong>Input:</strong> [ -i, &#8211;input ]</p>
 <blockquote>
 <div>Defines the path to the input VCF file.</div></blockquote>
-<p>Output: [ -o, &#8211;output ]</p>
+<p><strong>Output:</strong> [ -o, &#8211;output ]</p>
 <blockquote>
 <div>Defines the path to the output csv/txt file. If it&#8217;s not set it defaults to standard out (stout).</div></blockquote>
-<p>Core</p>
-<p>Regions: [ -r, -R, &#8211;regions ]</p>
+<p><strong>Cores:</strong> [ -c, &#8211;cores]</p>
 <blockquote>
-<div>This flag allows for selecting a subset of the VCF file for analysis. The command format should familiar to if you use GATK or samtools. A region can be presented, for example, in the following format: ‘chr2’ (the whole chr2), ‘chr2:1000000’ (region starting from 1,000,000bp) or ‘chr2:1,000,000-2,000,000’ (region between 1,000,000 and 2,000,000bp including the end points). The coordinate is 1-based.&#8217; Multiple regions can be submitted separated by spaces. [NOte: this is the same format as SAMTOOLs/GATK, example text largely cribbed from SAMTOOLs]</div></blockquote>
-<p>Window Size: [ -w, &#8211;window-size ]</p>
+<div>The number of cores to use.</div></blockquote>
+<p><strong>Regions:</strong> [ -r, -R, &#8211;regions ]</p>
+<blockquote>
+<div>This flag allows for selecting a subset of the VCF file for analysis. The command format should familiar to if you use GATK or samtools. A region can be presented, for example, in the following format: ‘chr2’ (the whole chr2), ‘chr2:1000000’ (region starting from 1,000,000bp) or ‘chr2:1,000,000-2,000,000’ (region between 1,000,000 and 2,000,000bp including the end points). The coordinate system is 1-based. Multiple regions can be submitted separated by spaces. [Note: this is the same format as samtools/GATK and this example text is largely borrowed from samtools]</div></blockquote>
+<p><strong>Window Size:</strong> [ -w, &#8211;window-size ]</p>
 <blockquote>
 <div>Windows are non overlapping and start at the first bp in the particular chromosome.</div></blockquote>
+<p><strong>Populations:</strong> [ -p, &#8211;populations ]</p>
+<blockquote>
+<div>Names of populations and samples. The format is: &#8220;PopName:sample1,sample2,.. PopName2:sample3,sample4,...&#8221; Whitespace is used to delimit populations. Note: the population name uname &#8220;Outgroup&#8221; is reserved for samples that that are used to polarize genotype calls.</div></blockquote>
+<p><strong>Minimum Number of Samples:</strong> [ -m, &#8211;min-samples ]</p>
+<blockquote>
+<div>This allows one to set the minimum number of samples per population that a SNV needs to have in order to be included in the analysis.</div></blockquote>
+<p><strong>Column Separator:</strong> [ -s, &#8211;column-separator ]</p>
+<blockquote>
+<div>This allows one to set the separator to be uses in the output. The default value is <tt class="docutils literal"><span class="pre">,</span></tt> which makes the output csv.</div></blockquote>
+<p><strong>Zero Based:</strong> [ &#8211;zero-based ]</p>
+<blockquote>
+<div>Setting this flag makes the output positions zero based</div></blockquote>
 </div>
 <div class="section" id="output">
-<h1>Output:<a class="headerlink" href="#output" title="Permalink to this headline">¶</a></h1>
+<h2>Output<a class="headerlink" href="#output" title="Permalink to this headline">¶</a></h2>
 <p><strong>vcf_sliding_window.py:</strong></p>
 <ul class="simple">
 <li>The format is loosely based on the <a class="reference external" href="http://genome.ucsc.edu/FAQ/FAQformat.html#format1">BED specification</a>. Although the first three column IDs will remain static for the foreseeable future, I expect to add more fields as I add additional functionality to pypgen.</li>
@@ -274,7 +294,7 @@ F-staticstics</td></tr>
 </tr>
 <tr><td>&nbsp;</td><td>Minimum number of samples per population.</td></tr>
 <tr><td class="option-group" colspan="2">
-<kbd><span class="option">-s <var>SEP</var></span>, <span class="option">--column-seperator <var>SEP</var></span></kbd></td>
+<kbd><span class="option">-s <var>SEP</var></span>, <span class="option">--column-separator <var>SEP</var></span></kbd></td>
 </tr>
 <tr><td>&nbsp;</td><td>Set column seperator. Default is comma (,).</td></tr>
 <tr><td class="option-group">
@@ -285,6 +305,7 @@ F-staticstics</td></tr>
 </dd>
 </dl>
 </div>
+</div>
 
 
           </div>
@@ -294,15 +315,20 @@ F-staticstics</td></tr>
         <div class="sphinxsidebarwrapper">
   <h3><a href="index.html">Table Of Contents</a></h3>
   <ul>
-<li><a class="reference internal" href="#">Quick Tutorial:</a></li>
-<li><a class="reference internal" href="#vcf-snpwise-fstats">vcf_snpwise_fstats:</a></li>
-<li><a class="reference internal" href="#vcf-sliding-window">vcf_sliding_window:</a></li>
-<li><a class="reference internal" href="#output">Output:</a></li>
+<li><a class="reference internal" href="#">Quick Tutorial:</a><ul>
+<li><a class="reference internal" href="#vcf-snpwise-fstats">vcf_snpwise_fstats</a></li>
+<li><a class="reference internal" href="#vcf-sliding-window">vcf_sliding_window</a></li>
+<li><a class="reference internal" href="#output">Output</a></li>
+</ul>
+</li>
 </ul>
 
   <h4>Previous topic</h4>
   <p class="topless"><a href="install.html"
                         title="previous chapter">Detailed Installation:</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="fstats.html"
+                        title="next chapter">API</a></p>
   <h3>This Page</h3>
   <ul class="this-page-menu">
     <li><a href="_sources/tutorial.txt"
@@ -331,6 +357,12 @@ F-staticstics</td></tr>
         <li class="right" style="margin-right: 10px">
           <a href="genindex.html" title="General Index"
              >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="fstats.html" title="API"
+             >next</a> |</li>
         <li class="right" >
           <a href="install.html" title="Detailed Installation:"
              >previous</a> |</li>

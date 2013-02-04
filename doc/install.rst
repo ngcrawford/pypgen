@@ -3,8 +3,8 @@ Detailed Installation:
 
 Installing pypgen is very straightforward especially if you are familiar with installing python packages. Just follow the instructions below entering the appropriate commands in terminal.
 
-Samtools and tabix:
-+++++++++++++++++++
+Samtools and tabix
+++++++++++++++++++
 
 **In OS X:**
 
@@ -54,8 +54,8 @@ Samtools and tabix:
 # You can check that everything is working by opening a fresh shell. The commands ``samtools`` and ``tabix`` should now be available from anywhere in the file system.
 
 
-Pip or Setuptools:
-++++++++++++++++++
+Pip or Setuptools
++++++++++++++++++
 
 Note: Pip is the the replacement for setuptools and is the recommended approach.
 
@@ -73,8 +73,8 @@ Note: Pip is the the replacement for setuptools and is the recommended approach.
 	
 		$ [sudo] sh setuptools-0.6c9-py2.4.egg
 
-Pypgen:
-+++++++
+Pypgen
+++++++
 
 Pypgen can be installed from `PyPi <http://pypi.python.org/pypi/pypgen>`_  using `pip <http://pypi.python.org/pypi/pip>`_ or `setuptools <http://pypi.python.org/pypi/setuptools>`_:
 
@@ -99,13 +99,13 @@ However, it's recommended, at least in these early days of pypgen when I'm activ
 This should complete your install. 	   
 
 
-UnitTests:
-++++++++++
+UnitTests
++++++++++
 
 UnitTests are in ``pygen/tests/tests.py``
 
-Pysam:
-++++++
+Pysam
++++++
 
 **NOTE: Pysam should automatically install when you install pypgen. These instructions are only necessary if you have problems with it.**
 

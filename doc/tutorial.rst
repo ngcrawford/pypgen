@@ -1,45 +1,65 @@
 Quick Tutorial:
-+++++++++++++++
+===============
 
 Once pygen is installed two scripts, ``vcf_sliding_window.py`` and ``vcf_snpwise_fstats.py`` should be available at the commandline.
 
 Running [script name].py will print out a short list of commands and adding the ``--help`` or ``-h`` prints out a more detailed list. 
 
 
-vcf_snpwise_fstats:
-+++++++++++++++++++
+vcf_snpwise_fstats
+++++++++++++++++++
 
 This script calculates *F*-statistics for each pair of populations at each SNP in the supplied region.  
 
 
-vcf_sliding_window:
-+++++++++++++++++++
+vcf_sliding_window
+++++++++++++++++++
 
 This script calculates *F*-statistics for each pair of populations at each window in the supplied region. This script requires that the input VCF file be bgzipped because it uses ``tabix`` to extract the windows. 
 
-Input: [ -i, --input ]
+**Input:** [ -i, --input ]
 
 	Defines the path to the input VCF file.
 
-Output: [ -o, --output ]
+**Output:** [ -o, --output ]
 
 	Defines the path to the output csv/txt file. If it's not set it defaults to standard out (stout).
 
-Core
+**Cores:** [ -c, --cores]
 
-Regions: [ -r, -R, --regions ]
+	The number of cores to use.
 
-    This flag allows for selecting a subset of the VCF file for analysis. The command format should familiar to if you use GATK or samtools. A region can be presented, for example, in the following format: ‘chr2’ (the whole chr2), ‘chr2:1000000’ (region starting from 1,000,000bp) or ‘chr2:1,000,000-2,000,000’ (region between 1,000,000 and 2,000,000bp including the end points). The coordinate is 1-based.' Multiple regions can be submitted separated by spaces. [NOte: this is the same format as SAMTOOLs/GATK, example text largely cribbed from SAMTOOLs]
+**Regions:** [ -r, -R, --regions ]
+
+    This flag allows for selecting a subset of the VCF file for analysis. The command format should familiar to if you use GATK or samtools. A region can be presented, for example, in the following format: ‘chr2’ (the whole chr2), ‘chr2:1000000’ (region starting from 1,000,000bp) or ‘chr2:1,000,000-2,000,000’ (region between 1,000,000 and 2,000,000bp including the end points). The coordinate system is 1-based. Multiple regions can be submitted separated by spaces. [Note: this is the same format as samtools/GATK and this example text is largely borrowed from samtools]
 
 
-Window Size: [ -w, --window-size ]
+**Window Size:** [ -w, --window-size ]
 
 	Windows are non overlapping and start at the first bp in the particular chromosome. 
 
 
+**Populations:** [ -p, --populations ]
 
-Output: 
-+++++++
+	Names of populations and samples. The format is: "PopName:sample1,sample2,.. PopName2:sample3,sample4,..." Whitespace is used to delimit populations. Note: the population name uname "Outgroup" is reserved for samples that that are used to polarize genotype calls.
+	
+
+**Minimum Number of Samples:** [ -m, --min-samples ]
+
+	This allows one to set the minimum number of samples per population that a SNV needs to have in order to be included in the analysis.
+	
+
+**Column Separator:** [ -s, --column-separator ]
+
+	This allows one to set the separator to be uses in the output. The default value is ``,`` which makes the output csv.
+			  
+**Zero Based:** [ --zero-based ]
+
+	Setting this flag makes the output positions zero based
+
+
+Output 
+++++++
 **vcf\_sliding\_window.py:** 
 
 - The format is loosely based on the `BED specification <http://genome.ucsc.edu/FAQ/FAQformat.html#format1>`_. Although the first three column IDs will remain static for the foreseeable future, I expect to add more fields as I add additional functionality to pypgen. 
@@ -171,6 +191,6 @@ optional arguments:
                         F-staticstics
   -m MIN_SAMPLES, --min-samples MIN_SAMPLES
                         Minimum number of samples per population.
-  -s SEP, --column-seperator SEP
+  -s SEP, --column-separator SEP
                         Set column seperator. Default is comma (,).
   --zero-based          If set then output positions are zero-based.

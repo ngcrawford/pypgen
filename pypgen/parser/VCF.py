@@ -67,26 +67,26 @@ def default_args():
                               The format is: "PopName:sample1,sample2,.. \
                               PopName2:sample3,sample4,..." \
                               Whitespace is used to delimit populations. Note: the \
-                              population name uname "Outgroup" is reserved for \
+                              population name "Outgroup" is reserved for \
                               samples that that are used to polarize genotype calls.')
 
     parser.add_argument('-w', '--window-size',
                         default=5000,
                         type=int,
                         help='Size of the window in which to \
-                              calculate pairwise F-staticstics')
+                              calculate pairwise F-statistics')
 
     parser.add_argument("-m", '--min-samples',
                         type=int,
                         default=5,
                         help="Minimum number of samples per population.")
 
-    parser.add_argument('-s', '--column-seperator',
+    parser.add_argument('-s', '--column-separator',
                         required=False,
                         type=str,
                         default=',',
                         dest='sep',
-                        help='Set column seperator. Default is comma (,).')
+                        help='Set column separator. Default is comma (,).')
 
     parser.add_argument('--zero-based',
                         action="store_true",

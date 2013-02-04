@@ -69,8 +69,9 @@ Contents:
 
    	   install
 	   tutorial
+	   fstats
 
-
+	
 Indices and tables
 ==================
 
