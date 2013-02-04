@@ -10,13 +10,13 @@ def de_NaN_list(l):
 
     Returns list without NaNs.
 
-    Parameters
-    ----------
-    a : array_like
+    Parameters:
+
+        a : array_like
 
     Returns
-    -------
-    m : array_like"""
+
+        m : array_like"""
 
     return [i for i in l if math.isnan(i) != True]
 
@@ -27,12 +27,12 @@ def _mean_(l):
     Returns the average of the array elements.
 
     Parameters
-    ----------
-    a : array_like
+
+        a : array_like
 
     Returns
-    -------
-    mean : array_like"""
+
+        mean : array_like"""
 
     l = de_NaN_list(l)
     mean = sum(l) * 1.0 / len(l)
@@ -46,12 +46,12 @@ def _mean_variance_(l):
     distribution.
 
     Parameters
-    ----------
-    a : array_like
+
+        a : array_like
 
     Returns
-    -------
-    variance : array_like
+
+        variance : array_like
 
     Note: Doc string derived from numpy.var()"""
 
@@ -67,13 +67,13 @@ def _stdev_(l):
     of the array elements.
 
     Parameters
-    ----------
-    l : array_like
-        Calculate the standard deviation of these values.
+
+        l : array_like
+            Calculate the standard deviation of these values.
 
     Returns
-    -------
-    standard_deviation : array_like
+
+        standard_deviation : array_like
 
     Note: Doc string derived from numpy.std()"""
 
@@ -86,13 +86,13 @@ def harmonic_mean(l):
     """Calculates harmonic mean from list of integers
 
     Parameters
-    ----------
-    l : array_like
-        Calculate the harmonic mean of these values.
+
+        l : array_like
+            Calculate the harmonic mean of these values.
 
     Returns
-    -------
-    harmonic mean : array_like"""
+
+        harmonic mean : array_like"""
 
     fractional_counts = sum([1.0 / v for v in l])
     harmonic_mean = float(len(l)) / fractional_counts
@@ -106,13 +106,13 @@ def harmonic_mean_chao(l):
     calculating multilocus Dest.
 
     Parameters
-    ----------
-    l : array_like
-        Calculate Chao's harmonic mean of these values.
+
+        l : array_like
+            Calculate Chao's harmonic mean of these values.
 
     Returns
-    -------
-    Chao's harmonic mean : array_like"""
+
+        Chao's harmonic mean : array_like"""
 
     count = float(len(l))
     if count == 0.0:
@@ -133,16 +133,16 @@ def Hs_prime_est(allele_freqs, n):
     heterozygosity (Nei and Chesser 1983).
 
     Parameters
-    ----------
-    allele_freqs : array_like
-        These values contain the allele freqeuncies
 
-    n : int,float
-        The number of populations
+        allele_freqs : array_like
+            These values contain the allele freqeuncies
+
+        n : int,float
+            The number of populations
 
     Returns
-    -------
-    H's : array_like"""
+
+        H's : array_like"""
 
     n = float(n)
     Hj = [1.0 - sum([freq ** 2 for freq in pop[:4]]) for pop in allele_freqs]
@@ -151,7 +151,7 @@ def Hs_prime_est(allele_freqs, n):
 
 
 def Hs_est(Hs_prime_est, harm_mean):
-    """ Basic Equation: ((2*N_harmonic)/(2*N_harmonic-1))*Hs"""
+    """Basic Equation: ((2*N_harmonic)/(2*N_harmonic-1))*Hs"""
 
     Hs = Hs_prime_est
     Hs_est = ((2.0 * harm_mean) / (2.0 * harm_mean - 1.0)) * Hs
