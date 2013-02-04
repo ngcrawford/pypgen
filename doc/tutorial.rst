@@ -12,6 +12,53 @@ vcf_snpwise_fstats
 This script calculates *F*-statistics for each pair of populations at each SNP in the supplied region.  
 
 
+
+Output 
+------
+
+
+- The chrom and pos column are fixed in positions 1 and 2, but the rest of the columns are [more]
+
+
+	+---------------------------------------+-------------------------------------------------+
+	| Label:                                | Definition:                                     |
+	+=======================================+=================================================+
+	| *chrom*                               | ID of chromosome/scaffold/contig/etc.           |
+	+---------------------------------------+-------------------------------------------------+
+	| *pos*                                 | Position of SNP                                 |
+	+---------------------------------------+-------------------------------------------------+
+	| *pop1.sample_count*                   | Number of samples represented                   |
+	+---------------------------------------+-------------------------------------------------+
+	| cont.                                 | Additional population sample counts             |
+	+---------------------------------------+-------------------------------------------------+
+	| *Pop1.Pop2.D\_est*\                   | D corrected for sample size (Jost 2008)         |
+	+---------------------------------------+-------------------------------------------------+
+	| *Pop1.Pop2.D\_est.stdev*\             | D corrected for sample size standard deviation  |
+	+---------------------------------------+-------------------------------------------------+
+	| *Pop1.Pop2.G\_double\_prime\_st\_est* | Corrected Hedrick’s G'st                        |
+	|                                       | (Meirmans & Hedrick 2011)                       |
+	+---------------------------------------+-------------------------------------------------+
+	| *Pop1.Pop2.G\_prime\_st\_est*         | Standardized Gst (Hedrick 2005)                 |
+	+---------------------------------------+-------------------------------------------------+
+	| *Pop1.Pop2.Gst\_est*                  | Fst corrected for sample size and allowing for  |
+	|                                       | multiallelic loci (Nei & Chesser 1983)          |
+	+---------------------------------------+-------------------------------------------------+
+	| *Pop1.Pop2.Hs\_est*                   | Within-population gene/locus diversity          |
+	|                                       | (e.g., expected heterozygosity)                 |
+	+---------------------------------------+-------------------------------------------------+
+	| *Pop1.Pop2.Ht\_est*                   | Total gene/locus diversity                      |
+	+---------------------------------------+-------------------------------------------------+
+	| cont...                               | Pairwise comparisons of F-statistics cont...    |
+	+---------------------------------------+-------------------------------------------------+
+	|*Pop1\_fixed*                          | If a sample is fixed at a particular allele     |
+	|                                       | this flag is set to 1 (= "True" in binary)      |    
+	+---------------------------------------+-------------------------------------------------+
+	| cont...                               | Additional fixed SNPs cont...                   |
+	+---------------------------------------+-------------------------------------------------+
+
+
+
+
 vcf_sliding_window
 ++++++++++++++++++
 
@@ -122,43 +169,4 @@ Output
 	| cont...                               | The rest of the pairwise comparisons follow...  |
 	+---------------------------------------+-------------------------------------------------+
 
-**vcf\_snpwise\_fstats.py:**
 
-- The chrom and pos column are fixed in positions 1 and 2, but the rest of the columns are [more]
-
-
-	+---------------------------------------+-------------------------------------------------+
-	| Label:                                | Definition:                                     |
-	+=======================================+=================================================+
-	| *chrom*                               | ID of chromosome/scaffold/contig/etc.           |
-	+---------------------------------------+-------------------------------------------------+
-	| *pos*                                 | Position of SNP                                 |
-	+---------------------------------------+-------------------------------------------------+
-	| *pop1.sample_count*                   | Number of samples represented                   |
-	+---------------------------------------+-------------------------------------------------+
-	| cont.                                 | Additional population sample counts             |
-	+---------------------------------------+-------------------------------------------------+
-	| *Pop1.Pop2.D\_est*\                   | D corrected for sample size (Jost 2008)         |
-	+---------------------------------------+-------------------------------------------------+
-	| *Pop1.Pop2.D\_est.stdev*\             | D corrected for sample size standard deviation  |
-	+---------------------------------------+-------------------------------------------------+
-	| *Pop1.Pop2.G\_double\_prime\_st\_est* | Corrected Hedrick’s G'st                        |
-	|                                       | (Meirmans & Hedrick 2011)                       |
-	+---------------------------------------+-------------------------------------------------+
-	| *Pop1.Pop2.G\_prime\_st\_est*         | Standardized Gst (Hedrick 2005)                 |
-	+---------------------------------------+-------------------------------------------------+
-	| *Pop1.Pop2.Gst\_est*                  | Fst corrected for sample size and allowing for  |
-	|                                       | multiallelic loci (Nei & Chesser 1983)          |
-	+---------------------------------------+-------------------------------------------------+
-	| *Pop1.Pop2.Hs\_est*                   | Within-population gene/locus diversity          |
-	|                                       | (e.g., expected heterozygosity)                 |
-	+---------------------------------------+-------------------------------------------------+
-	| *Pop1.Pop2.Ht\_est*                   | Total gene/locus diversity                      |
-	+---------------------------------------+-------------------------------------------------+
-	| cont...                               | Pairwise comparisons of F-statistics cont...    |
-	+---------------------------------------+-------------------------------------------------+
-	|*Pop1\_fixed*                          | If a sample is fixed at a particular allele     |
-	|                                       | this flag is set to 1 (= "True" in binary)      |    
-	+---------------------------------------+-------------------------------------------------+
-	| cont...                               | Additional fixed SNPs cont...                   |
-	+---------------------------------------+-------------------------------------------------+

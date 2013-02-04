@@ -39,12 +39,13 @@ from pypgen.parser import VCF
 def get_args():
     """Parse sys.argv"""
     parser = argparse.ArgumentParser()
-    parser.add_argument('-r','-R','--regions',
+
+    parser.add_argument('-r', '-R', '--regions',
                         required=True,
                         type=str,
                         help="Chromosomal region in the format: 'Chrm:start-stop'")
-                        
-    parser.add_argument('-o','--output',
+
+    parser.add_argument('-o', '--output',
                         type=argparse.FileType('w'),
                         default=sys.stdout,
                         help='Path to output. (default is STOUT)')
@@ -56,7 +57,7 @@ def get_args():
     parser.add_argument('input', 
                         nargs=1, 
                         help='bgzipped and indexed VCF file')
-    
+
     args = parser.parse_args()
     return args
 
@@ -81,14 +82,16 @@ def makeDataTuple(vcf):
     position_data = namedtuple('base', field_labels)
     return (position_data, chrm_data)
 
+
 def array2OnelinerAlignment(info, taxa, bases):
     """Convert array of array of taxa and an array of bases to one-liner."""
 
     oneliner = info
     for count, seq in enumerate(bases):
-        oneliner += taxa[count]+","+''.join(itertools.chain(bases[count])) + ","
+        oneliner += taxa[count] + "," + ''.join(itertools.chain(bases[count])) + ","
     oneliner = oneliner[:-1] + ";"
     return oneliner
+
 
 def callSNPs(current_base, numb_of_seqs):
     """Call the SNPs. Duh!"""
@@ -107,6 +110,7 @@ def callSNPs(current_base, numb_of_seqs):
 
     return blanks
 
+
 def count_informative_sites(alignment_array):
     """Informative Sites must have two different SNPs"""
     informative_sites = 0
@@ -115,6 +119,7 @@ def count_informative_sites(alignment_array):
         if len(unique_sites) >= 3:
             informative_sites += 1
     return informative_sites
+
 
 def get_subset_vcf(chrm, start, stop):
     base_dir = "/Users/MullenLab/Desktop/Grad_Students/Nick/butterfly_practice"
@@ -128,6 +133,7 @@ def get_subset_vcf(chrm, start, stop):
     vcf = Popen(cli_parts, stdin=PIPE, stderr=PIPE, stdout=PIPE).communicate()[0]
     return vcf
 
+
 def generate_bootstraps(chrm, chrm_len, window_size, numb_of_reps):
 
     start_sites = [random.randint(0, chrm_len-window_size) for item in range(numb_of_reps)]
@@ -135,6 +141,7 @@ def generate_bootstraps(chrm, chrm_len, window_size, numb_of_reps):
     for count, start in enumerate(start_sites):
         vcf = get_subset_vcf(chrm, start, start+window_size)
         yield vcf
+
 
 def parse_window_vcf(vcf, start, stop, window_size, chrm, fout):
     # SETUP NAMED TUPLE TO STORE INFO FROM A SINGLE BASE
