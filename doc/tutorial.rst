@@ -19,7 +19,7 @@ This script calculates *F*-statistics for each pair of populations at each windo
 
 **Working Example:**
 
-	Note that ``path/to/pypgen/data/example.vcf.gz`` needs to be update to the directory in which the source code for ``pypge`` is found.
+	Note that ``path/to/pypgen/data/example.vcf.gz`` needs to be updateed to the directory in which the source code for ``pypgen`` is found.
 
 	::
 
@@ -31,6 +31,9 @@ This script calculates *F*-statistics for each pair of populations at each windo
 	    -c 2 \
 	    -r Chr01:1-10001 | head
 
+
+Command Line Settings Definitions  
+---------------------------------
 
 **Input:** [ -i, --input ]
 
