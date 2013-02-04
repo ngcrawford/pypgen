@@ -68,7 +68,7 @@
 <p>This script calculates <em>F</em>-statistics for each pair of populations at each window in the supplied region. This script requires that the input VCF file be bgzipped because it uses <tt class="docutils literal"><span class="pre">tabix</span></tt> to extract the windows.</p>
 <p><strong>Working Example:</strong></p>
 <blockquote>
-<div><p>Note that <tt class="docutils literal"><span class="pre">path/to/pypgen/data/example.vcf.gz</span></tt> needs to be update to the directory in which the source code for <tt class="docutils literal"><span class="pre">pypge</span></tt> is found.</p>
+<div><p>Note that <tt class="docutils literal"><span class="pre">path/to/pypgen/data/example.vcf.gz</span></tt> needs to be updateed to the directory in which the source code for <tt class="docutils literal"><span class="pre">pypgen</span></tt> is found.</p>
 <div class="highlight-python"><pre>python scripts/vcf_snpwise_fstats.py \
 -i path/to/pypgen/data/example.vcf.gz \
 -p outgroups:h665,i02-210 \
@@ -78,6 +78,8 @@ pop2:m523,m524,m525,m589,m675,m676,m682,m683,m687,m689 \
 -r Chr01:1-10001 | head</pre>
 </div>
 </div></blockquote>
+<div class="section" id="command-line-settings-definitions">
+<h3>Command Line Settings Definitions<a class="headerlink" href="#command-line-settings-definitions" title="Permalink to this headline">¶</a></h3>
 <p><strong>Input:</strong> [ -i, &#8211;input ]</p>
 <blockquote>
 <div>Defines the path to the input VCF file.</div></blockquote>
@@ -105,6 +107,7 @@ pop2:m523,m524,m525,m589,m675,m676,m682,m683,m687,m689 \
 <p><strong>Zero Based:</strong> [ &#8211;zero-based ]</p>
 <blockquote>
 <div>Setting this flag makes the output positions zero based (e.g., BED like).</div></blockquote>
+</div>
 <div class="section" id="output">
 <h3>Output<a class="headerlink" href="#output" title="Permalink to this headline">¶</a></h3>
 <p><strong>vcf_sliding_window.py:</strong></p>
@@ -305,82 +308,6 @@ this flag is set to 1 (= &#8220;True&#8221; in binary)</p>
 </div></blockquote>
 </li>
 </ul>
-<dl class="docutils">
-<dt>optional arguments:</dt>
-<dd><table class="first docutils option-list" frame="void" rules="none">
-<col class="option" />
-<col class="description" />
-<tbody valign="top">
-<tr><td class="option-group">
-<kbd><span class="option">-h</span>, <span class="option">--help</span></kbd></td>
-<td>show this help message and exit</td></tr>
-<tr><td class="option-group" colspan="2">
-<kbd><span class="option">-i <var>INPUT</var></span>, <span class="option">--input <var>INPUT</var></span></kbd></td>
-</tr>
-<tr><td>&nbsp;</td><td>Path to VCF file.</td></tr>
-</tbody>
-</table>
-<dl class="docutils">
-<dt>-o [OUTPUT], &#8211;output [OUTPUT]</dt>
-<dd>Path to output csv file. If path is not set, defaults
-to STDOUT.</dd>
-</dl>
-<table class="docutils option-list" frame="void" rules="none">
-<col class="option" />
-<col class="description" />
-<tbody valign="top">
-<tr><td class="option-group" colspan="2">
-<kbd><span class="option">-c <var>CORES</var></span>, <span class="option">--cores <var>CORES</var></span></kbd></td>
-</tr>
-<tr><td>&nbsp;</td><td>Number of cores to use.</td></tr>
-</tbody>
-</table>
-<dl class="docutils">
-<dt>-r REGIONS [REGIONS ...], -R REGIONS [REGIONS ...], &#8211;regions REGIONS [REGIONS ...]</dt>
-<dd>Define a chromosomal region. A region can be
-presented, for example, in the following format:
-‘chr2’ (the whole chr2), ‘chr2:1000000’
-(region starting from 1,000,000bp) or
-‘chr2:1,000,000-2,000,000’ (region between
-1,000,000 and 2,000,000bp including the end points).
-The coordinate is 1-based.&#8217; Multiple regions can be
-submitted seperated by spaces. [NOte: this is the same
-format as SAMTOOLs/GATK, example text largely cribbed
-from SAMTOOLs]</dd>
-<dt>&#8211;regions-to-skip REGIONS_TO_SKIP [REGIONS_TO_SKIP ...]</dt>
-<dd>Define a chromosomal region(s) to skip.</dd>
-<dt>-p POPULATIONS [POPULATIONS ...], &#8211;populations POPULATIONS [POPULATIONS ...]</dt>
-<dd>Names of populations and samples. The format is:
-&#8220;PopName:sample1,sample2,..
-PopName2:sample3,sample4,...&#8221; Whitespace is used to
-delimit populations. Note: the population name uname
-&#8220;Outgroup&#8221; is reserved for samples that that are used
-to polarize genotype calls.</dd>
-</dl>
-<table class="last docutils option-list" frame="void" rules="none">
-<col class="option" />
-<col class="description" />
-<tbody valign="top">
-<tr><td class="option-group" colspan="2">
-<kbd><span class="option">-w <var>WINDOW_SIZE</var></span>, <span class="option">--window-size <var>WINDOW_SIZE</var></span></kbd></td>
-</tr>
-<tr><td>&nbsp;</td><td>Size of the window in which to calculate pairwise
-F-staticstics</td></tr>
-<tr><td class="option-group" colspan="2">
-<kbd><span class="option">-m <var>MIN_SAMPLES</var></span>, <span class="option">--min-samples <var>MIN_SAMPLES</var></span></kbd></td>
-</tr>
-<tr><td>&nbsp;</td><td>Minimum number of samples per population.</td></tr>
-<tr><td class="option-group" colspan="2">
-<kbd><span class="option">-s <var>SEP</var></span>, <span class="option">--column-separator <var>SEP</var></span></kbd></td>
-</tr>
-<tr><td>&nbsp;</td><td>Set column seperator. Default is comma (,).</td></tr>
-<tr><td class="option-group">
-<kbd><span class="option">--zero-based</span></kbd></td>
-<td>If set then output positions are zero-based.</td></tr>
-</tbody>
-</table>
-</dd>
-</dl>
 </div>
 </div>
 </div>
@@ -396,6 +323,7 @@ F-staticstics</td></tr>
 <li><a class="reference internal" href="#">Quick Tutorial:</a><ul>
 <li><a class="reference internal" href="#vcf-snpwise-fstats">vcf_snpwise_fstats</a></li>
 <li><a class="reference internal" href="#vcf-sliding-window">vcf_sliding_window</a><ul>
+<li><a class="reference internal" href="#command-line-settings-definitions">Command Line Settings Definitions</a></li>
 <li><a class="reference internal" href="#output">Output</a></li>
 </ul>
 </li>
