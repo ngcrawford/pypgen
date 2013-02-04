@@ -49,9 +49,9 @@ def get_args():
                         default=sys.stdout,
                         help='Path to output. (default is STOUT)')
 
-    parser.add_argument('-b','--bootstraps', 
-                        type=int,
-                        help='Calculate bootstraps.')
+    # parser.add_argument('-b','--bootstraps', 
+    #                     type=int,
+    #                     help='Calculate bootstraps.')
 
     parser.add_argument('input', 
                         nargs=1, 
