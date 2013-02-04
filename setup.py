@@ -9,12 +9,12 @@ setup(
     author_email='ngcrawford@gmail.com',
     url='http://pypi.python.org/pypi/pypgen/',
     license='LICENSE.txt',
-    description='Genetic diversity metrics from popoulation genomic datasets.',
+    description='Genetic diversity metrics from population genomic datasets.',
     long_description=open('README.rst').read(),
     test_suite='nose.collector',
     tests_require=['nose'],
     install_requires=[
-        "pysam >= 0.7.2"
+        "pysam == 0.6.0"   # The new versions don't seem to compile correctly.
     ],
 
     packages=[
