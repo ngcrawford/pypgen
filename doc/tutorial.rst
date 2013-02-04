@@ -19,10 +19,12 @@ This script calculates *F*-statistics for each pair of populations at each windo
 
 **Working Example:**
 
+	Note that ``path/to/pypgen/data/example.vcf.gz`` needs to be update to the directory in which the source code for ``pypge`` is found.
+
 	::
 
 	    python scripts/vcf_snpwise_fstats.py \
-	    -i **path/to/**pypgen/data/example.vcf.gz \
+	    -i path/to/pypgen/data/example.vcf.gz \
 	    -p outgroups:h665,i02-210 \
 	    pop1:c511,c512,c513,c514,c515,c563,c614,c630,c639,c640 \
 	    pop2:m523,m524,m525,m589,m675,m676,m682,m683,m687,m689 \
