@@ -25,7 +25,6 @@ The author may be contacted at ngcrawford@gmail.com
 import os
 import re
 import sys
-import VCF
 import gzip
 import pysam
 import shlex
@@ -35,11 +34,12 @@ import itertools
 import numpy as np
 from subprocess import Popen, PIPE
 from collections import namedtuple
+from pypgen.parser import VCF
 
 def get_args():
     """Parse sys.argv"""
     parser = argparse.ArgumentParser()
-    parser.add_argument('-r','--regions',
+    parser.add_argument('-r','-R','--regions',
                         required=True,
                         type=str,
                         help="Chromosomal region in the format: 'Chrm:start-stop'")
