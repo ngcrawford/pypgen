@@ -19,9 +19,10 @@ Samtools and tabix:
 #. Then install samtools using homebrew:
 
 	::
-
-		$ brew install homebrew/science/samtools
-		$ brew install homebrew/science/tabix
+		
+		$ brew tap homebrew/science
+		$ brew install samtools
+		$ brew install tabix
 
  While you're at it you might want to use brew to install ``wget``.
 
@@ -64,43 +65,13 @@ Note: Pip is the the replacement for setuptools and is the recommended approach.
 	
 		$ curl -O https://raw.github.com/pypa/pip/master/contrib/get-pip.py
 		$ [sudo] python get-pip.py
+		$ rm get-pip.py
 
 #. But, if you must, you can use setuptools. You'll need to download the appropriate `python .egg file <http://pypi.python.org/pypi/setuptools#files>`_. Then you can run it as an installation script. 
 
 	::
 	
 		$ [sudo] sh setuptools-0.6c9-py2.4.egg
-
-
-Pysam:
-++++++
-
-Installing pysam can be a bit tricky. The first thing to try is pip/easy_install.
-
-	::
-
-		$ [sudo] pip install pysam
-
-or, 
-
-	::
-
-		$ [sudo] easy_install -U pysam
-
-If that doesn't work you'll want to try installing it from source:
-
-	::
-
-		# replace the ###version### with the appropriate version number (e.g., 0.7.4)
-		
-		$ wget http://pysam.googlecode.com/files/pysam-###version###.tar.gz
-		$ tar xzf pysam-###version###.tar.gz
-		
-then ``cd`` into the directory and run:
-
-	::
-	
-		$ [sudo] python setup.py
 
 Pypgen:
 +++++++
@@ -123,8 +94,45 @@ However, it's recommended, at least in these early days of pypgen when I'm activ
 	::
 
 		$ [sudo] pip install -e git+https://github.com/ngcrawford/pypgen.git#egg=Package
-	   
+
+
+This should complete your install. 	   
+
+Pysam:
+++++++
+
+**NOTE: Pysam should automatically install when you install pypgen. These instructions are only necessary if you have problems with it.**
+
+Pysam is a bit of a finicky installation. The newest versions, in particular seem to have a lot of problems linking to their compiled cython libraries. With that in mind I recommend installing 0.6.
+
+	::
+
+		$ [sudo] pip install pysam==0.6
+
+or, 
+
+	::
+
+		$ [sudo] easy_install -U pysam==0.6
+
+If that doesn't work you'll want to try installing it from source:
+
+	::
+
+		# replace the ###version### with the appropriate version number (e.g., 0.7.4)
+		
+		$ wget http://pysam.googlecode.com/files/pysam-###version###.tar.gz
+		$ tar xzf pysam-###version###.tar.gz
+		
+then ``cd`` into the directory and run:
+
+	::
 	
+		$ [sudo] python setup.py
+
+There is also a `pysam google group <https://groups.google.com/forum/#!forum/pysam-user-group>`_. that is a good source of information.
+
+
 Run UnitTests:
 ++++++++++++++
 

@@ -41,7 +41,7 @@ Pypgen is written in Python 2.7. It may run under Python 2.6, but I haven't test
 Quick Installation:
 +++++++++++++++++++
 
-Pypgen can be installed from `PyPi <http://pypi.python.org/pypi/pypgen>`_  using `pip <http://pypi.python.org/pypi/pip>`_ or `setuptools <http://pypi.python.org/pypi/setuptools>`_:
+If you already have a working install of pysam, pypgen can be installed from `PyPi <http://pypi.python.org/pypi/pypgen>`_  using `pip <http://pypi.python.org/pypi/pip>`_ or `setuptools <http://pypi.python.org/pypi/setuptools>`_:
 
 ::
 
@@ -59,7 +59,7 @@ However, it's recommended, at least in these early days of pypgen, to install it
 ::
 
        pip install -e git+https://github.com/ngcrawford/pypgen.git#egg=Package
-
+	   
  
 Contents:
 +++++++++

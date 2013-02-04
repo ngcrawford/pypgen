@@ -65,8 +65,9 @@
 </li>
 <li><p class="first">Then install samtools using homebrew:</p>
 <blockquote>
-<div><div class="highlight-python"><pre>$ brew install homebrew/science/samtools
-$ brew install homebrew/science/tabix</pre>
+<div><div class="highlight-python"><pre>$ brew tap homebrew/science
+$ brew install samtools
+$ brew install tabix</pre>
 </div>
 </div></blockquote>
 </li>
@@ -109,7 +110,8 @@ $ wget http://sourceforge.net/projects/samtools/files/samtools/0.1.18/samtools-0
 <li><p class="first">Install pip:</p>
 <blockquote>
 <div><div class="highlight-python"><pre>$ curl -O https://raw.github.com/pypa/pip/master/contrib/get-pip.py
-$ [sudo] python get-pip.py</pre>
+$ [sudo] python get-pip.py
+$ rm get-pip.py</pre>
 </div>
 </div></blockquote>
 </li>
@@ -120,32 +122,6 @@ $ [sudo] python get-pip.py</pre>
 </div></blockquote>
 </li>
 </ol>
-</div>
-<div class="section" id="pysam">
-<h2>Pysam:<a class="headerlink" href="#pysam" title="Permalink to this headline">¶</a></h2>
-<p>Installing pysam can be a bit tricky. The first thing to try is pip/easy_install.</p>
-<blockquote>
-<div><div class="highlight-python"><pre>$ [sudo] pip install pysam</pre>
-</div>
-</div></blockquote>
-<p>or,</p>
-<blockquote>
-<div><div class="highlight-python"><pre>$ [sudo] easy_install -U pysam</pre>
-</div>
-</div></blockquote>
-<p>If that doesn&#8217;t work you&#8217;ll want to try installing it from source:</p>
-<blockquote>
-<div><div class="highlight-python"><pre># replace the ###version### with the appropriate version number (e.g., 0.7.4)
-
-$ wget http://pysam.googlecode.com/files/pysam-###version###.tar.gz
-$ tar xzf pysam-###version###.tar.gz</pre>
-</div>
-</div></blockquote>
-<p>then <tt class="docutils literal"><span class="pre">cd</span></tt> into the directory and run:</p>
-<blockquote>
-<div><div class="highlight-python"><pre>$ [sudo] python setup.py</pre>
-</div>
-</div></blockquote>
 </div>
 <div class="section" id="pypgen">
 <h2>Pypgen:<a class="headerlink" href="#pypgen" title="Permalink to this headline">¶</a></h2>
@@ -164,6 +140,35 @@ $ tar xzf pysam-###version###.tar.gz</pre>
 <div><div class="highlight-python"><pre>$ [sudo] pip install -e git+https://github.com/ngcrawford/pypgen.git#egg=Package</pre>
 </div>
 </div></blockquote>
+<p>This should complete your install.</p>
+</div>
+<div class="section" id="pysam">
+<h2>Pysam:<a class="headerlink" href="#pysam" title="Permalink to this headline">¶</a></h2>
+<p><strong>NOTE: Pysam should automatically install when you install pypgen. These instructions are only necessary if you have problems with it.</strong></p>
+<p>Pysam is a bit of a finicky installation. The newest versions, in particular seem to have a lot of problems linking to their compiled cython libraries. With that in mind I recommend installing 0.6.</p>
+<blockquote>
+<div><div class="highlight-python"><pre>$ [sudo] pip install pysam==0.6</pre>
+</div>
+</div></blockquote>
+<p>or,</p>
+<blockquote>
+<div><div class="highlight-python"><pre>$ [sudo] easy_install -U pysam==0.6</pre>
+</div>
+</div></blockquote>
+<p>If that doesn&#8217;t work you&#8217;ll want to try installing it from source:</p>
+<blockquote>
+<div><div class="highlight-python"><pre># replace the ###version### with the appropriate version number (e.g., 0.7.4)
+
+$ wget http://pysam.googlecode.com/files/pysam-###version###.tar.gz
+$ tar xzf pysam-###version###.tar.gz</pre>
+</div>
+</div></blockquote>
+<p>then <tt class="docutils literal"><span class="pre">cd</span></tt> into the directory and run:</p>
+<blockquote>
+<div><div class="highlight-python"><pre>$ [sudo] python setup.py</pre>
+</div>
+</div></blockquote>
+<p>There is also a <a class="reference external" href="https://groups.google.com/forum/#!forum/pysam-user-group">pysam google group</a>. that is a good source of information.</p>
 </div>
 <div class="section" id="run-unittests">
 <h2>Run UnitTests:<a class="headerlink" href="#run-unittests" title="Permalink to this headline">¶</a></h2>
@@ -182,8 +187,8 @@ $ tar xzf pysam-###version###.tar.gz</pre>
 <li><a class="reference internal" href="#">Detailed Installation:</a><ul>
 <li><a class="reference internal" href="#samtools-and-tabix">Samtools and tabix:</a></li>
 <li><a class="reference internal" href="#pip-or-setuptools">Pip or Setuptools:</a></li>
-<li><a class="reference internal" href="#pysam">Pysam:</a></li>
 <li><a class="reference internal" href="#pypgen">Pypgen:</a></li>
+<li><a class="reference internal" href="#pysam">Pysam:</a></li>
 <li><a class="reference internal" href="#run-unittests">Run UnitTests:</a></li>
 </ul>
 </li>
