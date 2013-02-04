@@ -178,31 +178,31 @@ pop2:m523,m524,m525,m589,m675,m676,m682,m683,m687,m689 \
 </div></blockquote>
 <div class="section" id="command-line-settings-definitions">
 <h3>Command Line Settings Definitions<a class="headerlink" href="#command-line-settings-definitions" title="Permalink to this headline">¶</a></h3>
-<p><strong>Input:</strong> [ -i, &#8211;input ]</p>
+<p><strong>Input:</strong> [ <tt class="docutils literal"><span class="pre">-i</span></tt>, <tt class="docutils literal"><span class="pre">--input</span></tt> ]</p>
 <blockquote>
 <div>Defines the path to the input VCF file.</div></blockquote>
-<p><strong>Output:</strong> [ -o, &#8211;output ]</p>
+<p><strong>Output:</strong> [ <tt class="docutils literal"><span class="pre">-o</span></tt>, <tt class="docutils literal"><span class="pre">--output</span></tt> ]</p>
 <blockquote>
 <div>Defines the path to the output csv/txt file. If it&#8217;s not set it defaults to standard out (stout).</div></blockquote>
-<p><strong>Cores:</strong> [ -c, &#8211;cores]</p>
+<p><strong>Cores:</strong> [ <tt class="docutils literal"><span class="pre">-c</span></tt>, <tt class="docutils literal"><span class="pre">--cores</span></tt> ]</p>
 <blockquote>
 <div>The number of cores to use.</div></blockquote>
-<p><strong>Regions:</strong> [ -r, -R, &#8211;regions ]</p>
+<p><strong>Regions:</strong> [ <tt class="docutils literal"><span class="pre">-r</span></tt>, <tt class="docutils literal"><span class="pre">-R</span></tt>, <tt class="docutils literal"><span class="pre">--regions</span></tt> ]</p>
 <blockquote>
 <div>This allows for selecting a subset of the VCF file for analysis. The command format should familiar to if you use GATK or samtools. A region can be presented, for example, in the following format: ‘chr2’ (the whole chr2), ‘chr2:1000000’ (region starting from 1,000,000bp) or ‘chr2:1,000,000-2,000,000’ (region between 1,000,000 and 2,000,000bp including the end points). The coordinate system is 1-based. Multiple regions can be submitted separated by spaces. [Note: this is the same format as samtools/GATK and this example text is largely borrowed from samtools]</div></blockquote>
-<p><strong>Window Size:</strong> [ -w, &#8211;window-size ]</p>
+<p><strong>Window Size:</strong> [ <tt class="docutils literal"><span class="pre">-w</span></tt>, <tt class="docutils literal"><span class="pre">--window-size</span></tt> ]</p>
 <blockquote>
 <div>Windows are non overlapping and start at the first bp in the particular chromosome.</div></blockquote>
-<p><strong>Populations:</strong> [ -p, &#8211;populations ]</p>
+<p><strong>Populations:</strong> [ <tt class="docutils literal"><span class="pre">-p</span></tt>, <tt class="docutils literal"><span class="pre">--populations</span></tt> ]</p>
 <blockquote>
 <div>Names of populations and samples. The format is: &#8220;PopName:sample1,sample2,.. PopName2:sample3,sample4,...&#8221; Whitespace is used to delimit populations. Note: the population name uname &#8220;Outgroup&#8221; is reserved for samples that that are used to polarize genotype calls.</div></blockquote>
-<p><strong>Minimum Number of Samples:</strong> [ -m, &#8211;min-samples ]</p>
+<p><strong>Minimum Number of Samples:</strong> [ <tt class="docutils literal"><span class="pre">-m</span></tt>, <tt class="docutils literal"><span class="pre">--min-samples</span></tt> ]</p>
 <blockquote>
 <div>This allows one to set the minimum number of samples per population that a SNV needs to have in order to be included in the analysis.</div></blockquote>
-<p><strong>Column Separator:</strong> [ -s, &#8211;column-separator ]</p>
+<p><strong>Column Separator:</strong> [ <tt class="docutils literal"><span class="pre">-s</span></tt>, <tt class="docutils literal"><span class="pre">--column-separator</span></tt> ]</p>
 <blockquote>
 <div>This allows one to set the separator to be uses in the output. The default value is <tt class="docutils literal"><span class="pre">,</span></tt> which makes the output comma separated (csv). If you&#8217;re planning on using tabix to index the output you&#8217;ll need to set the sep to <tt class="docutils literal"><span class="pre">\t</span></tt>.</div></blockquote>
-<p><strong>Zero Based:</strong> [ &#8211;zero-based ]</p>
+<p><strong>Zero Based:</strong> [ <tt class="docutils literal"><span class="pre">--zero-based</span></tt> ]</p>
 <blockquote>
 <div>Setting this flag makes the output positions zero based (e.g., BED like).</div></blockquote>
 </div>

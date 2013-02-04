@@ -82,43 +82,43 @@ This script calculates *F*-statistics for each pair of populations at each windo
 Command Line Settings Definitions  
 ---------------------------------
 
-**Input:** [ -i, --input ]
+**Input:** [ ``-i``, ``--input`` ]
 
 	Defines the path to the input VCF file.
 
-**Output:** [ -o, --output ]
+**Output:** [ ``-o``, ``--output`` ]
 
 	Defines the path to the output csv/txt file. If it's not set it defaults to standard out (stout).
 
-**Cores:** [ -c, --cores]
+**Cores:** [ ``-c``, ``--cores`` ]
 
 	The number of cores to use.
 
-**Regions:** [ -r, -R, --regions ]
+**Regions:** [ ``-r``, ``-R``, ``--regions`` ]
 
     This allows for selecting a subset of the VCF file for analysis. The command format should familiar to if you use GATK or samtools. A region can be presented, for example, in the following format: ‘chr2’ (the whole chr2), ‘chr2:1000000’ (region starting from 1,000,000bp) or ‘chr2:1,000,000-2,000,000’ (region between 1,000,000 and 2,000,000bp including the end points). The coordinate system is 1-based. Multiple regions can be submitted separated by spaces. [Note: this is the same format as samtools/GATK and this example text is largely borrowed from samtools]
 
 
-**Window Size:** [ -w, --window-size ]
+**Window Size:** [ ``-w``, ``--window-size`` ]
 
 	Windows are non overlapping and start at the first bp in the particular chromosome. 
 
 
-**Populations:** [ -p, --populations ]
+**Populations:** [ ``-p``, ``--populations`` ]
 
 	Names of populations and samples. The format is: "PopName:sample1,sample2,.. PopName2:sample3,sample4,..." Whitespace is used to delimit populations. Note: the population name uname "Outgroup" is reserved for samples that that are used to polarize genotype calls.
 	
 
-**Minimum Number of Samples:** [ -m, --min-samples ]
+**Minimum Number of Samples:** [ ``-m``, ``--min-samples`` ]
 
 	This allows one to set the minimum number of samples per population that a SNV needs to have in order to be included in the analysis.
 	
 
-**Column Separator:** [ -s, --column-separator ]
+**Column Separator:** [ ``-s``, ``--column-separator`` ]
 
 	This allows one to set the separator to be uses in the output. The default value is ``,`` which makes the output comma separated (csv). If you're planning on using tabix to index the output you'll need to set the sep to ``\t``.
 			  
-**Zero Based:** [ --zero-based ]
+**Zero Based:** [ ``--zero-based`` ]
 
 	Setting this flag makes the output positions zero based (e.g., BED like).
 
