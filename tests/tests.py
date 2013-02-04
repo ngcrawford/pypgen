@@ -235,36 +235,36 @@ class TestMultilocusFstatsCalculations(unittest.TestCase):
         ml_stats = VCF.calc_multilocus_f_statistics(self.Hs_est_dict, self.Ht_est_dict)
         self.assertEqual({('pop1', 'pop2'):
             {'Gst_est': 0.30312672938572266,
-            'Gst_est_stdev': 1.3360742705570265,
+            'Gst_est.stdev': 1.3360742705570265,
             'G_double_prime_st_est': 0.5003506191636901,
-            'G_double_prime_st_est_stdev': 2.394045897494315,
+            'G_double_prime_st_est.stdev': 2.394045897494315,
             'G_prime_st_est': 0.34889353651117816,
-            'G_prime_st_est_stdev': 1.6091544573608876,
+            'G_prime_st_est.stdev': 1.6091544573608876,
             'D_est': 0.0015629851350084287,
-            'D_est_stdev': 0.25110803099568757}}, ml_stats)
+            'D_est.stdev': 0.25110803099568757}}, ml_stats)
 
     def test_trivial_calc_multilocus_f_statistics(self):
         ml_stats = VCF.calc_multilocus_f_statistics(self.trivial_Hs_est_dict, self.trivial_Ht_est_dict)
         self.assertEqual({('pop1', 'pop2'):
             {'G_prime_st_est': 0.0,
-            'Gst_est_stdev': 0.0,
-            'G_double_prime_st_est_stdev': 0.0,
+            'Gst_est.stdev': 0.0,
+            'G_double_prime_st_est.stdev': 0.0,
             'G_double_prime_st_est': 0.0,
             'Gst_est': 0.0,
-            'D_est_stdev': 0.0,
-            'G_prime_st_est_stdev': 0.0,
+            'D_est.stdev': 0.0,
+            'G_prime_st_est.stdev': 0.0,
             'D_est': 0.0}}, ml_stats)
 
     def test_trivial_2_calc_multilocus_f_statistics(self):
         ml_stats = VCF.calc_multilocus_f_statistics(self.trivial_2_Hs_est_dict, self.trivial_2_Ht_est_dict)
         self.assertEqual({('pop1', 'pop2'):
         {'G_prime_st_est': 0.8333333333333334,
-        'Gst_est_stdev': 0.09999999999999998,
-        'G_double_prime_st_est_stdev': 0.060586734693877375,
+        'Gst_est.stdev': 0.09999999999999998,
+        'G_double_prime_st_est.stdev': 0.060586734693877375,
         'G_double_prime_st_est': 0.8888888888888888,
         'Gst_est': 0.5,
-        'D_est_stdev': 0.08928571428571419,
-        'G_prime_st_est_stdev': 0.07857142857142851,
+        'D_est.stdev': 0.08928571428571419,
+        'G_prime_st_est.stdev': 0.07857142857142851,
         'D_est': 0.6488650338184054}}, ml_stats)
 
 
