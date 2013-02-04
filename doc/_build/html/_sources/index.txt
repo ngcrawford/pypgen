@@ -68,6 +68,7 @@ Contents:
    	   :maxdepth: 2
 
    	   install
+	   tutorial
 
 
 Indices and tables

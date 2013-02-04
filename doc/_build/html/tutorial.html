@@ -8,7 +8,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Detailed Installation: &mdash; pypgen 0.2.2 beta documentation</title>
+    <title>Quick Tutorial: &mdash; pypgen 0.2.2 beta documentation</title>
     
     <link rel="stylesheet" href="_static/default.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
@@ -27,7 +27,7 @@
     <script type="text/javascript" src="_static/doctools.js"></script>
     <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
     <link rel="top" title="pypgen 0.2.2 beta documentation" href="index.html" />
-    <link rel="prev" title="Welcome to pypgen’s documentation!" href="index.html" /> 
+    <link rel="prev" title="Detailed Installation:" href="install.html" /> 
   </head>
   <body>
     <div class="related">
@@ -37,7 +37,7 @@
           <a href="genindex.html" title="General Index"
              accesskey="I">index</a></li>
         <li class="right" >
-          <a href="index.html" title="Welcome to pypgen’s documentation!"
+          <a href="install.html" title="Detailed Installation:"
              accesskey="P">previous</a> |</li>
         <li><a href="index.html">pypgen 0.2.2 beta documentation</a> &raquo;</li> 
       </ul>
@@ -48,119 +48,242 @@
         <div class="bodywrapper">
           <div class="body">
             
-  <div class="section" id="detailed-installation">
-<h1>Detailed Installation:<a class="headerlink" href="#detailed-installation" title="Permalink to this headline">¶</a></h1>
+  <div class="section" id="quick-tutorial">
+<h1>Quick Tutorial:<a class="headerlink" href="#quick-tutorial" title="Permalink to this headline">¶</a></h1>
+<p>Once pygen is installed two scripts, <tt class="docutils literal"><span class="pre">vcf_sliding_window.py</span></tt> and <tt class="docutils literal"><span class="pre">vcf_snpwise_fstats.py</span></tt> should be available at the commandline.</p>
+<p>Running [script name].py will print out a short list of commands and adding the <tt class="docutils literal"><span class="pre">--help</span></tt> or <tt class="docutils literal"><span class="pre">-h</span></tt> prints out a more detailed list.</p>
 </div>
-<div class="section" id="install-samtools-and-tabix">
-<h1>Install samtools and tabix:<a class="headerlink" href="#install-samtools-and-tabix" title="Permalink to this headline">¶</a></h1>
-<p>On OS X:</p>
-<ol class="arabic">
-<li><p class="first">Install <a class="reference external" href="http://itunes.apple.com/us/app/xcode/id497799835">Xcode</a> or <a class="reference external" href="https://developer.apple.com/downloads">Xcode Command Line Tools</a>. The CLI tools take up less space, but are an optional install under Xcode. Details in the <a class="reference external" href="https://github.com/mxcl/homebrew/wiki/Installation#wiki-fn3">homebrew documenation</a>.</p>
-</li>
-<li><p class="first">Then install the <a class="reference external" href="http://mxcl.github.com/homebrew/">homebrew</a> package installer:</p>
+<div class="section" id="vcf-snpwise-fstats">
+<h1>vcf_snpwise_fstats:<a class="headerlink" href="#vcf-snpwise-fstats" title="Permalink to this headline">¶</a></h1>
+<p>This script calculates <em>F</em>-statistics for each pair of populations at each SNP in the supplied region.</p>
+</div>
+<div class="section" id="vcf-sliding-window">
+<h1>vcf_sliding_window:<a class="headerlink" href="#vcf-sliding-window" title="Permalink to this headline">¶</a></h1>
+<p>This script calculates <em>F</em>-statistics for each pair of populations at each window in the supplied region. This script requires that the input VCF file be bgzipped because it uses <tt class="docutils literal"><span class="pre">tabix</span></tt> to extract the windows.</p>
+<p>Input: [ -i, &#8211;input ]</p>
 <blockquote>
-<div><div class="highlight-python"><pre>$ ruby -e "$(curl -fsSkL raw.github.com/mxcl/homebrew/go)"</pre>
-</div>
-</div></blockquote>
-</li>
-<li><p class="first">The install samtools using homebrew:</p>
+<div>Defines the path to the input VCF file.</div></blockquote>
+<p>Output: [ -o, &#8211;output ]</p>
 <blockquote>
-<div><div class="highlight-python"><pre>$ brew install homebrew/science/samtools
-$ brew install homebrew/science/tabix</pre>
-</div>
-</div></blockquote>
-</li>
-</ol>
-<p>While you&#8217;re at it you might want to use brew to install wget.</p>
+<div>Defines the path to the output csv/txt file. If it&#8217;s not set it defaults to standard out (stout).</div></blockquote>
+<p>Core</p>
+<p>Regions: [ -r, -R, &#8211;regions ]</p>
 <blockquote>
-<div><div class="highlight-python"><pre>$ brew install wget</pre>
-</div>
-</div></blockquote>
-<p>From source (e.g., on linux):</p>
-<ol class="arabic">
-<li><p class="first">Download the latest version of samtools and tabix.</p>
+<div>This flag allows for selecting a subset of the VCF file for analysis. The command format should familiar to if you use GATK or samtools. A region can be presented, for example, in the following format: ‘chr2’ (the whole chr2), ‘chr2:1000000’ (region starting from 1,000,000bp) or ‘chr2:1,000,000-2,000,000’ (region between 1,000,000 and 2,000,000bp including the end points). The coordinate is 1-based.&#8217; Multiple regions can be submitted separated by spaces. [NOte: this is the same format as SAMTOOLs/GATK, example text largely cribbed from SAMTOOLs]</div></blockquote>
+<p>Window Size: [ -w, &#8211;window-size ]</p>
 <blockquote>
-<div><div class="highlight-python"><pre># replace the ###version### with the appropriate version number (e.g., 0.2.6)
-
-$ wget http://sourceforge.net/projects/samtools/files/tabix/tabix-###version###.tar.bz2
-$ wget http://sourceforge.net/projects/samtools/files/samtools/0.1.18/samtools-0.1.18.tar.bz2</pre>
+<div>Windows are non overlapping and start at the first bp in the particular chromosome.</div></blockquote>
 </div>
-</div></blockquote>
-</li>
-<li><p class="first">Extract the tar.bz2 files</p>
-<blockquote>
-<div><div class="highlight-python"><pre>tar jxf *.tar.bz2</pre>
-</div>
-</div></blockquote>
-</li>
-<li><p class="first">Then run <tt class="docutils literal"><span class="pre">make</span></tt> in each directory</p>
-</li>
-</ol>
-</div>
-<div class="section" id="install-pip-or-setuptools">
-<h1>Install pip or setuptools:<a class="headerlink" href="#install-pip-or-setuptools" title="Permalink to this headline">¶</a></h1>
-<p>Pip is the the <em>replacement</em> for easy_install. A justification for using it may be found <a class="reference external" href="http://www.pip-installer.org/en/latest/other-tools.html#pip-compared-to-easy-install">here</a>.</p>
-<ol class="arabic">
-<li><p class="first">Install pip:</p>
-<blockquote>
-<div><div class="highlight-python"><pre>$ curl -O https://raw.github.com/pypa/pip/master/contrib/get-pip.py
-$ [sudo] python get-pip.py</pre>
-</div>
-</div></blockquote>
-</li>
-<li><p class="first">If you must, you can use easy_install. You&#8217;ll need to download the appropriate <a class="reference external" href="http://pypi.python.org/pypi/setuptools#files">python .egg file</a>. Then you can run the installation script.</p>
-<blockquote>
-<div><div class="highlight-python"><pre>$ [sudo] sh setuptools-0.6c9-py2.4.egg</pre>
-</div>
-</div></blockquote>
-</li>
-</ol>
-</div>
-<div class="section" id="install-pysam">
-<h1>Install pysam:<a class="headerlink" href="#install-pysam" title="Permalink to this headline">¶</a></h1>
-<p>Installing pysam can be a bit tricky. The first thing to try is pip/easy_install.</p>
-<blockquote>
-<div><div class="highlight-python"><pre>pip install pysam</pre>
-</div>
-</div></blockquote>
-<p>or,</p>
-<blockquote>
-<div><div class="highlight-python"><pre>easy_install -U pysam</pre>
-</div>
-</div></blockquote>
-<p>If that doesn&#8217;t work you&#8217;ll want to try installing it from source:</p>
-<blockquote>
-<div><div class="highlight-python"><pre># replace the ###version### with the appropriate version number (e.g., 0.7.4)
-
-$ wget http://pysam.googlecode.com/files/pysam-###version###.tar.gz
-$ tar xzf pysam-###version###.tar.gz</pre>
-</div>
-</div></blockquote>
-<p>then <tt class="docutils literal"><span class="pre">cd</span></tt> into the directory and run:</p>
-<blockquote>
-<div>$ [sudo] python setup.py</div></blockquote>
-</div>
-<div class="section" id="install-pypgen">
-<h1>Install pypgen:<a class="headerlink" href="#install-pypgen" title="Permalink to this headline">¶</a></h1>
-<p>Pypgen can be installed from <a class="reference external" href="http://pypi.python.org/pypi/pypgen">PyPi</a>  using <a class="reference external" href="http://pypi.python.org/pypi/pip">pip</a> or <a class="reference external" href="http://pypi.python.org/pypi/setuptools">setuptools</a>:</p>
-<blockquote>
-<div><div class="highlight-python"><pre>pip install pypgen</pre>
-</div>
-</div></blockquote>
-<p>or,</p>
-<blockquote>
-<div><div class="highlight-python"><pre>easy_install -U pypgen</pre>
-</div>
-</div></blockquote>
-<p>However, it&#8217;s recommended, at least in these early days of pypgen, to install it directly from the github repository:</p>
-<blockquote>
-<div><div class="highlight-python"><pre>pip install -e git+https://github.com/ngcrawford/pypgen.git#egg=Package</pre>
-</div>
-</div></blockquote>
-</div>
-<div class="section" id="test-installation">
-<h1>Test installation:<a class="headerlink" href="#test-installation" title="Permalink to this headline">¶</a></h1>
-<p>Tests are in <tt class="docutils literal"><span class="pre">pygen/tests/tests.py</span></tt></p>
+<div class="section" id="output">
+<h1>Output:<a class="headerlink" href="#output" title="Permalink to this headline">¶</a></h1>
+<p><strong>vcf_sliding_window.py:</strong></p>
+<ul class="simple">
+<li>The format is loosely based on the <a class="reference external" href="http://genome.ucsc.edu/FAQ/FAQformat.html#format1">BED specification</a>. Although the first three column IDs will remain static for the foreseeable future, I expect to add more fields as I add additional functionality to pypgen.</li>
+<li>Currently positional values are one based, but this may change as this is not &#8216;BED-like&#8217; (not zero based).</li>
+<li>The population IDs and the total number of populations come from those defined by the user. This means the number of pairwise population comparisons and hence the total number of columns is conditional on the number of defined populations.</li>
+</ul>
+<table border="1" class="docutils">
+<colgroup>
+<col width="44%" />
+<col width="56%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Label:</th>
+<th class="head">Definition:</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><em>chrom</em></td>
+<td>ID of chromosome/scaffold/contig/etc.</td>
+</tr>
+<tr class="row-odd"><td><em>chromStart</em></td>
+<td>Starting position of window</td>
+</tr>
+<tr class="row-even"><td><em>chromEnd</em></td>
+<td>Ending position of window</td>
+</tr>
+<tr class="row-odd"><td><em>snp_count</em></td>
+<td>Total Number of SNPs in window</td>
+</tr>
+<tr class="row-even"><td><em>total_depth_mean</em></td>
+<td>Mean read depth across window</td>
+</tr>
+<tr class="row-odd"><td><em>total_depth_stdev</em></td>
+<td>Standard deviation of read depth across window</td>
+</tr>
+<tr class="row-even"><td><em>Pop1.sample_count.mean</em></td>
+<td>Mean number of samples per snp for &#8216;Pop1&#8217;</td>
+</tr>
+<tr class="row-odd"><td><em>Pop1.sample_count.stdev</em></td>
+<td>Standard deviation of samples per snp for &#8216;Pop1&#8217;</td>
+</tr>
+<tr class="row-even"><td><em>Pop2.sample_count.mean</em></td>
+<td>Mean number of samples per snp for &#8216;Pop2&#8217;</td>
+</tr>
+<tr class="row-odd"><td><em>Pop2.sample_count.stdev</em></td>
+<td>Standard deviation of samples per snp for &#8216;Pop2&#8217;</td>
+</tr>
+<tr class="row-even"><td><em>Pop2.Pop1.D_est</em></td>
+<td>Multilocus D (Jost 2008)</td>
+</tr>
+<tr class="row-odd"><td><em>Pop2.Pop1.G_double_prime_st_est</em></td>
+<td>Corrected Hedrick’s G&#8217;st
+(Meirmans &amp; Hedrick 2011)</td>
+</tr>
+<tr class="row-even"><td><em>Pop2.Pop1.G_prime_st_est</em></td>
+<td>Standardized Gst (Hedrick 2005)</td>
+</tr>
+<tr class="row-odd"><td><em>Pop2.Pop1.Gst_est</em></td>
+<td>Fst corrected for sample size and
+allowing for multiallelic loci
+(Nei &amp; Chesser 1983)</td>
+</tr>
+<tr class="row-even"><td>cont...</td>
+<td>The rest of the pairwise comparisons follow...</td>
+</tr>
+</tbody>
+</table>
+<p><strong>vcf_snpwise_fstats.py:</strong></p>
+<ul class="simple">
+<li>The chrom and pos column are fixed in positions 1 and 2, but the rest of the columns are [more]</li>
+</ul>
+<table border="1" class="docutils">
+<colgroup>
+<col width="44%" />
+<col width="56%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Label:</th>
+<th class="head">Definition:</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><em>chrom</em></td>
+<td>ID of chromosome/scaffold/contig/etc.</td>
+</tr>
+<tr class="row-odd"><td><em>pos</em></td>
+<td>Position of SNP</td>
+</tr>
+<tr class="row-even"><td><em>pop1.sample_count</em></td>
+<td>Number of samples represented</td>
+</tr>
+<tr class="row-odd"><td>cont.</td>
+<td>Additional population sample counts</td>
+</tr>
+<tr class="row-even"><td><em>Pop1.Pop2.D_est</em></td>
+<td>D corrected for sample size (Jost 2008)</td>
+</tr>
+<tr class="row-odd"><td><em>Pop1.Pop2.D_est.stdev</em></td>
+<td>D corrected for sample size standard deviation</td>
+</tr>
+<tr class="row-even"><td><em>Pop1.Pop2.G_double_prime_st_est</em></td>
+<td>Corrected Hedrick’s G&#8217;st
+(Meirmans &amp; Hedrick 2011)</td>
+</tr>
+<tr class="row-odd"><td><em>Pop1.Pop2.G_prime_st_est</em></td>
+<td>Standardized Gst (Hedrick 2005)</td>
+</tr>
+<tr class="row-even"><td><em>Pop1.Pop2.Gst_est</em></td>
+<td>Fst corrected for sample size and allowing for
+multiallelic loci (Nei &amp; Chesser 1983)</td>
+</tr>
+<tr class="row-odd"><td><em>Pop1.Pop2.Hs_est</em></td>
+<td>Within-population gene/locus diversity
+(e.g., expected heterozygosity)</td>
+</tr>
+<tr class="row-even"><td><em>Pop1.Pop2.Ht_est</em></td>
+<td>Total gene/locus diversity</td>
+</tr>
+<tr class="row-odd"><td>cont...</td>
+<td>Pairwise comparisons of F-statistics cont...</td>
+</tr>
+<tr class="row-even"><td><em>Pop1_fixed</em></td>
+<td>If a sample is fixed at a particular allele
+this flag is set to 1 (= &#8220;True&#8221; in binary)</td>
+</tr>
+<tr class="row-odd"><td>cont...</td>
+<td>Additional fixed SNPs cont...</td>
+</tr>
+</tbody>
+</table>
+<dl class="docutils">
+<dt>Working Example:</dt>
+<dd>python scripts/vcf_snpwise_fstats.py -i pypgen/data/example.vcf.gz -p outgroups:h665,i02-210 pop1:c511,c512,c513,c514,c515,c563,c614,c630,c639,c640 pop2:m523,m524,m525,m589,m675,m676,m682,m683,m687,m689 -c 2 -r Chr01:1-10001 | head</dd>
+<dt>optional arguments:</dt>
+<dd><table class="first docutils option-list" frame="void" rules="none">
+<col class="option" />
+<col class="description" />
+<tbody valign="top">
+<tr><td class="option-group">
+<kbd><span class="option">-h</span>, <span class="option">--help</span></kbd></td>
+<td>show this help message and exit</td></tr>
+<tr><td class="option-group" colspan="2">
+<kbd><span class="option">-i <var>INPUT</var></span>, <span class="option">--input <var>INPUT</var></span></kbd></td>
+</tr>
+<tr><td>&nbsp;</td><td>Path to VCF file.</td></tr>
+</tbody>
+</table>
+<dl class="docutils">
+<dt>-o [OUTPUT], &#8211;output [OUTPUT]</dt>
+<dd>Path to output csv file. If path is not set, defaults
+to STDOUT.</dd>
+</dl>
+<table class="docutils option-list" frame="void" rules="none">
+<col class="option" />
+<col class="description" />
+<tbody valign="top">
+<tr><td class="option-group" colspan="2">
+<kbd><span class="option">-c <var>CORES</var></span>, <span class="option">--cores <var>CORES</var></span></kbd></td>
+</tr>
+<tr><td>&nbsp;</td><td>Number of cores to use.</td></tr>
+</tbody>
+</table>
+<dl class="docutils">
+<dt>-r REGIONS [REGIONS ...], -R REGIONS [REGIONS ...], &#8211;regions REGIONS [REGIONS ...]</dt>
+<dd>Define a chromosomal region. A region can be
+presented, for example, in the following format:
+‘chr2’ (the whole chr2), ‘chr2:1000000’
+(region starting from 1,000,000bp) or
+‘chr2:1,000,000-2,000,000’ (region between
+1,000,000 and 2,000,000bp including the end points).
+The coordinate is 1-based.&#8217; Multiple regions can be
+submitted seperated by spaces. [NOte: this is the same
+format as SAMTOOLs/GATK, example text largely cribbed
+from SAMTOOLs]</dd>
+<dt>&#8211;regions-to-skip REGIONS_TO_SKIP [REGIONS_TO_SKIP ...]</dt>
+<dd>Define a chromosomal region(s) to skip.</dd>
+<dt>-p POPULATIONS [POPULATIONS ...], &#8211;populations POPULATIONS [POPULATIONS ...]</dt>
+<dd>Names of populations and samples. The format is:
+&#8220;PopName:sample1,sample2,..
+PopName2:sample3,sample4,...&#8221; Whitespace is used to
+delimit populations. Note: the population name uname
+&#8220;Outgroup&#8221; is reserved for samples that that are used
+to polarize genotype calls.</dd>
+</dl>
+<table class="last docutils option-list" frame="void" rules="none">
+<col class="option" />
+<col class="description" />
+<tbody valign="top">
+<tr><td class="option-group" colspan="2">
+<kbd><span class="option">-w <var>WINDOW_SIZE</var></span>, <span class="option">--window-size <var>WINDOW_SIZE</var></span></kbd></td>
+</tr>
+<tr><td>&nbsp;</td><td>Size of the window in which to calculate pairwise
+F-staticstics</td></tr>
+<tr><td class="option-group" colspan="2">
+<kbd><span class="option">-m <var>MIN_SAMPLES</var></span>, <span class="option">--min-samples <var>MIN_SAMPLES</var></span></kbd></td>
+</tr>
+<tr><td>&nbsp;</td><td>Minimum number of samples per population.</td></tr>
+<tr><td class="option-group" colspan="2">
+<kbd><span class="option">-s <var>SEP</var></span>, <span class="option">--column-seperator <var>SEP</var></span></kbd></td>
+</tr>
+<tr><td>&nbsp;</td><td>Set column seperator. Default is comma (,).</td></tr>
+<tr><td class="option-group">
+<kbd><span class="option">--zero-based</span></kbd></td>
+<td>If set then output positions are zero-based.</td></tr>
+</tbody>
+</table>
+</dd>
+</dl>
 </div>
 
 
@@ -171,17 +294,15 @@ $ tar xzf pysam-###version###.tar.gz</pre>
         <div class="sphinxsidebarwrapper">
   <h3><a href="index.html">Table Of Contents</a></h3>
   <ul>
-<li><a class="reference internal" href="#">Detailed Installation:</a></li>
-<li><a class="reference internal" href="#install-samtools-and-tabix">Install samtools and tabix:</a></li>
-<li><a class="reference internal" href="#install-pip-or-setuptools">Install pip or setuptools:</a></li>
-<li><a class="reference internal" href="#install-pysam">Install pysam:</a></li>
-<li><a class="reference internal" href="#install-pypgen">Install pypgen:</a></li>
-<li><a class="reference internal" href="#test-installation">Test installation:</a></li>
+<li><a class="reference internal" href="#">Quick Tutorial:</a></li>
+<li><a class="reference internal" href="#vcf-snpwise-fstats">vcf_snpwise_fstats:</a></li>
+<li><a class="reference internal" href="#vcf-sliding-window">vcf_sliding_window:</a></li>
+<li><a class="reference internal" href="#output">Output:</a></li>
 </ul>
 
   <h4>Previous topic</h4>
-  <p class="topless"><a href="index.html"
-                        title="previous chapter">Welcome to pypgen&#8217;s documentation!</a></p>
+  <p class="topless"><a href="install.html"
+                        title="previous chapter">Detailed Installation:</a></p>
   <h3>This Page</h3>
   <ul class="this-page-menu">
     <li><a href="_sources/tutorial.txt"
@@ -211,7 +332,7 @@ $ tar xzf pysam-###version###.tar.gz</pre>
           <a href="genindex.html" title="General Index"
              >index</a></li>
         <li class="right" >
-          <a href="index.html" title="Welcome to pypgen’s documentation!"
+          <a href="install.html" title="Detailed Installation:"
              >previous</a> |</li>
         <li><a href="index.html">pypgen 0.2.2 beta documentation</a> &raquo;</li> 
       </ul>

@@ -98,6 +98,12 @@ However, it's recommended, at least in these early days of pypgen when I'm activ
 
 This should complete your install. 	   
 
+
+UnitTests:
+++++++++++
+
+UnitTests are in ``pygen/tests/tests.py``
+
 Pysam:
 ++++++
 
@@ -128,15 +134,9 @@ then ``cd`` into the directory and run:
 
 	::
 	
-		$ [sudo] python setup.py
+		$ [sudo] python setup.py install
 
-There is also a `pysam google group <https://groups.google.com/forum/#!forum/pysam-user-group>`_. that is a good source of information.
-
-
-Run UnitTests:
-++++++++++++++
-
-UnitTests are in ``pygen/tests/tests.py``
+There is also a `pysam google group <https://groups.google.com/forum/#!forum/pysam-user-group>`_ that is a good source of information.
 
 
 

@@ -43,7 +43,7 @@ def default_args():
                               starting from 1,000,000bp) or ‘chr2:1,000,000-2,000,000’ \
                               (region between 1,000,000 and 2,000,000bp including the end \
                               points). The coordinate is 1-based.' Multiple regions can \
-                              be submitted seperated by spaces. [NOte: this is the same \
+                              be submitted separated by spaces. [NOte: this is the same \
                               format as SAMTOOLs/GATK, example text largely cribbed from \
                               SAMTOOLs]")
 
