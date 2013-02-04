@@ -110,21 +110,18 @@ $ wget http://sourceforge.net/projects/samtools/files/samtools/0.1.18/samtools-0
 </ol>
 <p># You can check that everything is working by opening a fresh shell. The commands <tt class="docutils literal"><span class="pre">samtools</span></tt> and <tt class="docutils literal"><span class="pre">tabix</span></tt> should now be available from anywhere in the file system.</p>
 </div>
-<div class="section" id="pip-or-setuptools">
-<h2>Pip or Setuptools<a class="headerlink" href="#pip-or-setuptools" title="Permalink to this headline">¶</a></h2>
-<p>Note: Pip is the the replacement for setuptools and is the recommended approach.</p>
+<div class="section" id="pip-and-setuptools">
+<h2>Pip and Setuptools<a class="headerlink" href="#pip-and-setuptools" title="Permalink to this headline">¶</a></h2>
 <ol class="arabic">
-<li><p class="first">Install pip:</p>
+<li><p class="first">Unfortunately, <tt class="docutils literal"><span class="pre">pip</span></tt> doesn&#8217;t yet &#8216;play well&#8217; with with <tt class="docutils literal"><span class="pre">setup.py</span></tt>, the script the automates the installation of python packages, as <tt class="docutils literal"><span class="pre">setup.py</span></tt> still relies on <tt class="docutils literal"><span class="pre">easy_install/setuptools</span></tt> to install dependancies. This means you&#8217;ll need to install setup tools. You&#8217;ll need to download the appropriate <a class="reference external" href="http://pypi.python.org/pypi/setuptools#files">python .egg file</a>. Then you can run it as an installation script.</p>
 <blockquote>
-<div><div class="highlight-python"><pre>$ curl -O https://raw.github.com/pypa/pip/master/contrib/get-pip.py
-$ [sudo] python get-pip.py
-$ rm get-pip.py</pre>
+<div><div class="highlight-python"><pre>$ [sudo] sh setuptools-0.6c9-py2.7.egg</pre>
 </div>
 </div></blockquote>
 </li>
-<li><p class="first">But, if you must, you can use setuptools. You&#8217;ll need to download the appropriate <a class="reference external" href="http://pypi.python.org/pypi/setuptools#files">python .egg file</a>. Then you can run it as an installation script.</p>
+<li><p class="first">Then you can use <tt class="docutils literal"><span class="pre">easy_install</span></tt> to install pip:</p>
 <blockquote>
-<div><div class="highlight-python"><pre>$ [sudo] sh setuptools-0.6c9-py2.4.egg</pre>
+<div><div class="highlight-python"><pre>$ [sudo] easy_install install -U pip</pre>
 </div>
 </div></blockquote>
 </li>
@@ -193,7 +190,7 @@ $ tar xzf pysam-###version###.tar.gz</pre>
   <ul>
 <li><a class="reference internal" href="#">Detailed Installation:</a><ul>
 <li><a class="reference internal" href="#samtools-and-tabix">Samtools and tabix</a></li>
-<li><a class="reference internal" href="#pip-or-setuptools">Pip or Setuptools</a></li>
+<li><a class="reference internal" href="#pip-and-setuptools">Pip and Setuptools</a></li>
 <li><a class="reference internal" href="#pypgen">Pypgen</a></li>
 <li><a class="reference internal" href="#unittests">UnitTests</a></li>
 <li><a class="reference internal" href="#pysam">Pysam</a></li>

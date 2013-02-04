@@ -31,7 +31,7 @@ This script calculates *F*-statistics for each pair of populations at each windo
 
 **Regions:** [ -r, -R, --regions ]
 
-    This flag allows for selecting a subset of the VCF file for analysis. The command format should familiar to if you use GATK or samtools. A region can be presented, for example, in the following format: ‘chr2’ (the whole chr2), ‘chr2:1000000’ (region starting from 1,000,000bp) or ‘chr2:1,000,000-2,000,000’ (region between 1,000,000 and 2,000,000bp including the end points). The coordinate system is 1-based. Multiple regions can be submitted separated by spaces. [Note: this is the same format as samtools/GATK and this example text is largely borrowed from samtools]
+    This allows for selecting a subset of the VCF file for analysis. The command format should familiar to if you use GATK or samtools. A region can be presented, for example, in the following format: ‘chr2’ (the whole chr2), ‘chr2:1000000’ (region starting from 1,000,000bp) or ‘chr2:1,000,000-2,000,000’ (region between 1,000,000 and 2,000,000bp including the end points). The coordinate system is 1-based. Multiple regions can be submitted separated by spaces. [Note: this is the same format as samtools/GATK and this example text is largely borrowed from samtools]
 
 
 **Window Size:** [ -w, --window-size ]
@@ -51,20 +51,19 @@ This script calculates *F*-statistics for each pair of populations at each windo
 
 **Column Separator:** [ -s, --column-separator ]
 
-	This allows one to set the separator to be uses in the output. The default value is ``,`` which makes the output csv.
+	This allows one to set the separator to be uses in the output. The default value is ``,`` which makes the output comma separated (csv). If you're planning on using tabix to index the output you'll need to set the sep to ``\t``.
 			  
 **Zero Based:** [ --zero-based ]
 
-	Setting this flag makes the output positions zero based
+	Setting this flag makes the output positions zero based (e.g., BED like).
 
 
 Output 
-++++++
+------
+
 **vcf\_sliding\_window.py:** 
 
-- The format is loosely based on the `BED specification <http://genome.ucsc.edu/FAQ/FAQformat.html#format1>`_. Although the first three column IDs will remain static for the foreseeable future, I expect to add more fields as I add additional functionality to pypgen. 
-
-- Currently positional values are one based, but this may change as this is not 'BED-like' (not zero based). 
+- The format is loosely based on the `BED specification <http://genome.ucsc.edu/FAQ/FAQformat.html#format1>`_. Although the first three column IDs will remain static for the foreseeable future, I expect to add more fields as I add additional functionality to pypgen. Also, the default output is one based, but it is possible to make the positions zero based by including the ``--zero-based`` flag when you run the script.
 
 - The population IDs and the total number of populations come from those defined by the user. This means the number of pairwise population comparisons and hence the total number of columns is conditional on the number of defined populations. 
 

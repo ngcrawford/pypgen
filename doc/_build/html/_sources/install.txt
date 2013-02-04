@@ -54,24 +54,23 @@ Samtools and tabix
 # You can check that everything is working by opening a fresh shell. The commands ``samtools`` and ``tabix`` should now be available from anywhere in the file system.
 
 
-Pip or Setuptools
-+++++++++++++++++
+Pip and Setuptools
+++++++++++++++++++
 
-Note: Pip is the the replacement for setuptools and is the recommended approach.
 
-#. Install pip:
-
-	::
-	
-		$ curl -O https://raw.github.com/pypa/pip/master/contrib/get-pip.py
-		$ [sudo] python get-pip.py
-		$ rm get-pip.py
-
-#. But, if you must, you can use setuptools. You'll need to download the appropriate `python .egg file <http://pypi.python.org/pypi/setuptools#files>`_. Then you can run it as an installation script. 
+#. Unfortunately, ``pip`` doesn't yet 'play well' with with ``setup.py``, the script the automates the installation of python packages, as ``setup.py`` still relies on ``easy_install/setuptools`` to install dependancies. This means you'll need to install setup tools. You'll need to download the appropriate `python .egg file <http://pypi.python.org/pypi/setuptools#files>`_. Then you can run it as an installation script. 
 
 	::
 	
-		$ [sudo] sh setuptools-0.6c9-py2.4.egg
+		$ [sudo] sh setuptools-0.6c9-py2.7.egg
+
+
+#. Then you can use ``easy_install`` to install pip:
+
+	::
+	
+		$ [sudo] easy_install install -U pip
+
 
 Pypgen
 ++++++
