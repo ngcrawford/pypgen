@@ -37,6 +37,9 @@
           <a href="genindex.html" title="General Index"
              accesskey="I">index</a></li>
         <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
           <a href="tutorial.html" title="Quick Tutorial:"
              accesskey="P">previous</a> |</li>
         <li><a href="index.html">pypgen 0.2.2 beta documentation</a> &raquo;</li> 
@@ -52,7 +55,142 @@
 <h1>API<a class="headerlink" href="#api" title="Permalink to this headline">¶</a></h1>
 <p>Here is a very loose API for the statistical methods. I&#8217;m hopeful that others may find these methods useful.</p>
 <blockquote>
-<div></div></blockquote>
+<div><span class="target" id="module-pypgen.fstats.fstats"></span><dl class="function">
+<dt id="pypgen.fstats.fstats.D_est">
+<tt class="descclassname">pypgen.fstats.fstats.</tt><tt class="descname">D_est</tt><big>(</big><em>Ht_est</em>, <em>Hs_est</em>, <em>n</em><big>)</big><a class="headerlink" href="#pypgen.fstats.fstats.D_est" title="Permalink to this definition">¶</a></dt>
+<dd><p>Basic Equation: ((Ht-Hs)/(1.0-Hs))*(n/(n-1))</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="pypgen.fstats.fstats.G_double_prime_st_est">
+<tt class="descclassname">pypgen.fstats.fstats.</tt><tt class="descname">G_double_prime_st_est</tt><big>(</big><em>Ht_est</em>, <em>Hs_est</em>, <em>n</em><big>)</big><a class="headerlink" href="#pypgen.fstats.fstats.G_double_prime_st_est" title="Permalink to this definition">¶</a></dt>
+<dd><p>Basic Equation: G&#8217;&#8216;st = k*(HT-HS)/((k*HT-HS)*(1-HS)
+from Meirmans and Hedrick (2011)</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="pypgen.fstats.fstats.G_prime_st_est">
+<tt class="descclassname">pypgen.fstats.fstats.</tt><tt class="descname">G_prime_st_est</tt><big>(</big><em>Ht_est</em>, <em>Hs_est</em>, <em>Gst_est</em>, <em>n</em><big>)</big><a class="headerlink" href="#pypgen.fstats.fstats.G_prime_st_est" title="Permalink to this definition">¶</a></dt>
+<dd><p>Basic Equation: G&#8217;st = Gst/Gst max = (Gst*(k-1+Hs))/((k-1)*(1-Hs))
+from Hedrick 2005)</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="pypgen.fstats.fstats.Gst_est">
+<tt class="descclassname">pypgen.fstats.fstats.</tt><tt class="descname">Gst_est</tt><big>(</big><em>Ht_est</em>, <em>Hs_est</em><big>)</big><a class="headerlink" href="#pypgen.fstats.fstats.Gst_est" title="Permalink to this definition">¶</a></dt>
+<dd><p>Basic Equation: Gst = (Ht-Hs)/Ht</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="pypgen.fstats.fstats.Hs_est">
+<tt class="descclassname">pypgen.fstats.fstats.</tt><tt class="descname">Hs_est</tt><big>(</big><em>Hs_prime_est</em>, <em>harm_mean</em><big>)</big><a class="headerlink" href="#pypgen.fstats.fstats.Hs_est" title="Permalink to this definition">¶</a></dt>
+<dd><p>Basic Equation: ((2*N_harmonic)/(2*N_harmonic-1))*Hs</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="pypgen.fstats.fstats.Hs_prime_est">
+<tt class="descclassname">pypgen.fstats.fstats.</tt><tt class="descname">Hs_prime_est</tt><big>(</big><em>allele_freqs</em>, <em>n</em><big>)</big><a class="headerlink" href="#pypgen.fstats.fstats.Hs_prime_est" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate corrected Hs: the mean within-subpopulation
+heterozygosity (Nei and Chesser 1983).</p>
+<p>Parameters</p>
+<blockquote>
+<div><dl class="docutils">
+<dt>allele_freqs <span class="classifier-delimiter">:</span> <span class="classifier">array_like</span></dt>
+<dd>These values contain the allele freqeuncies</dd>
+<dt>n <span class="classifier-delimiter">:</span> <span class="classifier">int,float</span></dt>
+<dd>The number of populations</dd>
+</dl>
+</div></blockquote>
+<p>Returns</p>
+<blockquote>
+<div>H&#8217;s : array_like</div></blockquote>
+</dd></dl>
+
+<dl class="function">
+<dt id="pypgen.fstats.fstats.Ht_est">
+<tt class="descclassname">pypgen.fstats.fstats.</tt><tt class="descname">Ht_est</tt><big>(</big><em>Ht_p_est</em>, <em>Hs_est</em>, <em>harm_mean</em>, <em>n</em><big>)</big><a class="headerlink" href="#pypgen.fstats.fstats.Ht_est" title="Permalink to this definition">¶</a></dt>
+<dd><p>Basic Equation: Ht+Hs_est/(2*N_harmonic*n)</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="pypgen.fstats.fstats.Ht_prime_est">
+<tt class="descclassname">pypgen.fstats.fstats.</tt><tt class="descname">Ht_prime_est</tt><big>(</big><em>allele_freqs</em>, <em>n</em><big>)</big><a class="headerlink" href="#pypgen.fstats.fstats.Ht_prime_est" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate corrected Ht: the heterozygosity of the pooled
+subpopulations (Nei and Chesser 1983)</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="pypgen.fstats.fstats.de_NaN_list">
+<tt class="descclassname">pypgen.fstats.fstats.</tt><tt class="descname">de_NaN_list</tt><big>(</big><em>l</em><big>)</big><a class="headerlink" href="#pypgen.fstats.fstats.de_NaN_list" title="Permalink to this definition">¶</a></dt>
+<dd><p>Remove NaN values from list.</p>
+<p>Returns list without NaNs.</p>
+<p>Parameters:</p>
+<blockquote>
+<div>a : array_like</div></blockquote>
+<p>Returns</p>
+<blockquote>
+<div>m : array_like</div></blockquote>
+</dd></dl>
+
+<dl class="function">
+<dt id="pypgen.fstats.fstats.harmonic_mean">
+<tt class="descclassname">pypgen.fstats.fstats.</tt><tt class="descname">harmonic_mean</tt><big>(</big><em>l</em><big>)</big><a class="headerlink" href="#pypgen.fstats.fstats.harmonic_mean" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculates harmonic mean from list of integers</p>
+<p>Parameters</p>
+<blockquote>
+<div><dl class="docutils">
+<dt>l <span class="classifier-delimiter">:</span> <span class="classifier">array_like</span></dt>
+<dd>Calculate the harmonic mean of these values.</dd>
+</dl>
+</div></blockquote>
+<p>Returns</p>
+<blockquote>
+<div>harmonic mean : array_like</div></blockquote>
+</dd></dl>
+
+<dl class="function">
+<dt id="pypgen.fstats.fstats.harmonic_mean_chao">
+<tt class="descclassname">pypgen.fstats.fstats.</tt><tt class="descname">harmonic_mean_chao</tt><big>(</big><em>l</em><big>)</big><a class="headerlink" href="#pypgen.fstats.fstats.harmonic_mean_chao" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculates the harmonic mean following the method suggested by
+Anne Chao. The formula is: 1/[(1/A)+var(D)(1/A)**3]. Used for
+calculating multilocus Dest.</p>
+<p>Parameters</p>
+<blockquote>
+<div><dl class="docutils">
+<dt>l <span class="classifier-delimiter">:</span> <span class="classifier">array_like</span></dt>
+<dd>Calculate Chao&#8217;s harmonic mean of these values.</dd>
+</dl>
+</div></blockquote>
+<p>Returns</p>
+<blockquote>
+<div>Chao&#8217;s harmonic mean : array_like</div></blockquote>
+</dd></dl>
+
+<dl class="function">
+<dt id="pypgen.fstats.fstats.multilocus_D_est">
+<tt class="descclassname">pypgen.fstats.fstats.</tt><tt class="descname">multilocus_D_est</tt><big>(</big><em>Ht_est</em>, <em>Hs_est</em>, <em>n</em><big>)</big><a class="headerlink" href="#pypgen.fstats.fstats.multilocus_D_est" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate Dest values using Anne Chao&#8217;s harmonic mean.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="pypgen.fstats.fstats.multilocus_G_double_prime_st_est">
+<tt class="descclassname">pypgen.fstats.fstats.</tt><tt class="descname">multilocus_G_double_prime_st_est</tt><big>(</big><em>Ht_est</em>, <em>Hs_est</em>, <em>n</em><big>)</big><a class="headerlink" href="#pypgen.fstats.fstats.multilocus_G_double_prime_st_est" title="Permalink to this definition">¶</a></dt>
+<dd><p>Averages across loci before calculating G&#8217;&#8216;st.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="pypgen.fstats.fstats.multilocus_G_prime_st_est">
+<tt class="descclassname">pypgen.fstats.fstats.</tt><tt class="descname">multilocus_G_prime_st_est</tt><big>(</big><em>Ht_est</em>, <em>Hs_est</em>, <em>n</em><big>)</big><a class="headerlink" href="#pypgen.fstats.fstats.multilocus_G_prime_st_est" title="Permalink to this definition">¶</a></dt>
+<dd><p>Averages across loci before calculating G&#8217;st.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="pypgen.fstats.fstats.multilocus_Gst_est">
+<tt class="descclassname">pypgen.fstats.fstats.</tt><tt class="descname">multilocus_Gst_est</tt><big>(</big><em>Ht_est</em>, <em>Hs_est</em><big>)</big><a class="headerlink" href="#pypgen.fstats.fstats.multilocus_Gst_est" title="Permalink to this definition">¶</a></dt>
+<dd><p>Averages Ht_est and Hs_est across loci before calculating Gst.</p>
+</dd></dl>
+
+</div></blockquote>
 </div>
 
 
@@ -92,6 +230,9 @@
         <li class="right" style="margin-right: 10px">
           <a href="genindex.html" title="General Index"
              >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
         <li class="right" >
           <a href="tutorial.html" title="Quick Tutorial:"
              >previous</a> |</li>
