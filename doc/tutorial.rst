@@ -67,42 +67,42 @@ Output
 
 - The population IDs and the total number of populations come from those defined by the user. This means the number of pairwise population comparisons and hence the total number of columns is conditional on the number of defined populations. 
 
-+---------------------------------------+-------------------------------------------------+
-| Label:                                | Definition:                                     |
-+=======================================+=================================================+
-| *chrom*                               | ID of chromosome/scaffold/contig/etc.           |
-+---------------------------------------+-------------------------------------------------+
-| *chromStart*                          | Starting position of window                     |
-+---------------------------------------+-------------------------------------------------+
-| *chromEnd*                            | Ending position of window                       |
-+---------------------------------------+-------------------------------------------------+
-| *snp\_count*                          | Total Number of SNPs in window                  |
-+---------------------------------------+-------------------------------------------------+
-| *total\_depth\_mean*                  | Mean read depth across window                   |
-+---------------------------------------+-------------------------------------------------+
-| *total\_depth\_stdev*                 | Standard deviation of read depth across window  |
-+---------------------------------------+-------------------------------------------------+
-| *Pop1.sample\_count.mean*             | Mean number of samples per snp for 'Pop1'       |
-+---------------------------------------+-------------------------------------------------+
-| *Pop1.sample\_count.stdev*            | Standard deviation of samples per snp for 'Pop1'|
-+---------------------------------------+-------------------------------------------------+
-| *Pop2.sample\_count.mean*             | Mean number of samples per snp for 'Pop2'       |
-+---------------------------------------+-------------------------------------------------+
-| *Pop2.sample\_count.stdev*            | Standard deviation of samples per snp for 'Pop2'|
-+---------------------------------------+-------------------------------------------------+
-| *Pop2.Pop1.D\_est*                    | Multilocus D (Jost 2008)                        |
-+---------------------------------------+-------------------------------------------------+
-| *Pop2.Pop1.G\_double\_prime\_st\_est* | Corrected Hedrick’s G'st                        |
-|                                       | (Meirmans & Hedrick 2011)                       |
-+---------------------------------------+-------------------------------------------------+
-| *Pop2.Pop1.G\_prime\_st\_est*         | Standardized Gst (Hedrick 2005)                 |
-+---------------------------------------+-------------------------------------------------+
-| *Pop2.Pop1.Gst\_est*                  | Fst corrected for sample size and               |
-|                                       | allowing for multiallelic loci                  |
-|                                       | (Nei & Chesser 1983)                            |
-+---------------------------------------+-------------------------------------------------+
-| cont...                               | The rest of the pairwise comparisons follow...  |
-+---------------------------------------+-------------------------------------------------+
+	+---------------------------------------+-------------------------------------------------+
+	| Label:                                | Definition:                                     |
+	+=======================================+=================================================+
+	| *chrom*                               | ID of chromosome/scaffold/contig/etc.           |
+	+---------------------------------------+-------------------------------------------------+
+	| *chromStart*                          | Starting position of window                     |
+	+---------------------------------------+-------------------------------------------------+
+	| *chromEnd*                            | Ending position of window                       |
+	+---------------------------------------+-------------------------------------------------+
+	| *snp\_count*                          | Total Number of SNPs in window                  |
+	+---------------------------------------+-------------------------------------------------+
+	| *total\_depth\_mean*                  | Mean read depth across window                   |
+	+---------------------------------------+-------------------------------------------------+
+	| *total\_depth\_stdev*                 | Standard deviation of read depth across window  |
+	+---------------------------------------+-------------------------------------------------+
+	| *Pop1.sample\_count.mean*             | Mean number of samples per snp for 'Pop1'       |
+	+---------------------------------------+-------------------------------------------------+
+	| *Pop1.sample\_count.stdev*            | Standard deviation of samples per snp for 'Pop1'|
+	+---------------------------------------+-------------------------------------------------+
+	| *Pop2.sample\_count.mean*             | Mean number of samples per snp for 'Pop2'       |
+	+---------------------------------------+-------------------------------------------------+
+	| *Pop2.sample\_count.stdev*            | Standard deviation of samples per snp for 'Pop2'|
+	+---------------------------------------+-------------------------------------------------+
+	| *Pop2.Pop1.D\_est*                    | Multilocus D (Jost 2008)                        |
+	+---------------------------------------+-------------------------------------------------+
+	| *Pop2.Pop1.G\_double\_prime\_st\_est* | Corrected Hedrick’s G'st                        |
+	|                                       | (Meirmans & Hedrick 2011)                       |
+	+---------------------------------------+-------------------------------------------------+
+	| *Pop2.Pop1.G\_prime\_st\_est*         | Standardized Gst (Hedrick 2005)                 |
+	+---------------------------------------+-------------------------------------------------+
+	| *Pop2.Pop1.Gst\_est*                  | Fst corrected for sample size and               |
+	|                                       | allowing for multiallelic loci                  |
+	|                                       | (Nei & Chesser 1983)                            |
+	+---------------------------------------+-------------------------------------------------+
+	| cont...                               | The rest of the pairwise comparisons follow...  |
+	+---------------------------------------+-------------------------------------------------+
 
 **vcf\_snpwise\_fstats.py:**
 
