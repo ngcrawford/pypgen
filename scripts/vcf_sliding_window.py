@@ -37,10 +37,11 @@ def main():
     # get args.
     args = default_args()
 
-    args.description  = textwrap.dedent("""\
-    vcf_sliding_window.py version 0.2.0 beta by Nicholas Crawford (ngcrawford@gmail.com)
+    args.description = textwrap.dedent("""\
+    vcf_sliding_window.py version 0.2 beta by Nicholas Crawford (ngcrawford@gmail.com)
 
-    Working Example:
+    Working Example: Run from the base directory of pypgen
+
         python scripts/vcf_sliding_window.py \\
         -i pypgen/data/example.vcf.gz \\
         -p cydno:c511,c512,c513,c514,c515,c563,c614,c630,c639,c640 \\
@@ -50,6 +51,12 @@ def main():
         -c 2 \\
         -r Chr01:1-10001 | head
     """)
+
+    args.add_argument('-w', '--window-size',
+                    default=5000,
+                    type=int,
+                    help='Size of the window in which to \
+                          calculate pairwise F-statistics')
 
     args = args.parse_args()
 

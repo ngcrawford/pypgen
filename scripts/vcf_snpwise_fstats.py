@@ -70,10 +70,11 @@ def main():
     args = default_args()
 
     args.description = textwrap.dedent("""\
-    vcf_snpwise_fstats.py version 0.2.0 beta by
+    vcf_snpwise_fstats.py version 0.2 beta by
     Nicholas Crawford (ngcrawford@gmail.com)
 
-    Working Example:
+    Working Example: Run from the base directory of pypgen
+
         python scripts/vcf_snpwise_fstats.py \\
         -i pypgen/data/example.vcf.gz \\
         -p outgroups:h665,i02-210 \\

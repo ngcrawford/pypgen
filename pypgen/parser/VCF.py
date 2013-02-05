@@ -70,12 +70,6 @@ def default_args():
                               population name "Outgroup" is reserved for \
                               samples that that are used to polarize genotype calls.')
 
-    parser.add_argument('-w', '--window-size',
-                        default=5000,
-                        type=int,
-                        help='Size of the window in which to \
-                              calculate pairwise F-statistics')
-
     parser.add_argument("-m", '--min-samples',
                         type=int,
                         default=5,
