@@ -7,15 +7,16 @@ sys.path.insert(0, os.path.abspath('..'))  # Seriously?! This is fucking ugly.
 
 
 import unittest
+import pypgen
 from pypgen.parser import VCF
 from pypgen.misc.helpers import *
 from collections import OrderedDict
 
-
 class TestSlicing(unittest.TestCase):
 
     def setUp(self):
-        self.bgzip_path = "pypgen/data/example.vcf.gz"
+        module_dir = os.path.dirname(pypgen.__file__)     
+        self.bgzip_path = os.path.join(module_dir, "data/example.vcf.gz")
 
     def test_make_slices_default_settings(self):
         """Test slicing function with default settings: 500 bp slices"""
@@ -44,7 +45,9 @@ class TestSlicing(unittest.TestCase):
 class TestVCFInfoParsing(unittest.TestCase):
 
     def setUp(self):
-        self.bgzip_path = "pypgen/data/example.vcf.gz"
+        module_dir = os.path.dirname(pypgen.__file__)     
+        self.bgzip_path = os.path.join(module_dir, "data/example.vcf.gz")
+        
 
         self.populations_list = [
             "cydno:c511,c512,c513,c514,c515,c563,c614,c630,c639,c640",

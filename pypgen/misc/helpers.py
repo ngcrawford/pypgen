@@ -1,7 +1,9 @@
+import os
 import sys
 import gzip
 import datetime
 import numpy
+
 
 
 def float_2_string(value, places):
