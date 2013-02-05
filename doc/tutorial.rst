@@ -60,5 +60,9 @@ Basic analysis
 		
  If everything worked you should see a header line followed by ~ 9 lines of data. The amount of output varies depending on the region so it's a good idea to pick a region that you know contains SNVs.
 
-Replacing ``vcf_snpwise_fstats.py`` with ``vcf_sliding_window.py`` and setting the ``--window`` flag is all that is necessary to run a sliding window analysis
+ Replacing ``vcf_snpwise_fstats.py`` with ``vcf_sliding_window.py`` and setting the ``--window`` flag is all that is necessary to run a sliding window analysis
+
+Followup analysis
++++++++++++++++++
+
 
