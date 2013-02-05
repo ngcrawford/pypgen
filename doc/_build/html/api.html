@@ -1,0 +1,237 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>API &mdash; pypgen 0.2.2 beta documentation</title>
+    
+    <link rel="stylesheet" href="_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '',
+        VERSION:     '0.2.2 beta',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="top" title="pypgen 0.2.2 beta documentation" href="index.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="index.html">pypgen 0.2.2 beta documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="api">
+<h1>API<a class="headerlink" href="#api" title="Permalink to this headline">¶</a></h1>
+<p>Here is a very loose API for the statistical methods. I&#8217;m hopeful that others may find these methods useful.</p>
+<blockquote>
+<div><span class="target" id="module-pypgen.fstats.fstats"></span><dl class="function">
+<dt id="pypgen.fstats.fstats.D_est">
+<tt class="descclassname">pypgen.fstats.fstats.</tt><tt class="descname">D_est</tt><big>(</big><em>Ht_est</em>, <em>Hs_est</em>, <em>n</em><big>)</big><a class="headerlink" href="#pypgen.fstats.fstats.D_est" title="Permalink to this definition">¶</a></dt>
+<dd><p>Basic Equation: ((Ht-Hs)/(1.0-Hs))*(n/(n-1))</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="pypgen.fstats.fstats.G_double_prime_st_est">
+<tt class="descclassname">pypgen.fstats.fstats.</tt><tt class="descname">G_double_prime_st_est</tt><big>(</big><em>Ht_est</em>, <em>Hs_est</em>, <em>n</em><big>)</big><a class="headerlink" href="#pypgen.fstats.fstats.G_double_prime_st_est" title="Permalink to this definition">¶</a></dt>
+<dd><p>Basic Equation: G&#8217;&#8216;st = k*(HT-HS)/((k*HT-HS)*(1-HS)
+from Meirmans and Hedrick (2011)</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="pypgen.fstats.fstats.G_prime_st_est">
+<tt class="descclassname">pypgen.fstats.fstats.</tt><tt class="descname">G_prime_st_est</tt><big>(</big><em>Ht_est</em>, <em>Hs_est</em>, <em>Gst_est</em>, <em>n</em><big>)</big><a class="headerlink" href="#pypgen.fstats.fstats.G_prime_st_est" title="Permalink to this definition">¶</a></dt>
+<dd><p>Basic Equation: G&#8217;st = Gst/Gst max = (Gst*(k-1+Hs))/((k-1)*(1-Hs))
+from Hedrick 2005)</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="pypgen.fstats.fstats.Gst_est">
+<tt class="descclassname">pypgen.fstats.fstats.</tt><tt class="descname">Gst_est</tt><big>(</big><em>Ht_est</em>, <em>Hs_est</em><big>)</big><a class="headerlink" href="#pypgen.fstats.fstats.Gst_est" title="Permalink to this definition">¶</a></dt>
+<dd><p>Basic Equation: Gst = (Ht-Hs)/Ht</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="pypgen.fstats.fstats.Hs_est">
+<tt class="descclassname">pypgen.fstats.fstats.</tt><tt class="descname">Hs_est</tt><big>(</big><em>Hs_prime_est</em>, <em>harm_mean</em><big>)</big><a class="headerlink" href="#pypgen.fstats.fstats.Hs_est" title="Permalink to this definition">¶</a></dt>
+<dd><p>Basic Equation: ((2*N_harmonic)/(2*N_harmonic-1))*Hs</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="pypgen.fstats.fstats.Hs_prime_est">
+<tt class="descclassname">pypgen.fstats.fstats.</tt><tt class="descname">Hs_prime_est</tt><big>(</big><em>allele_freqs</em>, <em>n</em><big>)</big><a class="headerlink" href="#pypgen.fstats.fstats.Hs_prime_est" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate corrected Hs: the mean within-subpopulation
+heterozygosity (Nei and Chesser 1983).</p>
+<p>Parameters</p>
+<blockquote>
+<div><dl class="docutils">
+<dt>allele_freqs <span class="classifier-delimiter">:</span> <span class="classifier">array_like</span></dt>
+<dd>These values contain the allele freqeuncies</dd>
+<dt>n <span class="classifier-delimiter">:</span> <span class="classifier">int,float</span></dt>
+<dd>The number of populations</dd>
+</dl>
+</div></blockquote>
+<p>Returns</p>
+<blockquote>
+<div>H&#8217;s : array_like</div></blockquote>
+</dd></dl>
+
+<dl class="function">
+<dt id="pypgen.fstats.fstats.Ht_est">
+<tt class="descclassname">pypgen.fstats.fstats.</tt><tt class="descname">Ht_est</tt><big>(</big><em>Ht_p_est</em>, <em>Hs_est</em>, <em>harm_mean</em>, <em>n</em><big>)</big><a class="headerlink" href="#pypgen.fstats.fstats.Ht_est" title="Permalink to this definition">¶</a></dt>
+<dd><p>Basic Equation: Ht+Hs_est/(2*N_harmonic*n)</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="pypgen.fstats.fstats.Ht_prime_est">
+<tt class="descclassname">pypgen.fstats.fstats.</tt><tt class="descname">Ht_prime_est</tt><big>(</big><em>allele_freqs</em>, <em>n</em><big>)</big><a class="headerlink" href="#pypgen.fstats.fstats.Ht_prime_est" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate corrected Ht: the heterozygosity of the pooled
+subpopulations (Nei and Chesser 1983)</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="pypgen.fstats.fstats.de_NaN_list">
+<tt class="descclassname">pypgen.fstats.fstats.</tt><tt class="descname">de_NaN_list</tt><big>(</big><em>l</em><big>)</big><a class="headerlink" href="#pypgen.fstats.fstats.de_NaN_list" title="Permalink to this definition">¶</a></dt>
+<dd><p>Remove NaN values from list.</p>
+<p>Returns list without NaNs.</p>
+<p>Parameters:</p>
+<blockquote>
+<div>a : array_like</div></blockquote>
+<p>Returns</p>
+<blockquote>
+<div>m : array_like</div></blockquote>
+</dd></dl>
+
+<dl class="function">
+<dt id="pypgen.fstats.fstats.harmonic_mean">
+<tt class="descclassname">pypgen.fstats.fstats.</tt><tt class="descname">harmonic_mean</tt><big>(</big><em>l</em><big>)</big><a class="headerlink" href="#pypgen.fstats.fstats.harmonic_mean" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculates harmonic mean from list of integers</p>
+<p>Parameters</p>
+<blockquote>
+<div><dl class="docutils">
+<dt>l <span class="classifier-delimiter">:</span> <span class="classifier">array_like</span></dt>
+<dd>Calculate the harmonic mean of these values.</dd>
+</dl>
+</div></blockquote>
+<p>Returns</p>
+<blockquote>
+<div>harmonic mean : array_like</div></blockquote>
+</dd></dl>
+
+<dl class="function">
+<dt id="pypgen.fstats.fstats.harmonic_mean_chao">
+<tt class="descclassname">pypgen.fstats.fstats.</tt><tt class="descname">harmonic_mean_chao</tt><big>(</big><em>l</em><big>)</big><a class="headerlink" href="#pypgen.fstats.fstats.harmonic_mean_chao" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculates the harmonic mean following the method suggested by
+Anne Chao. The formula is: 1/[(1/A)+var(D)(1/A)**3]. Used for
+calculating multilocus Dest.</p>
+<p>Parameters</p>
+<blockquote>
+<div><dl class="docutils">
+<dt>l <span class="classifier-delimiter">:</span> <span class="classifier">array_like</span></dt>
+<dd>Calculate Chao&#8217;s harmonic mean of these values.</dd>
+</dl>
+</div></blockquote>
+<p>Returns</p>
+<blockquote>
+<div>Chao&#8217;s harmonic mean : array_like</div></blockquote>
+</dd></dl>
+
+<dl class="function">
+<dt id="pypgen.fstats.fstats.multilocus_D_est">
+<tt class="descclassname">pypgen.fstats.fstats.</tt><tt class="descname">multilocus_D_est</tt><big>(</big><em>Ht_est</em>, <em>Hs_est</em>, <em>n</em><big>)</big><a class="headerlink" href="#pypgen.fstats.fstats.multilocus_D_est" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate Dest values using Anne Chao&#8217;s harmonic mean.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="pypgen.fstats.fstats.multilocus_G_double_prime_st_est">
+<tt class="descclassname">pypgen.fstats.fstats.</tt><tt class="descname">multilocus_G_double_prime_st_est</tt><big>(</big><em>Ht_est</em>, <em>Hs_est</em>, <em>n</em><big>)</big><a class="headerlink" href="#pypgen.fstats.fstats.multilocus_G_double_prime_st_est" title="Permalink to this definition">¶</a></dt>
+<dd><p>Averages across loci before calculating G&#8217;&#8216;st.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="pypgen.fstats.fstats.multilocus_G_prime_st_est">
+<tt class="descclassname">pypgen.fstats.fstats.</tt><tt class="descname">multilocus_G_prime_st_est</tt><big>(</big><em>Ht_est</em>, <em>Hs_est</em>, <em>n</em><big>)</big><a class="headerlink" href="#pypgen.fstats.fstats.multilocus_G_prime_st_est" title="Permalink to this definition">¶</a></dt>
+<dd><p>Averages across loci before calculating G&#8217;st.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="pypgen.fstats.fstats.multilocus_Gst_est">
+<tt class="descclassname">pypgen.fstats.fstats.</tt><tt class="descname">multilocus_Gst_est</tt><big>(</big><em>Ht_est</em>, <em>Hs_est</em><big>)</big><a class="headerlink" href="#pypgen.fstats.fstats.multilocus_Gst_est" title="Permalink to this definition">¶</a></dt>
+<dd><p>Averages Ht_est and Hs_est across loci before calculating Gst.</p>
+</dd></dl>
+
+</div></blockquote>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="_sources/api.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="index.html">pypgen 0.2.2 beta documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2013, Nicholas Crawford.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.1.2.
+    </div>
+  </body>
+</html>

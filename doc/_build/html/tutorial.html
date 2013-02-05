@@ -8,7 +8,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Quick Tutorial: &mdash; pypgen 0.2.2 beta documentation</title>
+    <title>Tutorial: &mdash; pypgen 0.2.2 beta documentation</title>
     
     <link rel="stylesheet" href="_static/default.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
@@ -55,262 +55,64 @@
         <div class="bodywrapper">
           <div class="body">
             
-  <div class="section" id="quick-tutorial">
-<h1>Quick Tutorial:<a class="headerlink" href="#quick-tutorial" title="Permalink to this headline">¶</a></h1>
+  <div class="section" id="tutorial">
+<h1>Tutorial:<a class="headerlink" href="#tutorial" title="Permalink to this headline">¶</a></h1>
 <p>Once pygen is installed two scripts, <tt class="docutils literal"><span class="pre">vcf_sliding_window.py</span></tt> and <tt class="docutils literal"><span class="pre">vcf_snpwise_fstats.py</span></tt> should be available at the commandline.</p>
 <p>Running [script name].py will print out a short list of commands and adding the <tt class="docutils literal"><span class="pre">--help</span></tt> or <tt class="docutils literal"><span class="pre">-h</span></tt> prints out a more detailed list.</p>
-<div class="section" id="vcf-snpwise-fstats">
-<h2>vcf_snpwise_fstats<a class="headerlink" href="#vcf-snpwise-fstats" title="Permalink to this headline">¶</a></h2>
-<p>This script calculates <em>F</em>-statistics for each pair of populations at each SNP in the supplied region.</p>
-<div class="section" id="output">
-<h3>Output<a class="headerlink" href="#output" title="Permalink to this headline">¶</a></h3>
-<ul>
-<li><p class="first">The chrom and pos column are fixed in positions 1 and 2, but the rest of the columns are [more]</p>
+<div class="section" id="basic-analysis">
+<h2>Basic analysis<a class="headerlink" href="#basic-analysis" title="Permalink to this headline">¶</a></h2>
+<ol class="arabic">
+<li><p class="first">Run your samples through GATK or samtools (or similar SNV caller) that emits calls in the standard <a class="reference external" href="http://www.1000genomes.org/wiki/Analysis/Variant%20Call%20Format/vcf-variant-call-format-version-41">VCF format</a>. By default pypgen&#8217;s VCF parser only looks at SNVs with where the <tt class="docutils literal"><span class="pre">FILTER</span></tt> column is set to <tt class="docutils literal"><span class="pre">PASS</span></tt> so you should filter or recalibrate your VCF appropriately before running pypgen.</p>
+</li>
+<li><p class="first">Once you have a VCF file you&#8217;ll need to bgzip it. <a class="reference external" href="http://samtools.sourceforge.net/tabix.shtml">Tabix</a> provides this tool so you make sure you have it installed. Tabix and samtools installation is detailed in the <a class="reference internal" href="install.html#samtools-tabix"><em>Samtools and tabix</em></a> section of this guide. The basic command to run bgzip is:</p>
 <blockquote>
-<div><table border="1" class="docutils">
-<colgroup>
-<col width="44%" />
-<col width="56%" />
-</colgroup>
-<thead valign="bottom">
-<tr class="row-odd"><th class="head"><p class="first last">Label:</p>
-</th>
-<th class="head"><p class="first last">Definition:</p>
-</th>
-</tr>
-</thead>
-<tbody valign="top">
-<tr class="row-even"><td><p class="first last"><em>chrom</em></p>
-</td>
-<td><p class="first last">ID of chromosome/scaffold/contig/etc.</p>
-</td>
-</tr>
-<tr class="row-odd"><td><p class="first last"><em>pos</em></p>
-</td>
-<td><p class="first last">Position of SNP</p>
-</td>
-</tr>
-<tr class="row-even"><td><p class="first last"><em>pop1.sample_count</em></p>
-</td>
-<td><p class="first last">Number of samples represented</p>
-</td>
-</tr>
-<tr class="row-odd"><td><p class="first last">cont.</p>
-</td>
-<td><p class="first last">Additional population sample counts</p>
-</td>
-</tr>
-<tr class="row-even"><td><p class="first last"><em>Pop1.Pop2.D_est</em></p>
-</td>
-<td><p class="first last">D corrected for sample size (Jost 2008)</p>
-</td>
-</tr>
-<tr class="row-odd"><td><p class="first last"><em>Pop1.Pop2.D_est.stdev</em></p>
-</td>
-<td><p class="first last">D corrected for sample size standard deviation</p>
-</td>
-</tr>
-<tr class="row-even"><td><p class="first last"><em>Pop1.Pop2.G_double_prime_st_est</em></p>
-</td>
-<td><p class="first last">Corrected Hedrick’s G&#8217;st
-(Meirmans &amp; Hedrick 2011)</p>
-</td>
-</tr>
-<tr class="row-odd"><td><p class="first last"><em>Pop1.Pop2.G_prime_st_est</em></p>
-</td>
-<td><p class="first last">Standardized Gst (Hedrick 2005)</p>
-</td>
-</tr>
-<tr class="row-even"><td><p class="first last"><em>Pop1.Pop2.Gst_est</em></p>
-</td>
-<td><p class="first last">Fst corrected for sample size and allowing for
-multiallelic loci (Nei &amp; Chesser 1983)</p>
-</td>
-</tr>
-<tr class="row-odd"><td><p class="first last"><em>Pop1.Pop2.Hs_est</em></p>
-</td>
-<td><p class="first last">Within-population gene/locus diversity
-(e.g., expected heterozygosity)</p>
-</td>
-</tr>
-<tr class="row-even"><td><p class="first last"><em>Pop1.Pop2.Ht_est</em></p>
-</td>
-<td><p class="first last">Total gene/locus diversity</p>
-</td>
-</tr>
-<tr class="row-odd"><td><p class="first last">cont...</p>
-</td>
-<td><p class="first last">Pairwise comparisons of F-statistics cont...</p>
-</td>
-</tr>
-<tr class="row-even"><td><p class="first last"><em>Pop1_fixed</em></p>
-</td>
-<td><p class="first last">If a sample is fixed at a particular allele
-this flag is set to 1 (= &#8220;True&#8221; in binary)</p>
-</td>
-</tr>
-<tr class="row-odd"><td><p class="first last">cont...</p>
-</td>
-<td><p class="first last">Additional fixed SNPs cont...</p>
-</td>
-</tr>
-</tbody>
-</table>
+<div><div class="highlight-python"><pre>bgzip -c  path/to/vcf_file.vcf &gt; path/to/vcf_file.vcf.bgz</pre>
+</div>
 </div></blockquote>
 </li>
-</ul>
-</div>
-</div>
-<div class="section" id="vcf-sliding-window">
-<h2>vcf_sliding_window<a class="headerlink" href="#vcf-sliding-window" title="Permalink to this headline">¶</a></h2>
-<p>This script calculates <em>F</em>-statistics for each pair of populations at each window in the supplied region. This script requires that the input VCF file be bgzipped because it uses <tt class="docutils literal"><span class="pre">tabix</span></tt> to extract the windows.</p>
-<p><strong>Working Example:</strong></p>
+</ol>
 <blockquote>
-<div><p>Note that <tt class="docutils literal"><span class="pre">path/to/pypgen/data/example.vcf.gz</span></tt> needs to be updateed to the directory in which the source code for <tt class="docutils literal"><span class="pre">pypgen</span></tt> is found.</p>
-<div class="highlight-python"><pre>python scripts/vcf_snpwise_fstats.py \
--i path/to/pypgen/data/example.vcf.gz \
--p outgroups:h665,i02-210 \
-pop1:c511,c512,c513,c514,c515,c563,c614,c630,c639,c640 \
-pop2:m523,m524,m525,m589,m675,m676,m682,m683,m687,m689 \
--c 2 \
--r Chr01:1-10001 | head</pre>
+<div>This can take a couple of minutes if your uncompressed VCF file is very large.</div></blockquote>
+<ol class="arabic" start="3">
+<li><p class="first">Next you need to index your bgzipped VCF file. The command to do this is:</p>
+<blockquote>
+<div><div class="highlight-python"><pre>tabix -p vcf path/to/vcf_file.vcf.bgz</pre>
 </div>
 </div></blockquote>
-<div class="section" id="command-line-settings-definitions">
-<h3>Command Line Settings Definitions<a class="headerlink" href="#command-line-settings-definitions" title="Permalink to this headline">¶</a></h3>
-<p><strong>Input:</strong> [ <tt class="docutils literal"><span class="pre">-i</span></tt>, <tt class="docutils literal"><span class="pre">--input</span></tt> ]</p>
-<blockquote>
-<div>Defines the path to the input VCF file.</div></blockquote>
-<p><strong>Output:</strong> [ <tt class="docutils literal"><span class="pre">-o</span></tt>, <tt class="docutils literal"><span class="pre">--output</span></tt> ]</p>
-<blockquote>
-<div>Defines the path to the output csv/txt file. If it&#8217;s not set it defaults to standard out (stout).</div></blockquote>
-<p><strong>Cores:</strong> [ <tt class="docutils literal"><span class="pre">-c</span></tt>, <tt class="docutils literal"><span class="pre">--cores</span></tt> ]</p>
-<blockquote>
-<div>The number of cores to use.</div></blockquote>
-<p><strong>Regions:</strong> [ <tt class="docutils literal"><span class="pre">-r</span></tt>, <tt class="docutils literal"><span class="pre">-R</span></tt>, <tt class="docutils literal"><span class="pre">--regions</span></tt> ]</p>
-<blockquote>
-<div>This allows for selecting a subset of the VCF file for analysis. The command format should familiar to if you use GATK or samtools. A region can be presented, for example, in the following format: ‘chr2’ (the whole chr2), ‘chr2:1000000’ (region starting from 1,000,000bp) or ‘chr2:1,000,000-2,000,000’ (region between 1,000,000 and 2,000,000bp including the end points). The coordinate system is 1-based. Multiple regions can be submitted separated by spaces. [Note: this is the same format as samtools/GATK and this example text is largely borrowed from samtools]</div></blockquote>
-<p><strong>Window Size:</strong> [ <tt class="docutils literal"><span class="pre">-w</span></tt>, <tt class="docutils literal"><span class="pre">--window-size</span></tt> ]</p>
-<blockquote>
-<div>Windows are non overlapping and start at the first bp in the particular chromosome.</div></blockquote>
-<p><strong>Populations:</strong> [ <tt class="docutils literal"><span class="pre">-p</span></tt>, <tt class="docutils literal"><span class="pre">--populations</span></tt> ]</p>
-<blockquote>
-<div>Names of populations and samples. The format is: &#8220;PopName:sample1,sample2,.. PopName2:sample3,sample4,...&#8221; Whitespace is used to delimit populations. Note: the population name uname &#8220;Outgroup&#8221; is reserved for samples that that are used to polarize genotype calls.</div></blockquote>
-<p><strong>Minimum Number of Samples:</strong> [ <tt class="docutils literal"><span class="pre">-m</span></tt>, <tt class="docutils literal"><span class="pre">--min-samples</span></tt> ]</p>
-<blockquote>
-<div>This allows one to set the minimum number of samples per population that a SNV needs to have in order to be included in the analysis.</div></blockquote>
-<p><strong>Column Separator:</strong> [ <tt class="docutils literal"><span class="pre">-s</span></tt>, <tt class="docutils literal"><span class="pre">--column-separator</span></tt> ]</p>
-<blockquote>
-<div>This allows one to set the separator to be uses in the output. The default value is <tt class="docutils literal"><span class="pre">,</span></tt> which makes the output comma separated (csv). If you&#8217;re planning on using tabix to index the output you&#8217;ll need to set the sep to <tt class="docutils literal"><span class="pre">\t</span></tt>.</div></blockquote>
-<p><strong>Zero Based:</strong> [ <tt class="docutils literal"><span class="pre">--zero-based</span></tt> ]</p>
-<blockquote>
-<div>Setting this flag makes the output positions zero based (e.g., BED like).</div></blockquote>
-</div>
-<div class="section" id="id1">
-<h3>Output<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h3>
-<p><strong>vcf_sliding_window.py:</strong></p>
-<ul>
-<li><p class="first">The format is loosely based on the <a class="reference external" href="http://genome.ucsc.edu/FAQ/FAQformat.html#format1">BED specification</a>. Although the first three column IDs will remain static for the foreseeable future, I expect to add more fields as I add additional functionality to pypgen. Also, the default output is one based, but it is possible to make the positions zero based by including the <tt class="docutils literal"><span class="pre">--zero-based</span></tt> flag when you run the script.</p>
 </li>
-<li><p class="first">The population IDs and the total number of populations come from those defined by the user. This means the number of pairwise population comparisons and hence the total number of columns is conditional on the number of defined populations.</p>
+</ol>
 <blockquote>
-<div><table border="1" class="docutils">
-<colgroup>
-<col width="44%" />
-<col width="56%" />
-</colgroup>
-<thead valign="bottom">
-<tr class="row-odd"><th class="head"><p class="first last">Label:</p>
-</th>
-<th class="head"><p class="first last">Definition:</p>
-</th>
-</tr>
-</thead>
-<tbody valign="top">
-<tr class="row-even"><td><p class="first last"><em>chrom</em></p>
-</td>
-<td><p class="first last">ID of chromosome/scaffold/contig/etc.</p>
-</td>
-</tr>
-<tr class="row-odd"><td><p class="first last"><em>chromStart</em></p>
-</td>
-<td><p class="first last">Starting position of window</p>
-</td>
-</tr>
-<tr class="row-even"><td><p class="first last"><em>chromEnd</em></p>
-</td>
-<td><p class="first last">Ending position of window</p>
-</td>
-</tr>
-<tr class="row-odd"><td><p class="first last"><em>snp_count</em></p>
-</td>
-<td><p class="first last">Total Number of SNPs in window</p>
-</td>
-</tr>
-<tr class="row-even"><td><p class="first last"><em>total_depth_mean</em></p>
-</td>
-<td><p class="first last">Mean read depth across window</p>
-</td>
-</tr>
-<tr class="row-odd"><td><p class="first last"><em>total_depth_stdev</em></p>
-</td>
-<td><p class="first last">Standard deviation of read depth across window</p>
-</td>
-</tr>
-<tr class="row-even"><td><p class="first last"><em>Pop1.sample_count.mean</em></p>
-</td>
-<td><p class="first last">Mean number of samples per snp for &#8216;Pop1&#8217;</p>
-</td>
-</tr>
-<tr class="row-odd"><td><p class="first last"><em>Pop1.sample_count.stdev</em></p>
-</td>
-<td><p class="first last">Standard deviation of samples per snp for &#8216;Pop1&#8217;</p>
-</td>
-</tr>
-<tr class="row-even"><td><p class="first last"><em>Pop2.sample_count.mean</em></p>
-</td>
-<td><p class="first last">Mean number of samples per snp for &#8216;Pop2&#8217;</p>
-</td>
-</tr>
-<tr class="row-odd"><td><p class="first last"><em>Pop2.sample_count.stdev</em></p>
-</td>
-<td><p class="first last">Standard deviation of samples per snp for &#8216;Pop2&#8217;</p>
-</td>
-</tr>
-<tr class="row-even"><td><p class="first last"><em>Pop2.Pop1.D_est</em></p>
-</td>
-<td><p class="first last">Multilocus D (Jost 2008)</p>
-</td>
-</tr>
-<tr class="row-odd"><td><p class="first last"><em>Pop2.Pop1.G_double_prime_st_est</em></p>
-</td>
-<td><p class="first last">Corrected Hedrick’s G&#8217;st
-(Meirmans &amp; Hedrick 2011)</p>
-</td>
-</tr>
-<tr class="row-even"><td><p class="first last"><em>Pop2.Pop1.G_prime_st_est</em></p>
-</td>
-<td><p class="first last">Standardized Gst (Hedrick 2005)</p>
-</td>
-</tr>
-<tr class="row-odd"><td><p class="first last"><em>Pop2.Pop1.Gst_est</em></p>
-</td>
-<td><p class="first last">Fst corrected for sample size and
-allowing for multiallelic loci
-(Nei &amp; Chesser 1983)</p>
-</td>
-</tr>
-<tr class="row-even"><td><p class="first last">cont...</p>
-</td>
-<td><p class="first last">The rest of the pairwise comparisons follow...</p>
-</td>
-</tr>
-</tbody>
-</table>
+<div>This command will produce a <tt class="docutils literal"><span class="pre">path/to/vcf_file.vcf.tbi</span></tt> index file.</div></blockquote>
+<ol class="arabic" start="4">
+<li><p class="first">Now you can run pypgen. In a text editor I recommend composing a test command that looks something like this.</p>
+<blockquote>
+<div><div class="highlight-python"><pre>vcf_snpwise_fstats.py \
+     -i path/to/vcf_file.vcf.bgz \
+     -p pop1:sample1,sample2 \
+        pop2:sample3,sample4,sample5 \
+        pop3:sample6,sample7,sample8 \
+     -c 2 \
+     -r Chr:1-10001 | head</pre>
+</div>
 </div></blockquote>
 </li>
-</ul>
+</ol>
+<blockquote>
+<div><p>You&#8217;ll need to replace <tt class="docutils literal"><span class="pre">path/to/vcf_file.vcf.bgz</span></tt> as you did in the last command.</p>
+<p>You&#8217;ll also need to associate the sample names with their populations. The sample names should to exactly match the sample IDs in the VCF file. If you&#8217;ve forgotten what they are you can run the following command to print them out.</p>
+<blockquote>
+<div><div class="highlight-python"><pre>gunzip -c pypgen/data/example.vcf.gz | grep "#CHROM"</pre>
 </div>
+</div></blockquote>
+<p>You will also want to change the regions flag such that it selects a valid region in your VCF file.</p>
+<p>Piping the output into <tt class="docutils literal"><span class="pre">head</span></tt> prevents flooding your terminal with output.</p>
+<p>If you have an enormous number of samples and get an error like <tt class="docutils literal"><span class="pre">Argument</span> <span class="pre">list</span> <span class="pre">too</span> <span class="pre">long</span></tt> you can just save the text file as a shell script and run it like:</p>
+<blockquote>
+<div><div class="highlight-python"><pre>sh path/to/shell_script.sh</pre>
+</div>
+</div></blockquote>
+<p>If everything worked you should see a header line followed by ~ 9 lines of data. The amount of output varies depending on the region so it&#8217;s a good idea to pick a region that you know contains SNVs.</p>
+</div></blockquote>
 </div>
 </div>
 
@@ -322,16 +124,8 @@ allowing for multiallelic loci
         <div class="sphinxsidebarwrapper">
   <h3><a href="index.html">Table Of Contents</a></h3>
   <ul>
-<li><a class="reference internal" href="#">Quick Tutorial:</a><ul>
-<li><a class="reference internal" href="#vcf-snpwise-fstats">vcf_snpwise_fstats</a><ul>
-<li><a class="reference internal" href="#output">Output</a></li>
-</ul>
-</li>
-<li><a class="reference internal" href="#vcf-sliding-window">vcf_sliding_window</a><ul>
-<li><a class="reference internal" href="#command-line-settings-definitions">Command Line Settings Definitions</a></li>
-<li><a class="reference internal" href="#id1">Output</a></li>
-</ul>
-</li>
+<li><a class="reference internal" href="#">Tutorial:</a><ul>
+<li><a class="reference internal" href="#basic-analysis">Basic analysis</a></li>
 </ul>
 </li>
 </ul>

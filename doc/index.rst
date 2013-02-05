@@ -60,6 +60,11 @@ However, it's recommended, at least in these early days of pypgen, to install it
 
        pip install -e git+https://github.com/ngcrawford/pypgen.git#egg=Package
 	   
+
+Reporting Problems:
++++++++++++++++++++
+
+If you have a general with pypgen you should post in on `biostar <http://www.biostars.org/>`_ and tag it ``pypgen``. If you think you've found a bug in pypgen you can open an `issue <https://github.com/ngcrawford/pypgen/issues>`_ in the pypgen github repo. 
  
 Contents:
 +++++++++
@@ -69,7 +74,7 @@ Contents:
 
    	   install
 	   tutorial
-	   fstats
+	   script_instructions
 
 	
 Indices and tables

@@ -1,0 +1,423 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Scripts: &mdash; pypgen 0.2.2 beta documentation</title>
+    
+    <link rel="stylesheet" href="_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '',
+        VERSION:     '0.2.2 beta',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="top" title="pypgen 0.2.2 beta documentation" href="index.html" />
+    <link rel="prev" title="Tutorial:" href="tutorial.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="tutorial.html" title="Tutorial:"
+             accesskey="P">previous</a> |</li>
+        <li><a href="index.html">pypgen 0.2.2 beta documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="scripts">
+<h1>Scripts:<a class="headerlink" href="#scripts" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="vcf-snpwise-fstats">
+<h2>vcf_snpwise_fstats<a class="headerlink" href="#vcf-snpwise-fstats" title="Permalink to this headline">¶</a></h2>
+<p>This script calculates <em>F</em>-statistics for each pair of populations at each SNV in the supplied region.</p>
+<p><strong>Working Example:</strong></p>
+<blockquote>
+<div><p>Note that <tt class="docutils literal"><span class="pre">path/to/pypgen/data/example.vcf.gz</span></tt> needs to be updated to the directory in which the source code for <tt class="docutils literal"><span class="pre">pypgen</span></tt> is found.</p>
+<div class="highlight-python"><pre>vcf_snpwise_fstats.py \
+  -i pypgen/data/example.vcf.gz \
+  -p outgroups:h665,i02-210 \
+     pop1:c511,c512,c513,c514,c515,c563,c614,c630,c639,c640 \
+     pop2:m523,m524,m525,m589,m675,m676,m682,m683,m687,m689 \
+  -c 2 \
+  -r Chr01:1-10001 | head</pre>
+</div>
+</div></blockquote>
+<div class="section" id="command-line-flags">
+<h3>Command Line Flags<a class="headerlink" href="#command-line-flags" title="Permalink to this headline">¶</a></h3>
+<p><strong>Input:</strong> [ <tt class="docutils literal"><span class="pre">-i</span></tt>, <tt class="docutils literal"><span class="pre">--input</span></tt> ]</p>
+<blockquote>
+<div>Defines the path to the input VCF file.</div></blockquote>
+<p><strong>Output:</strong> [ <tt class="docutils literal"><span class="pre">-o</span></tt>, <tt class="docutils literal"><span class="pre">--output</span></tt> ]</p>
+<blockquote>
+<div>Defines the path to the output csv/txt file. If it&#8217;s not set it defaults to standard out (stout).</div></blockquote>
+<p><strong>Cores:</strong> [ <tt class="docutils literal"><span class="pre">-c</span></tt>, <tt class="docutils literal"><span class="pre">--cores</span></tt> ]</p>
+<blockquote>
+<div>The number of cores to use.</div></blockquote>
+<p><strong>Regions:</strong> [ <tt class="docutils literal"><span class="pre">-r</span></tt>, <tt class="docutils literal"><span class="pre">-R</span></tt>, <tt class="docutils literal"><span class="pre">--regions</span></tt> ]</p>
+<blockquote>
+<div>This allows for selecting a subset of the VCF file for analysis. The command format should familiar to if you use GATK or samtools. A region can be presented, for example, in the following format: ‘chr2’ (the whole chr2), ‘chr2:1000000’ (region starting from 1,000,000bp) or ‘chr2:1,000,000-2,000,000’ (region between 1,000,000 and 2,000,000bp including the end points). The coordinate system is 1-based. Multiple regions can be submitted separated by spaces. [Note: this is the same format as samtools/GATK and this example text is largely borrowed from samtools]</div></blockquote>
+<p><strong>Populations:</strong> [ <tt class="docutils literal"><span class="pre">-p</span></tt>, <tt class="docutils literal"><span class="pre">--populations</span></tt> ]</p>
+<blockquote>
+<div>Names of populations and samples. The format is: &#8220;PopName:sample1,sample2,.. PopName2:sample3,sample4,...&#8221; with colons after each population name and samples delimited by commas. Whitespace is used to delimit populations.</div></blockquote>
+<p><strong>Minimum Number of Samples:</strong> [ <tt class="docutils literal"><span class="pre">-m</span></tt>, <tt class="docutils literal"><span class="pre">--min-samples</span></tt> ]</p>
+<blockquote>
+<div>This allows one to set the minimum number of samples per population that a SNV needs to have in order to be included in the analysis.</div></blockquote>
+<p><strong>Column Separator:</strong> [ <tt class="docutils literal"><span class="pre">-s</span></tt>, <tt class="docutils literal"><span class="pre">--column-separator</span></tt> ]</p>
+<blockquote>
+<div>This allows one to set the separator to be uses in the output. The default value is <tt class="docutils literal"><span class="pre">,</span></tt> which makes the output comma separated (csv). If you&#8217;re planning on using tabix to index the output you&#8217;ll need to set the sep to <tt class="docutils literal"><span class="pre">\t</span></tt>.</div></blockquote>
+<p><strong>Zero Based:</strong> [ <tt class="docutils literal"><span class="pre">--zero-based</span></tt> ]</p>
+<blockquote>
+<div>Setting this flag makes the output positions zero based (e.g., BED like).</div></blockquote>
+</div>
+<div class="section" id="output">
+<h3>Output<a class="headerlink" href="#output" title="Permalink to this headline">¶</a></h3>
+<ul>
+<li><p class="first">The chrom and pos columns are fixed in positions 1 and 2, but the rest of the columns vary depending on the number of populations being compared and their names.</p>
+<blockquote>
+<div><table border="1" class="docutils">
+<colgroup>
+<col width="44%" />
+<col width="56%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head"><p class="first last">Label:</p>
+</th>
+<th class="head"><p class="first last">Definition:</p>
+</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><p class="first last"><em>chrom</em></p>
+</td>
+<td><p class="first last">ID of chromosome/scaffold/contig/etc.</p>
+</td>
+</tr>
+<tr class="row-odd"><td><p class="first last"><em>pos</em></p>
+</td>
+<td><p class="first last">Position of SNP</p>
+</td>
+</tr>
+<tr class="row-even"><td><p class="first last"><em>pop1.sample_count</em></p>
+</td>
+<td><p class="first last">Number of samples represented</p>
+</td>
+</tr>
+<tr class="row-odd"><td><p class="first last">cont.</p>
+</td>
+<td><p class="first last">Additional population sample counts</p>
+</td>
+</tr>
+<tr class="row-even"><td><p class="first last"><em>Pop1.Pop2.D_est</em></p>
+</td>
+<td><p class="first last">D corrected for sample size (Jost 2008)</p>
+</td>
+</tr>
+<tr class="row-odd"><td><p class="first last"><em>Pop1.Pop2.D_est.stdev</em></p>
+</td>
+<td><p class="first last">Standard deviation D corrected for sample size</p>
+</td>
+</tr>
+<tr class="row-even"><td><p class="first last"><em>Pop1.Pop2.G_double_prime_st_est</em></p>
+</td>
+<td><p class="first last">Corrected Hedrick’s G&#8217;st
+(Meirmans &amp; Hedrick 2011)</p>
+</td>
+</tr>
+<tr class="row-odd"><td><p class="first last"><em>Pop1.Pop2.G_prime_st_est</em></p>
+</td>
+<td><p class="first last">Standardized Gst (Hedrick 2005)</p>
+</td>
+</tr>
+<tr class="row-even"><td><p class="first last"><em>Pop1.Pop2.Gst_est</em></p>
+</td>
+<td><p class="first last">Fst corrected for sample size and allowing for
+multiallelic loci (Nei &amp; Chesser 1983)</p>
+</td>
+</tr>
+<tr class="row-odd"><td><p class="first last"><em>Pop1.Pop2.Hs_est</em></p>
+</td>
+<td><p class="first last">Within-population gene/locus diversity
+(e.g., expected heterozygosity)</p>
+</td>
+</tr>
+<tr class="row-even"><td><p class="first last"><em>Pop1.Pop2.Ht_est</em></p>
+</td>
+<td><p class="first last">Total gene/locus diversity</p>
+</td>
+</tr>
+<tr class="row-odd"><td><p class="first last">cont...</p>
+</td>
+<td><p class="first last">Pairwise comparisons of F-statistics cont...</p>
+</td>
+</tr>
+<tr class="row-even"><td><p class="first last"><em>Pop1_fixed</em></p>
+</td>
+<td><p class="first last">If a sample is fixed at a particular allele
+this flag is set to 1 (= &#8220;True&#8221; in binary)</p>
+</td>
+</tr>
+<tr class="row-odd"><td><p class="first last">cont...</p>
+</td>
+<td><p class="first last">Additional fixed SNPs cont...</p>
+</td>
+</tr>
+</tbody>
+</table>
+</div></blockquote>
+</li>
+</ul>
+</div>
+</div>
+<div class="section" id="vcf-sliding-window">
+<h2>vcf_sliding_window<a class="headerlink" href="#vcf-sliding-window" title="Permalink to this headline">¶</a></h2>
+<p>This script calculates <em>F</em>-statistics for each pair of populations at each window in the supplied region. This script requires that the input VCF file be bgzipped because it uses <tt class="docutils literal"><span class="pre">tabix</span></tt> to extract the windows.</p>
+<p><strong>Working Example:</strong></p>
+<blockquote>
+<div><p>Note that <tt class="docutils literal"><span class="pre">path/to/pypgen/data/example.vcf.gz</span></tt> needs to be updated to the directory in which the source code for <tt class="docutils literal"><span class="pre">pypgen</span></tt> is found.</p>
+<div class="highlight-python"><pre>vcf_sliding_window.py \
+  -i path/to/pypgen/data/example.vcf.gz \
+  -p outgroups:h665,i02-210 \
+     pop1:c511,c512,c513,c514,c515,c563,c614,c630,c639,c640 \
+     pop2:m523,m524,m525,m589,m675,m676,m682,m683,m687,m689 \
+  -c 2 \
+  -w 5000 \
+  -r Chr01:1-10001 | head</pre>
+</div>
+</div></blockquote>
+<div class="section" id="id1">
+<h3>Command Line Flags<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h3>
+<p><tt class="docutils literal"><span class="pre">vcf_sliding_window.py</span></tt> shares the same commands as <tt class="docutils literal"><span class="pre">vcf_snpwise_fstats.py</span></tt> with the single addition of a window size flag.</p>
+<p><strong>Window Size:</strong> [ <tt class="docutils literal"><span class="pre">-w</span></tt>, <tt class="docutils literal"><span class="pre">--window-size</span></tt> ]</p>
+<blockquote>
+<div>Windows are non overlapping and start at the first bp in the particular chromosome.</div></blockquote>
+</div>
+<div class="section" id="id2">
+<h3>Output<a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h3>
+<p><strong>vcf_sliding_window.py:</strong></p>
+<ul>
+<li><p class="first">The format is loosely based on the <a class="reference external" href="http://genome.ucsc.edu/FAQ/FAQformat.html#format1">BED specification</a>. Although the first three column IDs will remain static for the foreseeable future, I expect to add more fields as I add additional functionality to pypgen. Also, the default output is one based, but it is possible to make the positions zero based by including the <tt class="docutils literal"><span class="pre">--zero-based</span></tt> flag when you run the script.</p>
+</li>
+<li><p class="first">The population IDs and the total number of populations come from those defined by the user. This means the number of pairwise population comparisons and hence the total number of columns is conditional on the number of defined populations.</p>
+<blockquote>
+<div><table border="1" class="docutils">
+<colgroup>
+<col width="49%" />
+<col width="51%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head"><p class="first last">Label:</p>
+</th>
+<th class="head"><p class="first last">Definition:</p>
+</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><p class="first last"><em>chrom</em></p>
+</td>
+<td><p class="first last">ID of chromosome/scaffold/contig/etc.</p>
+</td>
+</tr>
+<tr class="row-odd"><td><p class="first last"><em>chromStart</em></p>
+</td>
+<td><p class="first last">Starting position of window</p>
+</td>
+</tr>
+<tr class="row-even"><td><p class="first last"><em>chromEnd</em></p>
+</td>
+<td><p class="first last">Ending position of window</p>
+</td>
+</tr>
+<tr class="row-odd"><td><p class="first last"><em>snp_count</em></p>
+</td>
+<td><p class="first last">Total Number of SNPs in window</p>
+</td>
+</tr>
+<tr class="row-even"><td><p class="first last"><em>total_depth_mean</em></p>
+</td>
+<td><p class="first last">Mean read depth across window</p>
+</td>
+</tr>
+<tr class="row-odd"><td><p class="first last"><em>total_depth_stdev</em></p>
+</td>
+<td><p class="first last">Standard deviation of read depth across window</p>
+</td>
+</tr>
+<tr class="row-even"><td><p class="first last"><em>Pop1.sample_count.mean</em></p>
+</td>
+<td><p class="first last">Mean number of samples per snp for &#8216;Pop1&#8217;</p>
+</td>
+</tr>
+<tr class="row-odd"><td><p class="first last"><em>Pop1.sample_count.stdev</em></p>
+</td>
+<td><p class="first last">Standard deviation of samples per snp for
+&#8216;Pop1&#8217;</p>
+</td>
+</tr>
+<tr class="row-even"><td><p class="first last"><em>Pop2.sample_count.mean</em></p>
+</td>
+<td><p class="first last">Mean number of samples per snp for &#8216;Pop2&#8217;</p>
+</td>
+</tr>
+<tr class="row-odd"><td><p class="first last"><em>Pop2.sample_count.stdev</em></p>
+</td>
+<td><p class="first last">Standard deviation of samples per snp for
+&#8216;Pop2&#8217;</p>
+</td>
+</tr>
+<tr class="row-even"><td><p class="first last"><em>Pop2.Pop1.D_est</em></p>
+</td>
+<td><p class="first last">Multilocus D_est (Jost 2008)</p>
+</td>
+</tr>
+<tr class="row-odd"><td><p class="first last"><em>Pop2.Pop1.D_est.stdev</em></p>
+</td>
+<td><p class="first last">Standard Deviation of SNVwise D_est across
+the window</p>
+</td>
+</tr>
+<tr class="row-even"><td><p class="first last"><em>Pop2.Pop1.G_double_prime_st_est</em></p>
+</td>
+<td><p class="first last">Corrected Hedrick’s G&#8217;st
+(Meirmans &amp; Hedrick 2011)</p>
+</td>
+</tr>
+<tr class="row-odd"><td><p class="first last"><em>Pop2.Pop1.G_double_prime_st_est.stdev</em></p>
+</td>
+<td><p class="first last">Standard Deviation of Corrected Hedrick’s
+G&#8217;st across the window</p>
+</td>
+</tr>
+<tr class="row-even"><td><p class="first last"><em>Pop2.Pop1.G_prime_st_est</em></p>
+</td>
+<td><p class="first last">Standardized Gst (Hedrick 2005)</p>
+</td>
+</tr>
+<tr class="row-odd"><td><p class="first last"><em>Pop2.Pop1.G_prime_st_est.stdev</em></p>
+</td>
+<td><p class="first last">Standard Deviation of Standardized Gst across
+the window</p>
+</td>
+</tr>
+<tr class="row-even"><td><p class="first last"><em>Pop2.Pop1.Gst_est</em></p>
+</td>
+<td><p class="first last">Fst corrected for sample size and
+allowing for multiallelic loci
+(Nei &amp; Chesser 1983)</p>
+</td>
+</tr>
+<tr class="row-odd"><td><p class="first last"><em>Pop2.Pop1.Gst_est.stdev</em></p>
+</td>
+<td><p class="first last">Standard Deviation of Fst corrected for
+sample size and  allowing for multiallelic
+loci (Nei &amp; Chesser 1983)</p>
+</td>
+</tr>
+<tr class="row-even"><td><p class="first last">cont...</p>
+</td>
+<td><p class="first last">The rest of the pairwise comparisons follow...</p>
+</td>
+</tr>
+</tbody>
+</table>
+</div></blockquote>
+</li>
+</ul>
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Scripts:</a><ul>
+<li><a class="reference internal" href="#vcf-snpwise-fstats">vcf_snpwise_fstats</a><ul>
+<li><a class="reference internal" href="#command-line-flags">Command Line Flags</a></li>
+<li><a class="reference internal" href="#output">Output</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#vcf-sliding-window">vcf_sliding_window</a><ul>
+<li><a class="reference internal" href="#id1">Command Line Flags</a></li>
+<li><a class="reference internal" href="#id2">Output</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="tutorial.html"
+                        title="previous chapter">Tutorial:</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="_sources/script_instructions.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="tutorial.html" title="Tutorial:"
+             >previous</a> |</li>
+        <li><a href="index.html">pypgen 0.2.2 beta documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2013, Nicholas Crawford.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.1.2.
+    </div>
+  </body>
+</html>

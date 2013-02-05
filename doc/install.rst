@@ -3,6 +3,8 @@ Detailed Installation:
 
 Installing pypgen is very straightforward especially if you are familiar with installing python packages. Just follow the instructions below entering the appropriate commands in terminal.
 
+.. _samtools-tabix:
+
 Samtools and tabix
 ++++++++++++++++++
 
