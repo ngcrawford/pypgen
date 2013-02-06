@@ -104,9 +104,12 @@ def calculate_trees(phylip, args, pos):
     args_dict['lnL'] = lnL
     args_dict['model'] = args.model
 
+    if args.as_nexus == True:
+        tree = "tree " + makeTreeName(args_dict) + " = [&U] " + tree
+        return tree
+    else:
+        return args_dict
 
-    tree = "tree " + makeTreeName(args_dict) + " = [&U] " + tree
-    return tree
 
 
 
@@ -141,6 +144,14 @@ def get_args():
     parser.add_argument('input',
                         nargs=1,
                         help='Bgzipped and indexed VCF file')
+
+    parser.add_argument('--name',
+                        type=str,
+                        help='Add uniqe id to output.')
+
+    parser.add_argument('--as-nexus',
+                        action="store_true",
+                        default=False)
 
     args = parser.parse_args()
     return args
@@ -368,10 +379,20 @@ def main():
 
     pos = {'chrm': chrm,
            'start': start,
-           'stop': stop}
+           'stop': stop,
+           'id': args.name}
 
-    tree = calculate_trees(phylip, args, pos)
-    sys.stdout.write(tree + "\n")
+    if args.as_nexus == True:
+        line = calculate_trees(phylip, args, pos)
+    
+    else:
+        order = ('id', 'model', 'lnL', 'chrm', 'start', 'stop')
+        line = calculate_trees(phylip, args, pos)
+
+        line = [str(line[i]) for i in order]
+        line = ','.join(line)
+
+    sys.stdout.write(line + "\n")
 
 
 if __name__ == '__main__':
