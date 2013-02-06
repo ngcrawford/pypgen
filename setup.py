@@ -35,9 +35,7 @@ setup(
     include_package_data=True,
 
     scripts=[
-             'scripts/vcf2Dadi.py',
-             'scripts/vcf2phylip.py',
-             'scripts/vcf_sliding_window.py',
-             'scripts/vcf_snpwise_fstats.py',
+             'scripts/vcfSNVfstats',
+             'scripts/vcfWindowedFstats',
             ],
 )

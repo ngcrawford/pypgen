@@ -38,11 +38,11 @@ def main():
     args = default_args()
 
     args.description = textwrap.dedent("""\
-    vcf_sliding_window.py version 0.2 beta by Nicholas Crawford (ngcrawford@gmail.com)
+    vcfWindowedFstats version 0.2 beta by Nicholas Crawford (ngcrawford@gmail.com)
 
     Working Example: Run from the base directory of pypgen
 
-        python scripts/vcf_sliding_window.py \\
+        vcfWindowedFstats \\
         -i pypgen/data/example.vcf.gz \\
         -p cydno:c511,c512,c513,c514,c515,c563,c614,c630,c639,c640 \\
         outgroups:h665,i02-210 \\

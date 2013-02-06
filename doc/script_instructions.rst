@@ -13,7 +13,7 @@ This script calculates *F*-statistics for each pair of populations at each SNV i
 
     ::
     
-        vcf_snpwise_fstats.py \
+        vcfSNVfstats \
           -i pypgen/data/example.vcf.gz \
           -p outgroups:h665,i02-210 \
              pop1:c511,c512,c513,c514,c515,c563,c614,c630,c639,c640 \
@@ -118,7 +118,7 @@ This script calculates *F*-statistics for each pair of populations at each windo
 
     ::
 
-        vcf_sliding_window.py \
+        vcfWindowedFstats \
           -i path/to/pypgen/data/example.vcf.gz \
           -p outgroups:h665,i02-210 \
              pop1:c511,c512,c513,c514,c515,c563,c614,c630,c639,c640 \
@@ -131,7 +131,7 @@ This script calculates *F*-statistics for each pair of populations at each windo
 Command Line Flags  
 ------------------
 
-``vcf_sliding_window.py`` shares the same commands as ``vcf_snpwise_fstats.py`` with the single addition of a window size flag.
+``vcfWindowedFstats`` shares the same commands as ``vcfSNVfstats`` with the single addition of a window size flag.
 
 
 **Window Size:** [ ``-w``, ``--window-size`` ]
