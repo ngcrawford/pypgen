@@ -31,84 +31,10 @@ import shlex
 import random
 import argparse
 import itertools
-import tempfile
 import numpy as np
 from subprocess import Popen, PIPE
 from collections import namedtuple
 from pypgen.parser import VCF
-
-
-def makeTreeName(args_dict):
-    """Converts dictionary of arguement into a sorted string with the
-    format:  """
-    name = ""
-    for pair in sorted(args_dict.items()):
-        pair = [str(pair[0]), str(pair[1])]
-        name += ':'.join(pair) + ","
-
-    return "'" + name.strip(",") + "'"
-
-
-def processStatsFile(fin):
-    lnL = None
-    for line in fin:
-        if 'Log-likelihood' in line:
-            lnL = line.split()[-1]
-    return lnL
-
-
-def calculate_trees(phylip, args, pos):
-    """Doc string"""
-
-    args_dict = pos
-    if os.path.exists('tmp/') == False:
-        os.mkdir('tmp/')
-
-    temp_in = tempfile.NamedTemporaryFile(suffix='.out', dir='tmp/')   # delete=False)
-    for line in phylip:
-        temp_in.write(line)
-    temp_in.seek(0)     # move pointer to beginning of file
-
-    # SETUP CONSTRAINT TREE FILE
-    if args.constraint_tree != None:
-
-        constraint_file = tempfile.NamedTemporaryFile(suffix='.tree', dir='tmp/')
-        constraint_file.write(args.constraint_tree + '\n')
-        constraint_file.seek(0)
-
-        cli = 'phyml \
-                --input={0} \
-                --model={1} \
-                -u {2} \
-                -o lr \
-                >/dev/null 2>&1'.format(temp_in.name, args.model, constraint_file.name)
-
-    else:
-        cli = 'phyml \
-                --input={0} \
-                --model={1} \
-                >/dev/null 2>&1'.format(temp_in.name, args.model)
-        print cli
-
-    cli_parts = cli.split()
-    ft = Popen(cli_parts, stdin=PIPE, stderr=PIPE, stdout=PIPE).communicate()
-
-    # EXTRACT RESULTS AND FORMAT AS NEXUS TREES
-    temp_string = os.path.split(temp_in.name)[1].split('.')[0]
-
-    treefile =  os.path.join('tmp','%s.out_phyml_tree.txt' % (temp_string))
-    tree = open(treefile,'r').readlines()[0].strip().strip("\"")
-
-    statsfile = os.path.join('tmp','%s.out_phyml_stats.txt' % (temp_string))
-    lnL = processStatsFile(open(statsfile,'r'))
-    args_dict['lnL'] = lnL
-    args_dict['model'] = args.model
-
-
-    tree = "tree " + makeTreeName(args_dict) + " = [&U] " + tree
-    return tree
-
-
 
 def get_args():
     """Parse sys.argv"""
@@ -124,27 +50,16 @@ def get_args():
                         default=sys.stdout,
                         help='Path to output. (default is STOUT)')
 
-    parser.add_argument('-c', '--constraint-tree',
-                        type=str,
-                        help="Newick formated tree.")
-
-    parser.add_argument('-m', '--model',
-                        type=str,
-                        default='HKY85',
-                        help="Substitution model name. \
-                               HKY85 (default) | JC69 | K80 | F81 | F84 | TN93 | GTR .")
-
-    # parser.add_argument('-b','--bootstraps',
+    # parser.add_argument('-b','--bootstraps', 
     #                     type=int,
     #                     help='Calculate bootstraps.')
 
-    parser.add_argument('input',
-                        nargs=1,
-                        help='Bgzipped and indexed VCF file')
+    parser.add_argument('input', 
+                        nargs=1, 
+                        help='bgzipped and indexed VCF file')
 
     args = parser.parse_args()
     return args
-
 
 def makeDataTuple(vcf):
     """Setup a labeled tuple to store the data."""
@@ -268,32 +183,30 @@ def parse_window_vcf(vcf, start, stop, window_size, chrm, fout):
         info = 'chrm={0},start={1},stop={2},inform_sites={3}'.format(current_base.CHROM, start, stop, inform_sites)
         oneliner = array2OnelinerAlignment(info, taxa, alignment.transpose())
 
-    if ":" in oneliner and oneliner[-1] == ';':  # this prevents bad alignments from getting printed
+    if ":" in oneliner and oneliner[-1] == ';': # this prevents bad alignments from getting printed
         return oneliner
     else:
         return 'error'
 
-
 def header_slices(vcf, window_size=5000):
     vcf = pysam.Tabixfile(vcf)
-
+    
     slices = {}
     for line in vcf.header:
-
+        
         if line.startswith('##contig'):
-
+            
             line_dict = dict([item.split("=") for item in line.split("<")[1].strip('>').split(",")])
             length = int(line_dict['length'])
+            
+            if length < window_size: continue
 
-            if length < window_size:
-                continue
-
-            start = (length % window_size) / 2
-            stop = ((length / window_size) * window_size) + start
-
-            s = xrange(start, stop, window_size)
+            start = (length % window_size)/2
+            stop = ((length/window_size) * window_size) + start
+            
+            s = xrange(start,stop,window_size)
             slices[line_dict['ID']] = s
-
+    
     return slices
 
 
@@ -309,7 +222,7 @@ def process_vcf_slice(tabix_file, chrm, start, stop, position_data):
     tbx_lines = tbx.fetch(chrm, start, stop)
 
     numb_of_seqs = len(position_data._fields[9:])
-    alignment = np.zeros((stop - start, numb_of_seqs), np.string0)
+    alignment = np.zeros((stop-start,numb_of_seqs), np.string0)
 
     # This 'error handling' needs to be rewritten.
     current_data = []
@@ -323,7 +236,7 @@ def process_vcf_slice(tabix_file, chrm, start, stop, position_data):
 
     alignment = np.array(current_data)
     inform_sites = count_informative_sites(alignment)
-
+    
     if current_base == None:
         return 'error'
     else:
@@ -331,24 +244,22 @@ def process_vcf_slice(tabix_file, chrm, start, stop, position_data):
         info = "tree 'chrm={0},start={1},stop={2},inform_sites={3}':".format(current_base.CHROM, start, stop, inform_sites)
         oneliner = array2OnelinerAlignment(info, taxa, alignment.transpose())
 
-    if ":" in oneliner and oneliner[-1] == ';':   # this prevents bad alignments from getting printed
+    if ":" in oneliner and oneliner[-1] == ';': # this prevents bad alignments from getting printed
         return oneliner
     else:
         return 'error'
 
-
 def oneliner2phylip(line):
     """Convert one-liner to phylip format."""
     seqs = line.strip(";").split(':')[-1].split(',')
-    label_seqs = zip(seqs[:-1:2], seqs[1::2])
+    label_seqs = zip(seqs[:-1:2],seqs[1::2])
     taxa_count = len(label_seqs)
     seq_length = len(label_seqs[0][1])
-    alignment = "%s %s\n" % (taxa_count, seq_length)   # add header
+    alignment = "%s %s\n" % (taxa_count, seq_length) # add header
     for taxa_name, seq in label_seqs:
         taxa_name = taxa_name.strip()
         alignment += '%-10s%s\n' % (taxa_name, seq)
     return alignment
-
 
 def main():
 
@@ -357,26 +268,19 @@ def main():
 
     chrm, start, stop = re.split(r':|-', args.regions)
     start, stop = int(start), int(stop)
-
+    
     # OPEN VCF
-    vcf_file = gzip.open(args.input[0], 'rb')
+    vcf_file = gzip.open(args.input[0],'rb')
     position_data, chrm_data = makeDataTuple(vcf_file)
     vcf_file.close()
 
     oneliner = process_vcf_slice(args.input[0], chrm, start, stop, position_data)
-    phylip = oneliner2phylip(oneliner)
-
-    pos = {'chrm': chrm,
-           'start': start,
-           'stop': stop}
-
-    tree = calculate_trees(phylip, args, pos)
-    sys.stdout.write(tree + "\n")
-
+    oneliner = oneliner2phylip(oneliner)
+    if oneliner != 'error':
+        sys.stdout.write(oneliner+"\n")
 
 if __name__ == '__main__':
     main()
-
 
 
 
