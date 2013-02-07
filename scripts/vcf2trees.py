@@ -108,6 +108,7 @@ def calculate_trees(phylip, args, pos):
         tree = "tree " + makeTreeName(args_dict) + " = [&U] " + tree
         return tree
     else:
+        args_dict['tree'] = "'" + tree + "'"
         return args_dict
 
 
@@ -382,11 +383,13 @@ def main():
            'stop': stop,
            'id': args.name}
 
+    
     if args.as_nexus == True:
         line = calculate_trees(phylip, args, pos)
     
+
     else:
-        order = ('id', 'model', 'lnL', 'chrm', 'start', 'stop')
+        order = ('id', 'model', 'lnL', 'chrm', 'start', 'stop', 'tree')
         line = calculate_trees(phylip, args, pos)
 
         line = [str(line[i]) for i in order]
