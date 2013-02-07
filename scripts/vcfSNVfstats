@@ -96,7 +96,7 @@ def main():
     fixed_alleles_order = []
     vcf_count = 0
 
-    p = multiprocessing.Pool(processes=int(args.cores))
+    p = multiprocessing.Pool(processes=int(args.cores), maxtasksperchild=10000)
 
     #for count, result in enumerate(map(calc_SNP_stats, vcf_iterator(args))):
     for count, result in enumerate(p.imap(calc_SNP_stats, vcf_iterator(args))):
