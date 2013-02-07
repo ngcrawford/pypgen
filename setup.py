@@ -14,7 +14,7 @@ setup(
     test_suite='nose.collector',
     tests_require=['nose'],
     install_requires=[
-        "pysam == 0.6.0"   # The new versions don't seem to compile correctly.
+        "pysam == 0.6.0"   # Newer versions don't seem to compile correctly.
     ],
 
     packages=[

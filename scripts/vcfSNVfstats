@@ -8,7 +8,7 @@ import re
 import textwrap
 import multiprocessing
 from pypgen.parser.VCF import *
-from pypgen.misc.helpers import *
+from pypgen.misc.helpers import open_vcf
 
 
 def process_header(tabix_file):
@@ -89,12 +89,17 @@ def main():
     # test that pysam is installed.
     # bgzip check. MDSum?
 
+
+
     fstat_order = []         # store order of paired samples.
     pop_size_order = []
     fixed_alleles_order = []
     vcf_count = 0
 
-    for count, result in enumerate(map(calc_SNP_stats, vcf_iterator(args))):
+    p = multiprocessing.Pool(processes=int(args.cores))
+
+    #for count, result in enumerate(map(calc_SNP_stats, vcf_iterator(args))):
+    for count, result in enumerate(p.imap(calc_SNP_stats, vcf_iterator(args))):
         pos, chrm, pop_size_stats, fstats, fixed_alleles = result
         vcf_count += 1
 

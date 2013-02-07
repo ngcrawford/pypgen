@@ -27,7 +27,7 @@
     <script type="text/javascript" src="_static/doctools.js"></script>
     <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
     <link rel="top" title="pypgen 0.2.2 beta documentation" href="index.html" />
-    <link rel="next" title="API" href="fstats.html" />
+    <link rel="next" title="Scripts:" href="script_instructions.html" />
     <link rel="prev" title="Detailed Installation:" href="install.html" /> 
   </head>
   <body>
@@ -41,7 +41,7 @@
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
         <li class="right" >
-          <a href="fstats.html" title="API"
+          <a href="script_instructions.html" title="Scripts:"
              accesskey="N">next</a> |</li>
         <li class="right" >
           <a href="install.html" title="Detailed Installation:"
@@ -57,14 +57,14 @@
             
   <div class="section" id="tutorial">
 <h1>Tutorial:<a class="headerlink" href="#tutorial" title="Permalink to this headline">¶</a></h1>
-<p>Once pygen is installed two scripts, <tt class="docutils literal"><span class="pre">vcf_sliding_window.py</span></tt> and <tt class="docutils literal"><span class="pre">vcf_snpwise_fstats.py</span></tt> should be available at the commandline.</p>
+<p>Once pygen is installed two scripts, <tt class="docutils literal"><span class="pre">vcfWindowedFstats</span></tt> and <tt class="docutils literal"><span class="pre">vcfSNVfstats</span></tt>, should be available at the command line.</p>
 <p>Running [script name].py will print out a short list of commands and adding the <tt class="docutils literal"><span class="pre">--help</span></tt> or <tt class="docutils literal"><span class="pre">-h</span></tt> prints out a more detailed list.</p>
 <div class="section" id="basic-analysis">
 <h2>Basic analysis<a class="headerlink" href="#basic-analysis" title="Permalink to this headline">¶</a></h2>
 <ol class="arabic">
-<li><p class="first">Run your samples through GATK or samtools (or similar SNV caller) that emits calls in the standard <a class="reference external" href="http://www.1000genomes.org/wiki/Analysis/Variant%20Call%20Format/vcf-variant-call-format-version-41">VCF format</a>. By default pypgen&#8217;s VCF parser only looks at SNVs with where the <tt class="docutils literal"><span class="pre">FILTER</span></tt> column is set to <tt class="docutils literal"><span class="pre">PASS</span></tt> so you should filter or recalibrate your VCF appropriately before running pypgen.</p>
+<li><p class="first">Run your samples through GATK or samtools (or similar SNV caller) that emits calls in the standard <a class="reference external" href="http://www.1000genomes.org/wiki/Analysis/Variant%20Call%20Format/vcf-variant-call-format-version-41">VCF format</a>. By default pypgen&#8217;s VCF parser only looks at SNVs where the <tt class="docutils literal"><span class="pre">FILTER</span></tt> column is set to <tt class="docutils literal"><span class="pre">PASS</span></tt> so you should filter or recalibrate your VCF appropriately before running pypgen.</p>
 </li>
-<li><p class="first">Once you have a VCF file you&#8217;ll need to bgzip it. <a class="reference external" href="http://samtools.sourceforge.net/tabix.shtml">Tabix</a> provides this tool so you make sure you have it installed. Tabix and samtools installation is detailed in the <a class="reference internal" href="install.html#samtools-tabix"><em>Samtools and tabix</em></a> section of this guide. The basic command to run bgzip is:</p>
+<li><p class="first">Once you have a VCF file you&#8217;ll need to bgzip it. <a class="reference external" href="http://samtools.sourceforge.net/tabix.shtml">Tabix</a> include bgzip so you make sure you have tabix installed. Tabix and samtools installation is detailed in the <a class="reference internal" href="install.html#samtools-tabix"><em>Samtools and tabix</em></a> section of this guide. The basic command to run bgzip is:</p>
 <blockquote>
 <div><div class="highlight-python"><pre>bgzip -c  path/to/vcf_file.vcf &gt; path/to/vcf_file.vcf.bgz</pre>
 </div>
@@ -72,7 +72,7 @@
 </li>
 </ol>
 <blockquote>
-<div>This can take a couple of minutes if your uncompressed VCF file is very large.</div></blockquote>
+<div>This can exceed 30 minutes if your uncompressed VCF file is very large.</div></blockquote>
 <ol class="arabic" start="3">
 <li><p class="first">Next you need to index your bgzipped VCF file. The command to do this is:</p>
 <blockquote>
@@ -86,7 +86,7 @@
 <ol class="arabic" start="4">
 <li><p class="first">Now you can run pypgen. In a text editor I recommend composing a test command that looks something like this.</p>
 <blockquote>
-<div><div class="highlight-python"><pre>vcf_snpwise_fstats.py \
+<div><div class="highlight-python"><pre>vcfSNVfstats \
      -i path/to/vcf_file.vcf.bgz \
      -p pop1:sample1,sample2 \
         pop2:sample3,sample4,sample5 \
@@ -112,7 +112,11 @@
 </div>
 </div></blockquote>
 <p>If everything worked you should see a header line followed by ~ 9 lines of data. The amount of output varies depending on the region so it&#8217;s a good idea to pick a region that you know contains SNVs.</p>
+<p>Replacing <tt class="docutils literal"><span class="pre">vcfSNVfstats</span></tt> with <tt class="docutils literal"><span class="pre">vcfWindowedFstats</span></tt> and setting the <tt class="docutils literal"><span class="pre">--window</span></tt> flag is all that is necessary to run a sliding window analysis</p>
 </div></blockquote>
+</div>
+<div class="section" id="followup-analysis">
+<h2>Followup analysis<a class="headerlink" href="#followup-analysis" title="Permalink to this headline">¶</a></h2>
 </div>
 </div>
 
@@ -126,6 +130,7 @@
   <ul>
 <li><a class="reference internal" href="#">Tutorial:</a><ul>
 <li><a class="reference internal" href="#basic-analysis">Basic analysis</a></li>
+<li><a class="reference internal" href="#followup-analysis">Followup analysis</a></li>
 </ul>
 </li>
 </ul>
@@ -134,8 +139,8 @@
   <p class="topless"><a href="install.html"
                         title="previous chapter">Detailed Installation:</a></p>
   <h4>Next topic</h4>
-  <p class="topless"><a href="fstats.html"
-                        title="next chapter">API</a></p>
+  <p class="topless"><a href="script_instructions.html"
+                        title="next chapter">Scripts:</a></p>
   <h3>This Page</h3>
   <ul class="this-page-menu">
     <li><a href="_sources/tutorial.txt"
@@ -168,7 +173,7 @@
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
         <li class="right" >
-          <a href="fstats.html" title="API"
+          <a href="script_instructions.html" title="Scripts:"
              >next</a> |</li>
         <li class="right" >
           <a href="install.html" title="Detailed Installation:"
