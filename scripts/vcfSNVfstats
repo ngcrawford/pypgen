@@ -8,7 +8,7 @@ import re
 import textwrap
 import multiprocessing
 from pypgen.parser.VCF import *
-from pypgen.misc.helpers import open_vcf
+from pypgen.misc.helpers import open_vcf, float_2_string
 
 
 def process_header(tabix_file):

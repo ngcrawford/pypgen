@@ -24,7 +24,7 @@ def default_args():
     parser.add_argument('-o', '--output',
                         nargs='?',
                         type=argparse.FileType('w'),
-                        default=helpers.Unbuffered(sys.stdout),  # forces consistent writing to STOUT
+                        default=sys.stdout, #helpers.Unbuffered(sys.stdout),  # forces consistent writing to STOUT
                         help='Path to output csv file. \
                               If path is not set, defaults to STDOUT.')
 
