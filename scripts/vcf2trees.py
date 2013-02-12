@@ -79,7 +79,7 @@ def calculate_trees(phylip, args, pos):
         cli = 'phyml \
                 --input={0} \
                 --model={1} \
-                -u {2} \
+                --constraint_file {2} \
                 -o lr \
                 >/dev/null 2>&1'.format(temp_in.name, args.model, constraint_file.name)
 
@@ -88,15 +88,16 @@ def calculate_trees(phylip, args, pos):
                 --input={0} \
                 --model={1} \
                 >/dev/null 2>&1'.format(temp_in.name, args.model)
-        print cli
 
     cli_parts = cli.split()
     ft = Popen(cli_parts, stdin=PIPE, stderr=PIPE, stdout=PIPE).communicate()
+    for line in ft:
+        print line
 
     # EXTRACT RESULTS AND FORMAT AS NEXUS TREES
     temp_string = os.path.split(temp_in.name)[1].split('.')[0]
 
-    treefile =  os.path.join('tmp','%s.out_phyml_tree.txt' % (temp_string))
+    treefile = os.path.join('tmp','%s.out_phyml_tree.txt' % (temp_string))
     tree = open(treefile,'r').readlines()[0].strip().strip("\"")
 
     statsfile = os.path.join('tmp','%s.out_phyml_stats.txt' % (temp_string))
@@ -383,10 +384,8 @@ def main():
            'stop': stop,
            'id': args.name}
 
-    
     if args.as_nexus == True:
         line = calculate_trees(phylip, args, pos)
-    
 
     else:
         order = ('id', 'model', 'lnL', 'chrm', 'start', 'stop', 'tree')
