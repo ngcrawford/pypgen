@@ -26,6 +26,7 @@ import os
 import re
 import sys
 import gzip
+import glob
 import pysam
 import shlex
 import random
@@ -36,6 +37,54 @@ import numpy as np
 from subprocess import Popen, PIPE
 from collections import namedtuple
 from pypgen.parser import VCF
+
+def get_args():
+    """Parse sys.argv"""
+    parser = argparse.ArgumentParser()
+
+    parser.add_argument('-r', '-R', '--regions',
+                        required=True,
+                        type=str,
+                        help="Chromosomal region in the format: 'chrm:start-stop'")
+
+    parser.add_argument('-o', '--output',
+                        type=argparse.FileType('w'),
+                        default=sys.stdout,
+                        help='Path to output. (default is STOUT)')
+
+    parser.add_argument('-c', '--constraint-tree',
+                        type=str,
+                        help="Newick formated tree.")
+
+    parser.add_argument('-m', '--model',
+                        type=str,
+                        default='HKY85',
+                        help="Substitution model name. \
+                               HKY85 (default) | JC69 | K80 | F81 | F84 | TN93 | GTR")
+
+    # parser.add_argument('-b','--bootstraps',
+    #                     type=int,
+    #                     help='Calculate bootstraps.')
+
+    parser.add_argument('--raxml',
+                        action='store_true',
+                        default=False,
+                        help="beta: run raxml in place of phyml. Works with contraint trees.")
+
+    parser.add_argument('input',
+                        nargs=1,
+                        help='Bgzipped and indexed VCF file')
+
+    parser.add_argument('--name',
+                        type=str,
+                        help='Add uniqe id to output.')
+
+    parser.add_argument('--as-nexus',
+                        action="store_true",
+                        default=False)
+
+    args = parser.parse_args()
+    return args
 
 
 def makeTreeName(args_dict):
@@ -54,6 +103,10 @@ def processStatsFile(fin):
     for line in fin:
         if 'Log-likelihood' in line:
             lnL = line.split()[-1]
+        
+        if line.startswith("Final GAMMA-based Score of best tree") == True:
+            lnL = line.split()[-1]
+
     return lnL
 
 
@@ -113,50 +166,75 @@ def calculate_trees(phylip, args, pos):
         return args_dict
 
 
+def calculate_raxml_trees(phylip, args, pos):
+    """Doc string"""
+
+    args_dict = pos
+    if os.path.exists('tmp/') == False:
+        os.mkdir('tmp/')
+
+    temp_in = tempfile.NamedTemporaryFile(suffix='.out', dir='tmp/')   # delete=False)
+    for line in phylip:
+        temp_in.write(line)
+    temp_in.seek(0)     # move pointer to beginning of file
+
+    temp_string = os.path.split(temp_in.name)[1].split('.')[0]
+
+    # SETUP CONSTRAINT TREE FILE
+    if args.constraint_tree != None:
+
+        constraint_file = tempfile.NamedTemporaryFile(suffix='.tree', dir='tmp/')
+        constraint_file.write(args.constraint_tree + '\n')
+        constraint_file.seek(0)
+
+        # raxmlHPC-SSE3 -m GTRGAMMA -s test.phylip -n t -g test.constraint.tree -o h665,i02_210
+
+        cli = 'raxmlHPC-SSE3 \
+                -m GTRGAMMA \
+                -s {0} \
+                -g {2} \
+                -n {3} \
+                -o h665,i02_210 \
+                >/dev/null 2>&1'.format(temp_in.name, args.model, constraint_file.name, temp_string)
+
+    else:
+        cli = '-m GTRGAMMA \
+                -s {0} \
+                -g {2} \
+                -n {3} \
+                -o h665,i02_210 \
+                >/dev/null 2>&1'.format(temp_in.name, args.model, constraint_file.name)
+
+    cli_parts = cli.split()
+    ft = Popen(cli_parts, stdin=PIPE, stderr=PIPE, stdout=PIPE).communicate()
+    # for line in ft:
+    #     print line
+
+    temp_string = os.path.split(temp_in.name)[1].split('.')[0]
+
+    treefile = 'RAxML_result.%s' % (temp_string)
+    tree = open(treefile, 'r').readlines()[0].strip().strip("\"")
+
+    statsfile = 'RAxML_log.%s' % (temp_string)
+    lnL = processStatsFile(open(statsfile, 'r'))
 
 
-def get_args():
-    """Parse sys.argv"""
-    parser = argparse.ArgumentParser()
+    ## clean up:
+    
+    [os.remove(f) for f in glob.glob("*.%s" % (temp_string))]
 
-    parser.add_argument('-r', '-R', '--regions',
-                        required=True,
-                        type=str,
-                        help="Chromosomal region in the format: 'Chrm:start-stop'")
+    args_dict['lnL'] = lnL
+    args_dict['model'] = 'GTRGAMMA' 
 
-    parser.add_argument('-o', '--output',
-                        type=argparse.FileType('w'),
-                        default=sys.stdout,
-                        help='Path to output. (default is STOUT)')
+    if args.as_nexus == True:
+        tree = "tree " + makeTreeName(args_dict) + " = [&U] " + tree
+        return tree
+    else:
+        args_dict['tree'] = "'" + tree + "'"
+        return args_dict
 
-    parser.add_argument('-c', '--constraint-tree',
-                        type=str,
-                        help="Newick formated tree.")
 
-    parser.add_argument('-m', '--model',
-                        type=str,
-                        default='HKY85',
-                        help="Substitution model name. \
-                               HKY85 (default) | JC69 | K80 | F81 | F84 | TN93 | GTR .")
 
-    # parser.add_argument('-b','--bootstraps',
-    #                     type=int,
-    #                     help='Calculate bootstraps.')
-
-    parser.add_argument('input',
-                        nargs=1,
-                        help='Bgzipped and indexed VCF file')
-
-    parser.add_argument('--name',
-                        type=str,
-                        help='Add uniqe id to output.')
-
-    parser.add_argument('--as-nexus',
-                        action="store_true",
-                        default=False)
-
-    args = parser.parse_args()
-    return args
 
 
 def makeDataTuple(vcf):
@@ -194,7 +272,7 @@ def array2OnelinerAlignment(info, taxa, bases):
 def callSNPs(current_base, numb_of_seqs):
     """Call the SNPs. Duh!"""
 
-    blanks =  np.zeros(numb_of_seqs, np.string0)
+    blanks = np.zeros(numb_of_seqs, np.string0)
 
     if current_base.FILTER == 'LowQual':
         blanks.fill("-")
@@ -387,6 +465,13 @@ def main():
     if args.as_nexus == True:
         line = calculate_trees(phylip, args, pos)
 
+    elif args.raxml == True:
+        order = ('id', 'model', 'lnL', 'chrm', 'start', 'stop', 'tree')
+        line = calculate_raxml_trees(phylip, args, pos)
+        
+        line = [str(line[i]) for i in order]
+        line = ','.join(line)
+
     else:
         order = ('id', 'model', 'lnL', 'chrm', 'start', 'stop', 'tree')
         line = calculate_trees(phylip, args, pos)
@@ -399,7 +484,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-
-
-
-
