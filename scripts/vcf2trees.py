@@ -101,7 +101,6 @@ def makeTreeName(args_dict):
 def processStatsFile(fin):
     lnL = None
     for line in fin:
-        print line
         if 'Log-likelihood' in line:
             lnL = line.split()[-1]
         
