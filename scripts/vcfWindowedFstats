@@ -12,7 +12,6 @@ from pypgen.parser.VCF import *
 from pypgen.misc.helpers import *
 
 
-
 def generate_fstats_from_vcf_slices(slice_indicies, populations, header, args):
 
     for count, si in enumerate(slice_indicies):
