@@ -101,6 +101,7 @@ def makeTreeName(args_dict):
 def processStatsFile(fin):
     lnL = None
     for line in fin:
+        print line
         if 'Log-likelihood' in line:
             lnL = line.split()[-1]
         
@@ -215,7 +216,7 @@ def calculate_raxml_trees(phylip, args, pos):
     treefile = 'RAxML_result.%s' % (temp_string)
     tree = open(treefile, 'r').readlines()[0].strip().strip("\"")
 
-    statsfile = 'RAxML_log.%s' % (temp_string)
+    statsfile = 'RAxML_info.%s' % (temp_string)
     lnL = processStatsFile(open(statsfile, 'r'))
 
 
