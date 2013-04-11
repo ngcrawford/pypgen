@@ -34,6 +34,7 @@ import argparse
 import itertools
 import tempfile
 import numpy as np
+from copy import deepcopy
 from subprocess import Popen, PIPE
 from collections import namedtuple
 from pypgen.parser import VCF
@@ -66,6 +67,10 @@ def get_args():
     #                     type=int,
     #                     help='Calculate bootstraps.')
 
+    parser.add_argument('-p','--threads',
+                        default=1,
+                        type=int,
+                        help='Set number of threads to use. Only for RAXML.')
     parser.add_argument('--raxml',
                         action='store_true',
                         default=False,
@@ -80,6 +85,10 @@ def get_args():
                         help='Add uniqe id to output.')
 
     parser.add_argument('--as-nexus',
+                        action="store_true",
+                        default=False)
+
+    parser.add_argument('--sh-test',
                         action="store_true",
                         default=False)
 
@@ -104,7 +113,7 @@ def processStatsFile(fin):
         if 'Log-likelihood' in line:
             lnL = line.split()[-1]
         
-        if line.startswith("Final GAMMA-based Score of best tree") == True:
+        if line.startswith("Final GAMMA-based Score of best tree") is True:
             lnL = line.split()[-1]
 
     return lnL
@@ -114,7 +123,7 @@ def calculate_trees(phylip, args, pos):
     """Doc string"""
 
     args_dict = pos
-    if os.path.exists('tmp/') == False:
+    if os.path.exists('tmp/') is False:
         os.mkdir('tmp/')
 
     temp_in = tempfile.NamedTemporaryFile(suffix='.out', dir='tmp/')   # delete=False)
@@ -123,7 +132,7 @@ def calculate_trees(phylip, args, pos):
     temp_in.seek(0)     # move pointer to beginning of file
 
     # SETUP CONSTRAINT TREE FILE
-    if args.constraint_tree != None:
+    if args.constraint_tree is not None:
 
         constraint_file = tempfile.NamedTemporaryFile(suffix='.tree', dir='tmp/')
         constraint_file.write(args.constraint_tree + '\n')
@@ -150,15 +159,15 @@ def calculate_trees(phylip, args, pos):
     # EXTRACT RESULTS AND FORMAT AS NEXUS TREES
     temp_string = os.path.split(temp_in.name)[1].split('.')[0]
 
-    treefile = os.path.join('tmp','%s.out_phyml_tree.txt' % (temp_string))
-    tree = open(treefile,'r').readlines()[0].strip().strip("\"")
+    treefile = os.path.join('tmp', '%s.out_phyml_tree.txt' % (temp_string))
+    tree = open(treefile, 'r').readlines()[0].strip().strip("\"")
 
-    statsfile = os.path.join('tmp','%s.out_phyml_stats.txt' % (temp_string))
-    lnL = processStatsFile(open(statsfile,'r'))
+    statsfile = os.path.join('tmp', '%s.out_phyml_stats.txt' % (temp_string))
+    lnL = processStatsFile(open(statsfile, 'r'))
     args_dict['lnL'] = lnL
     args_dict['model'] = args.model
 
-    if args.as_nexus == True:
+    if args.as_nexus is True:
         tree = "tree " + makeTreeName(args_dict) + " = [&U] " + tree
         return tree
     else:
@@ -170,7 +179,7 @@ def calculate_raxml_trees(phylip, args, pos):
     """Doc string"""
 
     args_dict = pos
-    if os.path.exists('tmp/') == False:
+    if os.path.exists('tmp/') is False:
         os.mkdir('tmp/')
 
     temp_in = tempfile.NamedTemporaryFile(suffix='.out', dir='tmp/')   # delete=False)
@@ -181,7 +190,7 @@ def calculate_raxml_trees(phylip, args, pos):
     temp_string = os.path.split(temp_in.name)[1].split('.')[0]
 
     # SETUP CONSTRAINT TREE FILE
-    if args.constraint_tree != None:
+    if args.constraint_tree is not None:
 
         constraint_file = tempfile.NamedTemporaryFile(suffix='.tree', dir='tmp/')
         constraint_file.write(args.constraint_tree + '\n')
@@ -189,21 +198,23 @@ def calculate_raxml_trees(phylip, args, pos):
 
         # raxmlHPC-SSE3 -m GTRGAMMA -s test.phylip -n t -g test.constraint.tree -o h665,i02_210
 
-        cli = 'raxmlHPC-SSE3 \
+        cli = 'raxmlHPC-PTHREADS-SSE3  \
                 -m GTRGAMMA \
                 -s {0} \
                 -g {2} \
                 -n {3} \
+                -T {4} \
                 -o h665,i02_210 \
-                >/dev/null 2>&1'.format(temp_in.name, args.model, constraint_file.name, temp_string)
+                >/dev/null 2>&1'.format(temp_in.name, args.model, constraint_file.name, temp_string, args.threads)
 
     else:
-        cli = '-m GTRGAMMA \
+        cli = 'raxmlHPC-PTHREADS-SSE3 \
+               -m GTRGAMMA \
                 -s {0} \
-                -g {2} \
-                -n {3} \
+                -n {2} \
+                -T {3} \
                 -o h665,i02_210 \
-                >/dev/null 2>&1'.format(temp_in.name, args.model, constraint_file.name)
+                >/dev/null 2>&1'.format(temp_in.name, args.model, temp_string, args.threads)
 
     cli_parts = cli.split()
     ft = Popen(cli_parts, stdin=PIPE, stderr=PIPE, stdout=PIPE).communicate()
@@ -218,23 +229,19 @@ def calculate_raxml_trees(phylip, args, pos):
     statsfile = 'RAxML_info.%s' % (temp_string)
     lnL = processStatsFile(open(statsfile, 'r'))
 
-
     ## clean up:
-    
     [os.remove(f) for f in glob.glob("*.%s" % (temp_string))]
 
     args_dict['lnL'] = lnL
-    args_dict['model'] = 'GTRGAMMA' 
+    args_dict['model'] = 'GTRGAMMA'
 
-    if args.as_nexus == True:
+
+    if args.as_nexus is True:
         tree = "tree " + makeTreeName(args_dict) + " = [&U] " + tree
         return tree
     else:
-        args_dict['tree'] = "'" + tree + "'"
+        args_dict['tree'] = "'" + str(tree) + "'"
         return args_dict
-
-
-
 
 
 def makeDataTuple(vcf):
@@ -352,6 +359,7 @@ def parse_window_vcf(vcf, start, stop, window_size, chrm, fout):
 
     alignment = np.array(current_data)
     inform_sites = count_informative_sites(alignment)
+
     if current_base == None:
         return 'error'
     else:
@@ -394,6 +402,7 @@ def slice_vcf(vcf, chrm, start, stop):
     vcf = Popen(cli_parts, stdin=PIPE, stderr=PIPE, stdout=PIPE).communicate()[0]
     return vcf
 
+
 def process_vcf_slice(tabix_file, chrm, start, stop, position_data):
 
     tbx = pysam.Tabixfile(tabix_file)
@@ -404,7 +413,8 @@ def process_vcf_slice(tabix_file, chrm, start, stop, position_data):
 
     # This 'error handling' needs to be rewritten.
     current_data = []
-    if tbx_lines == None:
+
+    if tbx_lines is None:
         return 'error'
 
     for line in tbx_lines:
@@ -415,7 +425,7 @@ def process_vcf_slice(tabix_file, chrm, start, stop, position_data):
     alignment = np.array(current_data)
     inform_sites = count_informative_sites(alignment)
 
-    if current_base == None:
+    if current_base is None:
         return 'error'
     else:
         taxa = current_base._fields[9:]
@@ -440,6 +450,53 @@ def oneliner2phylip(line):
         alignment += '%-10s%s\n' % (taxa_name, seq)
     return alignment
 
+def calculate_sh_test(phylip, args, pos):
+    """Do SH test"""
+    order = ('id', 'model', 'lnL', 'chrm', 'start', 'stop', 'tree')
+    constraint_trees = args.constraint_tree.strip(";").split(";")
+    fitted_trees = []
+
+    for count, tree in enumerate(constraint_trees):
+        print 'Calculating constraint tree number: {}'.format(count)
+
+        args.constraint_tree = tree + ";"
+        t = calculate_raxml_trees(phylip, args, pos)
+        fitted_trees.append(deepcopy(t))
+
+    args.constraint_tree = None
+    best_tree = calculate_raxml_trees(phylip, args, pos)
+
+    best_file = tempfile.NamedTemporaryFile(suffix='.best', dir='tmp/')   # delete=False)
+    const_file = tempfile.NamedTemporaryFile(suffix='.const', dir='tmp/')   # delete=False)
+
+    for t in fitted_trees:
+        const_file.write(t["tree"] + "\n")
+    const_file.seek(0)     # move pointer to beginning of file
+
+    best_file.write(best_tree["tree"] + "\n")
+    best_file.seek(0) 
+
+    temp_in = tempfile.NamedTemporaryFile(suffix='.out', dir='tmp/')   # delete=False)
+
+    for line in phylip:
+        temp_in.write(line)
+    temp_in.seek(0)     # move pointer to beginning of file
+
+    temp_string = os.path.split(temp_in.name)[1].split('.')[0]
+
+    cli = "raxmlHPC-SSE3 \
+      -f h \
+      -t {0}  \
+      -z {1} \
+      -s {2} \
+      -m GTRGAMMA \
+      -n {3}".format(best_file.name, const_file.name, temp_in.name, temp_string)
+
+    cli_parts = cli.split()
+    ft = Popen(cli_parts, stdin=PIPE, stderr=PIPE, stdout=PIPE).communicate()
+    for line in ft:
+        print line
+
 
 def main():
 
@@ -462,15 +519,19 @@ def main():
            'stop': stop,
            'id': args.name}
 
-    if args.as_nexus == True:
+    if args.as_nexus is True:
         line = calculate_trees(phylip, args, pos)
 
-    elif args.raxml == True:
+    elif args.raxml is True:
         order = ('id', 'model', 'lnL', 'chrm', 'start', 'stop', 'tree')
         line = calculate_raxml_trees(phylip, args, pos)
-        
+
         line = [str(line[i]) for i in order]
         line = ','.join(line)
+
+    elif args.sh_test is True:
+        calculate_sh_test(phylip, args, pos)
+        sys.exit()
 
     else:
         order = ('id', 'model', 'lnL', 'chrm', 'start', 'stop', 'tree')
