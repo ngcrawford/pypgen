@@ -497,6 +497,7 @@ def calculate_sh_test(phylip, args, pos):
     for line in ft:
         print line
 
+    [os.remove(f) for f in glob.glob("*.%s" % (temp_string))]
 
 def main():
 
