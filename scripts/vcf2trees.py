@@ -74,7 +74,7 @@ def get_args():
     parser.add_argument('--raxml',
                         action='store_true',
                         default=False,
-                        help="beta: run raxml in place of phyml. Works with contraint trees.")
+                        help="beta: run raxml in place of phyml. Works with constraint trees.")
 
     parser.add_argument('input',
                         nargs=1,
@@ -450,21 +450,24 @@ def oneliner2phylip(line):
         alignment += '%-10s%s\n' % (taxa_name, seq)
     return alignment
 
-def calculate_sh_test(phylip, args, pos):
+def calculate_sh_test(phylip, args, pos, constraint_trees, best_tree=None):
     """Do SH test"""
+
+
     order = ('id', 'model', 'lnL', 'chrm', 'start', 'stop', 'tree')
-    constraint_trees = args.constraint_tree.strip(";").split(";")
     fitted_trees = []
 
     for count, tree in enumerate(constraint_trees):
-        print 'Calculating constraint tree number: {}'.format(count)
+        #print 'Calculating constraint tree number: {}'.format(count)
 
         args.constraint_tree = tree + ";"
         t = calculate_raxml_trees(phylip, args, pos)
         fitted_trees.append(deepcopy(t))
 
     args.constraint_tree = None
-    best_tree = calculate_raxml_trees(phylip, args, pos)
+
+    if best_tree is None:
+       best_tree = calculate_raxml_trees(phylip, args, pos)
 
     best_file = tempfile.NamedTemporaryFile(suffix='.best', dir='tmp/')   # delete=False)
     const_file = tempfile.NamedTemporaryFile(suffix='.const', dir='tmp/')   # delete=False)
@@ -473,8 +476,13 @@ def calculate_sh_test(phylip, args, pos):
         const_file.write(t["tree"] + "\n")
     const_file.seek(0)     # move pointer to beginning of file
 
-    best_file.write(best_tree["tree"] + "\n")
-    best_file.seek(0) 
+
+    if type(best_tree) is dict:
+        best_file.write(best_tree["tree"] + "\n")
+    else:
+        best_file.write(best_tree + "\n")
+
+    best_file.seek(0)
 
     temp_in = tempfile.NamedTemporaryFile(suffix='.out', dir='tmp/')   # delete=False)
 
@@ -494,10 +502,31 @@ def calculate_sh_test(phylip, args, pos):
 
     cli_parts = cli.split()
     ft = Popen(cli_parts, stdin=PIPE, stderr=PIPE, stdout=PIPE).communicate()
-    for line in ft:
-        print line
+    lines = []
+    best_tree_line = None
+    for line in ft[0].split('\n'):
+        if line.startswith('Tree:') is True:
+            line = re.split('\s+', line)[:10]
+            line = [w.replace(":", '') for w in line]
+            lines.append(line)
+
+        elif line.startswith('Model optimization') is True:
+            line = re.split('\s+', line)
+            line = [w.replace(":", '') for w in line]
+            line += [best_tree["tree"]]
+            best_tree_line = line
 
     [os.remove(f) for f in glob.glob("*.%s" % (temp_string))]
+    return (lines, best_tree_line)
+
+def print_results(note, lines, best_tree_line, trees, args):
+
+    chrm, start, stop = re.split(r':|-', args.regions)
+
+    print note, args.regions, chrm, start, stop, best_tree_line[4], 'best_tree', best_tree_line[5].strip('\'')
+
+    for count, l in enumerate(lines):
+        print note, args.regions, chrm, start, stop, l[3], l[-1], trees[count]
 
 def main():
 
@@ -531,7 +560,26 @@ def main():
         line = ','.join(line)
 
     elif args.sh_test is True:
-        calculate_sh_test(phylip, args, pos)
+
+        print " ".join(["Pass",'Region','Chrm','Start','Stop','-lnl','Comparison','Tree'])
+
+        constraint_trees = args.constraint_tree.strip(";").split(";")
+        initial_result, best_tree_line = np.array(calculate_sh_test(phylip, args, pos, constraint_trees))
+
+        print_results('first_pass', initial_result, best_tree_line, constraint_trees, args)
+
+        initial_result = np.array(initial_result)
+        lnls = np.array([float(i) for i in initial_result[:, 3]])
+        best_const_tree_id = lnls.argmax()
+
+        args.constraint_tree = constraint_trees[best_const_tree_id] + ";"
+        best_const_tree = calculate_raxml_trees(phylip, args, pos)
+
+        del constraint_trees[best_const_tree_id]
+
+        const_best_tree_results, best_tree_line = calculate_sh_test(phylip, args, pos, constraint_trees, best_tree=best_const_tree)
+        print_results('best_constraint', const_best_tree_results, best_tree_line, constraint_trees, args)
+
         sys.exit()
 
     else:
