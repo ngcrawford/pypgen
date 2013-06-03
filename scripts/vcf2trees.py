@@ -36,8 +36,9 @@ import tempfile
 import numpy as np
 from copy import deepcopy
 from subprocess import Popen, PIPE
-from collections import namedtuple
+from collections import namedtuple, defaultdict
 from pypgen.parser import VCF
+
 
 def get_args():
     """Parse sys.argv"""
@@ -76,10 +77,6 @@ def get_args():
                         default=False,
                         help="beta: run raxml in place of phyml. Works with constraint trees.")
 
-    parser.add_argument('input',
-                        nargs=1,
-                        help='Bgzipped and indexed VCF file')
-
     parser.add_argument('--name',
                         type=str,
                         help='Add uniqe id to output.')
@@ -91,6 +88,12 @@ def get_args():
     parser.add_argument('--sh-test',
                         action="store_true",
                         default=False)
+
+    #parser.add_argument('--as-alignment')
+
+    parser.add_argument('input',
+                        nargs=1,
+                        help='Bgzipped and indexed VCF file')
 
     args = parser.parse_args()
     return args
@@ -112,7 +115,7 @@ def processStatsFile(fin):
     for line in fin:
         if 'Log-likelihood' in line:
             lnL = line.split()[-1]
-        
+       
         if line.startswith("Final GAMMA-based Score of best tree") is True:
             lnL = line.split()[-1]
 
@@ -453,10 +456,13 @@ def oneliner2phylip(line):
 def calculate_sh_test(phylip, args, pos, constraint_trees, best_tree=None):
     """Do SH test"""
 
-
-    order = ('id', 'model', 'lnL', 'chrm', 'start', 'stop', 'tree')
     fitted_trees = []
 
+    # 1. CALCULATE BEST TREE
+    if best_tree is None:
+       best_tree = calculate_raxml_trees(phylip, args, pos)
+
+    # PROCESS CONSTRAINT TREES
     for count, tree in enumerate(constraint_trees):
         #print 'Calculating constraint tree number: {}'.format(count)
 
@@ -466,67 +472,93 @@ def calculate_sh_test(phylip, args, pos, constraint_trees, best_tree=None):
 
     args.constraint_tree = None
 
-    if best_tree is None:
-       best_tree = calculate_raxml_trees(phylip, args, pos)
-
+    # WRITE TREES TO TEMP FILES
     best_file = tempfile.NamedTemporaryFile(suffix='.best', dir='tmp/')   # delete=False)
-    const_file = tempfile.NamedTemporaryFile(suffix='.const', dir='tmp/')   # delete=False)
-
-    for t in fitted_trees:
-        const_file.write(t["tree"] + "\n")
-    const_file.seek(0)     # move pointer to beginning of file
-
-
     if type(best_tree) is dict:
         best_file.write(best_tree["tree"] + "\n")
     else:
         best_file.write(best_tree + "\n")
-
     best_file.seek(0)
 
-    temp_in = tempfile.NamedTemporaryFile(suffix='.out', dir='tmp/')   # delete=False)
+    const_file = tempfile.NamedTemporaryFile(suffix='.const', dir='tmp/')   # delete=False)
+    for t in fitted_trees:
+        const_file.write(t["tree"] + "\n")
+    const_file.seek(0)     # move pointer to beginning of file
 
+    # WRITE ALIGNMENT TO TEMP FILE
+    temp_in = tempfile.NamedTemporaryFile(suffix='.out', dir='tmp/')   # delete=False)
     for line in phylip:
         temp_in.write(line)
     temp_in.seek(0)     # move pointer to beginning of file
 
-    temp_string = os.path.split(temp_in.name)[1].split('.')[0]
-
+    # RUN SH TEST
+    run_name = os.path.split(temp_in.name)[1].split('.')[0]
     cli = "raxmlHPC-SSE3 \
       -f h \
       -t {0}  \
       -z {1} \
       -s {2} \
       -m GTRGAMMA \
-      -n {3}".format(best_file.name, const_file.name, temp_in.name, temp_string)
+      -n {3}".format(best_file.name, const_file.name, temp_in.name, run_name)
 
     cli_parts = cli.split()
     ft = Popen(cli_parts, stdin=PIPE, stderr=PIPE, stdout=PIPE).communicate()
-    lines = []
+    
+    # PARSE SH TEST OUTPUT
+    ordered_const_trees = []
     best_tree_line = None
     for line in ft[0].split('\n'):
         if line.startswith('Tree:') is True:
-            line = re.split('\s+', line)[:10]
+            line = re.split('\s+', line)
             line = [w.replace(":", '') for w in line]
-            lines.append(line)
+            ordered_const_trees.append(line)
 
         elif line.startswith('Model optimization') is True:
             line = re.split('\s+', line)
             line = [w.replace(":", '') for w in line]
             line += [best_tree["tree"]]
             best_tree_line = line
+     
+    # CALCULATE CONSTRAINT TREES WITH BRANCH LENGTHS
+    order = ('id', 'model', 'lnL', 'chrm', 'start', 'stop', 'tree')
+    ordered_recalc_const_trees = []
+    for count, l in enumerate(ordered_const_trees):
+        args.constraint_tree = constraint_trees[count] + ";"
+        recalc_const_tree_dict = calculate_raxml_trees(phylip, args, pos)
+        tree_info = [recalc_const_tree_dict[i] for i in order]
+        #print l[3], ''.join(l[-2:]), tree_info
+        tree_info += [''.join(l[-2:]), constraint_trees[count]]
+        ordered_recalc_const_trees.append(tree_info)
 
-    [os.remove(f) for f in glob.glob("*.%s" % (temp_string))]
-    return (lines, best_tree_line)
+    [os.remove(f) for f in glob.glob("*.%s" % (run_name))]
+    return (ordered_recalc_const_trees, best_tree_line)
 
-def print_results(note, lines, best_tree_line, trees, args):
+
+
+def print_results(lines, best_tree_line, const_trees_dict, args):
+
+
+    """
+
+    Region          treename    ?   model_evol      lnL scaffold    start   stop    tree here SH-Test SH-test of constraints
+                                                                
+    HE671174:390001-395000  best.tre    TRUE    GTRGAMMA    -1800.635416    HE671174    390001  395000  TREE    NA      NA
+    HE671174:390001-395000  constraint1 TRUE    GTRGAMMA    -1893.713626    HE671174    390001  395000  TREE    Yes(1%)     Yes (?)
+    HE671174:390001-395000  constraint2 TRUE    GTRGAMMA    -1889.310928    HE671174    390001  395000  TREE    Yes(1%)     No (?)
+    HE671174:390001-395000  constraint3 TRUE    GTRGAMMA    -1888.095646    HE671174    390001  395000  TREE    Yes(1%)     BEST_C
+
+    """
 
     chrm, start, stop = re.split(r':|-', args.regions)
 
-    print note, args.regions, chrm, start, stop, best_tree_line[4], 'best_tree', best_tree_line[5].strip('\'')
+    print args.regions, "best.tre", "GTRGAMMA", \
+    best_tree_line[4], chrm, start, stop, best_tree_line[5].strip('\''), 'NA', 'NA'
 
     for count, l in enumerate(lines):
-        print note, args.regions, chrm, start, stop, l[3], l[-1], trees[count]
+
+        sh_tests = const_trees_dict[l[-1]]
+        print  args.regions, "constraint{}".format(count + 1), "GTRGAMMA", \
+        l[2], chrm, start, stop, l[-3], sh_tests[0], sh_tests[1]
 
 def main():
 
@@ -561,24 +593,37 @@ def main():
 
     elif args.sh_test is True:
 
-        print " ".join(["Pass",'Region','Chrm','Start','Stop','-lnl','Comparison','Tree'])
+        print " ".join(['Region', 'ID', "Model", '-lnl', 'Chrm', 'Start', 'Stop', 'Topology', 'Constraint', 'SHTest','SHTest_Consts'])
 
+        # CALCULATE INITIAL RAXML TREE USING CONSTRAINT
         constraint_trees = args.constraint_tree.strip(";").split(";")
-        initial_result, best_tree_line = np.array(calculate_sh_test(phylip, args, pos, constraint_trees))
+        constraint_trees_dict = {t:[] for t in constraint_trees}
 
-        print_results('first_pass', initial_result, best_tree_line, constraint_trees, args)
+        initial_result, best_tree_line = calculate_sh_test(phylip, args, pos, constraint_trees)
 
-        initial_result = np.array(initial_result)
-        lnls = np.array([float(i) for i in initial_result[:, 3]])
+        # constraint_trees_dict[i] for i in initial_result
+
+        [constraint_trees_dict[i[-1]].append(i[-2]) for i in initial_result]
+    
+        # Second, identify the ML of the constraint trees (tree 2) and set that
+        # to be 'best.tre' and delete from the constraint set and repeat:
+
+        # IDENTIFY BEST CONSTRAINT
+        lnls = np.array([float(i) for i in np.array(initial_result)[:, 2]])
         best_const_tree_id = lnls.argmax()
 
         args.constraint_tree = constraint_trees[best_const_tree_id] + ";"
-        best_const_tree = calculate_raxml_trees(phylip, args, pos)
+        constraint_trees_dict[args.constraint_tree.strip(";")].append('best_C')
 
+        best_const_tree = calculate_raxml_trees(phylip, args, pos)             # Get actual toplogy but using constraint.
+
+        # RECALCULATE CONSTRAINT WITH BEST CONSTRAINT TREE REMOVED
         del constraint_trees[best_const_tree_id]
-
         const_best_tree_results, best_tree_line = calculate_sh_test(phylip, args, pos, constraint_trees, best_tree=best_const_tree)
-        print_results('best_constraint', const_best_tree_results, best_tree_line, constraint_trees, args)
+
+        [constraint_trees_dict[i[-1]].append(i[-2]) for i in const_best_tree_results]
+
+        print_results(const_best_tree_results, best_tree_line, constraint_trees_dict, args)
 
         sys.exit()
 
