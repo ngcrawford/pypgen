@@ -22,3 +22,5 @@ bayes_practice
 build
 /dist/
 tmp/*
+RAxML_*
+*.csv
