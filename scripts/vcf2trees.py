@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # encoding: utf-8
 """
-vcf2phylip.py
+vcf2trees.py
 
 Created by Nick Crawford on 2011-11-18.
 Copyright (c) 2011
