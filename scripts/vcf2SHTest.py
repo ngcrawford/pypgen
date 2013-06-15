@@ -36,12 +36,10 @@ import tempfile
 import argparse
 import itertools
 import numpy as np
+from pypgen.parser import VCF
 from copy import deepcopy, copy
 from subprocess import Popen, PIPE
 from collections import namedtuple, defaultdict
-from pypgen.parser import VCF
-
-
 
 """
 python scripts/vcf2SHTest.py \
@@ -371,10 +369,8 @@ class SHTest(object):
         sh_tests = z["SH_tree_name_results"] 
         sh_results = z["SH_test_results"]
 
-
-
         # This particular bit of logic was SHOCKINGLY difficult
-        # tow
+        # to write.
 
         final_list = []
         final = None
@@ -473,6 +469,9 @@ class SHTest(object):
         # CONVERT SLICE TO PHYLIP
         oneliner = self.process_vcf_slice(args.input[0], region, position_data)
         phylip = self.oneliner2phylip(oneliner)
+
+        print phylip
+        sys.exit()
 
         # CALCULATE BEST TREE
         best_tree = self.calculate_raxml_trees(phylip, args.model, args.threads, region, const_tree=None)
