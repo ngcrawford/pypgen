@@ -32,10 +32,12 @@ import pysam
 import shlex
 import pandas
 import random
+import unittest
 import tempfile
 import argparse
 import itertools
 import numpy as np
+import pypgen
 from pypgen.parser import VCF
 from copy import deepcopy, copy
 from subprocess import Popen, PIPE
@@ -70,9 +72,9 @@ def get_args():
 
     parser.add_argument('-m', '--model',
                         type=str,
-                        default='HKY85',
+                        default='GTRGAMMA',
                         help="Substitution model name. \
-                               HKY85 (default) | JC69 | K80 | F81 | F84 | TN93 | GTR")
+                              GTRGAMMA (default) | GTRCAT | GTRCATI | GTRGAMMAI")
 
     # parser.add_argument('-b','--bootstraps',
     #                     type=int,
@@ -260,7 +262,7 @@ class SHTest(object):
             # raxmlHPC-SSE3 -m GTRGAMMA -s test.phylip -n t -g test.constraint.tree -o h665,i02_210
 
             cli = 'raxmlHPC-PTHREADS-SSE3  \
-                    -m GTRGAMMA \
+                    -m {1} \
                     -s {0} \
                     -g {2} \
                     -n {3} \
@@ -270,7 +272,7 @@ class SHTest(object):
 
         else:
             cli = 'raxmlHPC-PTHREADS-SSE3 \
-                   -m GTRGAMMA \
+                   -m {1} \
                     -s {0} \
                     -n {2} \
                     -T {3} \
@@ -288,13 +290,14 @@ class SHTest(object):
         statsfile = 'RAxML_info.%s' % (temp_string)
         lnL = self.processStatsFile(open(statsfile, 'r'))
 
-        ## clean up:
-        [os.remove(f) for f in glob.glob("*.%s" % (temp_string))]
-
-        args_dict['lnL'] = lnL
-        args_dict['model'] = 'GTRGAMMA'
+        args_dict['lnL'] = float(lnL)
+        args_dict['model'] = model
 
         args_dict['tree'] = "'" + str(tree) + "'"
+
+         ## clean up:
+        [os.remove(f) for f in glob.glob("RAxML_*")]
+
         return args_dict
 
     def processStatsFile(self, fin):
@@ -470,11 +473,9 @@ class SHTest(object):
         oneliner = self.process_vcf_slice(args.input[0], region, position_data)
         phylip = self.oneliner2phylip(oneliner)
 
-        print phylip
-        sys.exit()
 
         # CALCULATE BEST TREE
-        best_tree = self.calculate_raxml_trees(phylip, args.model, args.threads, region, const_tree=None)
+        best_tree = deepcopy(self.calculate_raxml_trees(phylip, args.model, args.threads, region, const_tree=None))
 
         # CALCUATE FITTED CONSTRAINT TREES
         fitted_trees = []
@@ -485,14 +486,13 @@ class SHTest(object):
             fitted_trees.append(deepcopy(t))
 
         inc_count = len(const_trees) + 1
-        tree_names = ['constraint{0}'.format(i) for i in range(len(const_trees))]
-        tree_names = ['best.tre'] + tree_names
+        tree_names = ['best.tre'] + ['constraint{0}'.format(i) for i in range(len(const_trees))]
 
         results_template = {
                             "Region": [args.regions] * inc_count,
                             "Tree_IDs": tree_names,
                             "Model": [args.model] * inc_count,
-                            "lnL": [best_tree['lnL']] + [f['lnL'] for f in fitted_trees],
+                            "lnL": [best_tree['lnL']] + [t['lnL'] for t in fitted_trees],
                             'Chrm': [region["chrm"]] * inc_count,
                             'Start': [region['start']] * inc_count,
                             'Stop': [region['stop']] * inc_count,
@@ -509,12 +509,39 @@ class SHTest(object):
             updated_results["SH_Comparison_{0}".format(ct)] = comparison
 
         self.write_csv(updated_results)
-        
+
 
         #print " ".join(['Region', "Model", '-lnl', 'Chrm', 'Start', 'Stop', 'Topology', 'Constraint', 'SHTest','SHTest_Consts'])
 
 sh = SHTest()
 sh.run_test()
+
+
+
+# class TestSHTest(unittest.TestCase):
+
+#     def setUp(self):
+#         module_dir = os.path.dirname(pypgen.__file__)
+#         self.phylip_path = os.path.join(module_dir, "data/SHTest.phylip")
+#         self.phylip = ""
+
+#         for l in open(self.phylip_path, 'rU').readlines():
+#             self.phylip += l
+
+#         self.sh = SHTest()
+
+#     def test_raxml_calculation(self):
+#         model = "GTRGAMMA"
+#         threads = 3
+#         region = {'chrm': 'chrm', 'start': 1, 'stop': 1000}
+
+#         tree_and_data = self.sh.calculate_raxml_trees(self.phylip, model, 3, region, const_tree=None)
+#         lnL = tree_and_data["lnL"]
+#         print lnL
+
+
+# unittest.main()
+
 
 
 
