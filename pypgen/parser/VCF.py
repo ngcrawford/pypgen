@@ -286,13 +286,12 @@ def parse_vcf_line(pos, vcf_line_dict):
         vcf_line_dict[item] = pos_parts[count]
 
     sample_format = vcf_line_dict["FORMAT"].split(":")
- 
+
     for count, item in enumerate(vcf_line_dict):
-        
         if count >= 9:
             genotype = vcf_line_dict[item]
-            
-            if genotype == "./." or genotype == ".":      # "'./.'' for dip, '.' for haploid
+
+            if  "./." in genotype or genotype == ".":      # "'./.'' for dip, '.' for haploid
                 vcf_line_dict[item] = None
 
             else:
