@@ -52,7 +52,7 @@ def vcf_iterator(args):
         vcf_line = parse_vcf_line(line, empty_vcf_line)
 
         # APPLY BASIC FILTER
-        if vcf_line["FILTER"] != "PASS":
+        if vcf_line["FILTER"] != args.filter:
             continue
 
         # SKIP ALLELES WITH NO INFORMATION

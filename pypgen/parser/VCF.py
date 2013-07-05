@@ -55,7 +55,7 @@ def default_args():
     #                     required=False,
     #                     default="FILTER == PASS")
 
-    parser.add_argument('-f','--filter',
+    parser.add_argument('-f', '--filter',
                         default='.',
                         required=False,
                         help="Only consider those polymorphisms that have the filter field set \
