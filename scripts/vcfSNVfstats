@@ -75,7 +75,7 @@ def main():
 
     Working Example: Run from the base directory of pypgen
 
-        python scripts/vcf_snpwise_fstats.py \\
+        vcfSNVfstats \\
         -i pypgen/data/example.vcf.gz \\
         -p outgroups:h665,i02-210 \\
         pop1:c511,c512,c513,c514,c515,c563,c614,c630,c639,c640 \\
