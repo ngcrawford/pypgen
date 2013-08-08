@@ -24,3 +24,4 @@ build
 tmp/*
 RAxML_*
 *.csv
+calc_depth.py

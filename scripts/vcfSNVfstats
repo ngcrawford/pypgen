@@ -38,6 +38,8 @@ def calc_SNP_stats(data):
         chrm = vcf_line['CHROM']
         pos = vcf_line['POS']
 
+        #print pos, chrm, pop_size_stats, fstats, fixed_alleles
+
         return (pos, chrm, pop_size_stats, fstats, fixed_alleles)
 
 
@@ -59,6 +61,7 @@ def vcf_iterator(args):
         # NOTE: with multi alleleic snps this may
         # still leave some populations with nans..
         # but should account for most issues
+
         if ',' not in vcf_line["INFO"]["AF"]:
             if float(vcf_line["INFO"]["AF"]) == 1.0:
                 continue
@@ -100,11 +103,12 @@ def main():
 
     #for count, result in enumerate(map(calc_SNP_stats, vcf_iterator(args))):
     for count, result in enumerate(p.imap(calc_SNP_stats, vcf_iterator(args))):
+
         pos, chrm, pop_size_stats, fstats, fixed_alleles = result
         vcf_count += 1
 
         # Update postions if zero-based flag is set
-        if args.zero_based == True:
+        if args.zero_based is True:
             pos -= 1
 
         # Get all the values propperly sorted.
