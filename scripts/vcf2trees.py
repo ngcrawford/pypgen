@@ -115,7 +115,7 @@ def processStatsFile(fin):
     for line in fin:
         if 'Log-likelihood' in line:
             lnL = line.split()[-1]
-       
+
         if line.startswith("Final GAMMA-based Score of best tree") is True:
             lnL = line.split()[-1]
 
@@ -156,8 +156,6 @@ def calculate_trees(phylip, args, pos):
 
     cli_parts = cli.split()
     ft = Popen(cli_parts, stdin=PIPE, stderr=PIPE, stdout=PIPE).communicate()
-    for line in ft:
-        print line
 
     # EXTRACT RESULTS AND FORMAT AS NEXUS TREES
     temp_string = os.path.split(temp_in.name)[1].split('.')[0]
@@ -234,6 +232,7 @@ def calculate_raxml_trees(phylip, args, pos):
 
     ## clean up:
     [os.remove(f) for f in glob.glob("*.%s" % (temp_string))]
+    [os.remove(f) for f in glob.glob("tmp/*.%s" % (temp_string))]
 
     args_dict['lnL'] = lnL
     args_dict['model'] = 'GTRGAMMA'
@@ -503,7 +502,7 @@ def calculate_sh_test(phylip, args, pos, constraint_trees, best_tree=None):
 
     cli_parts = cli.split()
     ft = Popen(cli_parts, stdin=PIPE, stderr=PIPE, stdout=PIPE).communicate()
-    
+
     # PARSE SH TEST OUTPUT
     ordered_const_trees = []
     best_tree_line = None
@@ -518,7 +517,7 @@ def calculate_sh_test(phylip, args, pos, constraint_trees, best_tree=None):
             line = [w.replace(":", '') for w in line]
             line += [best_tree["tree"]]
             best_tree_line = line
-     
+
     # CALCULATE CONSTRAINT TREES WITH BRANCH LENGTHS
     order = ('id', 'model', 'lnL', 'chrm', 'start', 'stop', 'tree')
     ordered_recalc_const_trees = []
@@ -551,20 +550,16 @@ def print_results(lines, best_tree_line, const_trees_dict, args):
 
     chrm, start, stop = re.split(r':|-', args.regions)
 
-    print args.regions, "best.tre", "GTRGAMMA", \
-    best_tree_line[4], chrm, start, stop, best_tree_line[5].strip('\''), 'NA', 'NA'
+    args.output.write('\t'.join([str(i) for i in [args.regions, "best.tre", "GTRGAMMA", 
+    best_tree_line[4], chrm, start, stop, best_tree_line[5].strip('\''), 'NA', 'NA']]))
 
     for count, l in enumerate(lines):
 
         sh_tests = const_trees_dict[l[-1]]
-        print  args.regions, "constraint{}".format(count + 1), "GTRGAMMA", \
-        l[2], chrm, start, stop, l[-3], sh_tests[0], sh_tests[1]
+        args.output.write('\t'.join([str(i) for i in [ args.regions, "constraint{}".format(count + 1), "GTRGAMMA", \
+        l[2], chrm, start, stop, l[-3], sh_tests[0], sh_tests[1]]]))
 
-def main():
-
-    # SETUP ARGS
-    args = get_args()
-
+def do_work(args, print_header=False):
     chrm, start, stop = re.split(r':|-', args.regions)
     start, stop = int(start), int(stop)
 
@@ -593,18 +588,19 @@ def main():
 
     elif args.sh_test is True:
 
-        print " ".join(['Region', 'ID', "Model", '-lnl', 'Chrm', 'Start', 'Stop', 'Topology', 'Constraint', 'SHTest','SHTest_Consts'])
+        if print_header == True:
+            print " ".join(['Region', 'ID', "Model", '-lnl', 'Chrm', 'Start', 'Stop', 'Topology', 'Constraint', 'SHTest','SHTest_Consts'])
 
         # CALCULATE INITIAL RAXML TREE USING CONSTRAINT
         constraint_trees = args.constraint_tree.strip(";").split(";")
-        constraint_trees_dict = {t:[] for t in constraint_trees}
+        constraint_trees_dict = dict((t,[]) for t in constraint_trees)
 
         initial_result, best_tree_line = calculate_sh_test(phylip, args, pos, constraint_trees)
 
         # constraint_trees_dict[i] for i in initial_result
 
         [constraint_trees_dict[i[-1]].append(i[-2]) for i in initial_result]
-    
+
         # Second, identify the ML of the constraint trees (tree 2) and set that
         # to be 'best.tre' and delete from the constraint set and repeat:
 
@@ -625,7 +621,7 @@ def main():
 
         print_results(const_best_tree_results, best_tree_line, constraint_trees_dict, args)
 
-        sys.exit()
+        #sys.exit()
 
     else:
         order = ('id', 'model', 'lnL', 'chrm', 'start', 'stop', 'tree')
@@ -634,7 +630,20 @@ def main():
         line = [str(line[i]) for i in order]
         line = ','.join(line)
 
-    sys.stdout.write(line + "\n")
+    #sys.stdout.write(line + "\n")
+
+
+def main():
+
+    # SETUP ARGS
+    args = get_args()
+
+    do_work(args, print_header=False)
+    [os.remove(f) for f in glob.glob("RAxML_*")]
+
+
+
+
 
 
 if __name__ == '__main__':
