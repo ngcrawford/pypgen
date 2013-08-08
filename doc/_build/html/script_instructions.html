@@ -59,7 +59,7 @@
 <p><strong>Working Example:</strong></p>
 <blockquote>
 <div><p>Note that <tt class="docutils literal"><span class="pre">path/to/pypgen/data/example.vcf.gz</span></tt> needs to be updated to the directory in which the source code for <tt class="docutils literal"><span class="pre">pypgen</span></tt> is found.</p>
-<div class="highlight-python"><pre>vcf_snpwise_fstats.py \
+<div class="highlight-python"><pre>vcfSNVfstats \
   -i pypgen/data/example.vcf.gz \
   -p outgroups:h665,i02-210 \
      pop1:c511,c512,c513,c514,c515,c563,c614,c630,c639,c640 \
@@ -200,7 +200,7 @@ this flag is set to 1 (= &#8220;True&#8221; in binary)</p>
 <p><strong>Working Example:</strong></p>
 <blockquote>
 <div><p>Note that <tt class="docutils literal"><span class="pre">path/to/pypgen/data/example.vcf.gz</span></tt> needs to be updated to the directory in which the source code for <tt class="docutils literal"><span class="pre">pypgen</span></tt> is found.</p>
-<div class="highlight-python"><pre>vcf_sliding_window.py \
+<div class="highlight-python"><pre>vcfWindowedFstats \
   -i path/to/pypgen/data/example.vcf.gz \
   -p outgroups:h665,i02-210 \
      pop1:c511,c512,c513,c514,c515,c563,c614,c630,c639,c640 \
@@ -212,7 +212,7 @@ this flag is set to 1 (= &#8220;True&#8221; in binary)</p>
 </div></blockquote>
 <div class="section" id="id1">
 <h3>Command Line Flags<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h3>
-<p><tt class="docutils literal"><span class="pre">vcf_sliding_window.py</span></tt> shares the same commands as <tt class="docutils literal"><span class="pre">vcf_snpwise_fstats.py</span></tt> with the single addition of a window size flag.</p>
+<p><tt class="docutils literal"><span class="pre">vcfWindowedFstats</span></tt> shares the same commands as <tt class="docutils literal"><span class="pre">vcfSNVfstats</span></tt> with the single addition of a window size flag.</p>
 <p><strong>Window Size:</strong> [ <tt class="docutils literal"><span class="pre">-w</span></tt>, <tt class="docutils literal"><span class="pre">--window-size</span></tt> ]</p>
 <blockquote>
 <div>Windows are non overlapping and start at the first bp in the particular chromosome.</div></blockquote>

@@ -24,7 +24,7 @@ def default_args():
     parser.add_argument('-o', '--output',
                         nargs='?',
                         type=argparse.FileType('w'),
-                        default=helpers.Unbuffered(sys.stdout),  # forces consistent writing to STOUT
+                        default=sys.stdout, #helpers.Unbuffered(sys.stdout),  # forces consistent writing to STOUT
                         help='Path to output csv file. \
                               If path is not set, defaults to STDOUT.')
 
@@ -43,9 +43,9 @@ def default_args():
                               starting from 1,000,000bp) or ‘chr2:1,000,000-2,000,000’ \
                               (region between 1,000,000 and 2,000,000bp including the end \
                               points). The coordinate is 1-based.' Multiple regions can \
-                              be submitted separated by spaces. [NOte: this is the same \
-                              format as SAMTOOLs/GATK, example text largely cribbed from \
-                              SAMTOOLs]")
+                              be submitted separated by spaces. [Note: this is the same \
+                              format as SAMTOOLs/GATK and the example text is largely cribbed \
+                              from SAMTOOLs]")
 
     #  ADDING GATK STYLE FILTERING IS MORE CHALLENGING THAN I THOUGHT IT WOULD BE.
     #
@@ -54,6 +54,13 @@ def default_args():
     # parser.add_argument('-f', '--filter-string',
     #                     required=False,
     #                     default="FILTER == PASS")
+
+    parser.add_argument('-f', '--filter',
+                        default='.',
+                        required=False,
+                        help="Only consider those polymorphisms that have the filter field set \
+                              to this value. You'll probably want to changes this to 'PASS' after \
+                              running variant recalibration.")
 
     parser.add_argument('--regions-to-skip',
                         default=[],
@@ -286,13 +293,12 @@ def parse_vcf_line(pos, vcf_line_dict):
         vcf_line_dict[item] = pos_parts[count]
 
     sample_format = vcf_line_dict["FORMAT"].split(":")
- 
+
     for count, item in enumerate(vcf_line_dict):
-        
         if count >= 9:
             genotype = vcf_line_dict[item]
-            
-            if genotype == "./." or genotype == ".":      # "'./.'' for dip, '.' for haploid
+
+            if  "./." in genotype or genotype == ".":      # "'./.'' for dip, '.' for haploid
                 vcf_line_dict[item] = None
 
             else:

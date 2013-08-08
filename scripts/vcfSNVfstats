@@ -8,7 +8,7 @@ import re
 import textwrap
 import multiprocessing
 from pypgen.parser.VCF import *
-from pypgen.misc.helpers import *
+from pypgen.misc.helpers import open_vcf, float_2_string
 
 
 def process_header(tabix_file):
@@ -52,7 +52,7 @@ def vcf_iterator(args):
         vcf_line = parse_vcf_line(line, empty_vcf_line)
 
         # APPLY BASIC FILTER
-        if vcf_line["FILTER"] != "PASS":
+        if vcf_line["FILTER"] != args.filter:
             continue
 
         # SKIP ALLELES WITH NO INFORMATION
@@ -70,12 +70,12 @@ def main():
     args = default_args()
 
     args.description = textwrap.dedent("""\
-    vcf_snpwise_fstats.py version 0.2 beta by
+    vcfSNVfstats version 0.2 beta by
     Nicholas Crawford (ngcrawford@gmail.com)
 
     Working Example: Run from the base directory of pypgen
 
-        python scripts/vcf_snpwise_fstats.py \\
+        vcfSNVfstats \\
         -i pypgen/data/example.vcf.gz \\
         -p outgroups:h665,i02-210 \\
         pop1:c511,c512,c513,c514,c515,c563,c614,c630,c639,c640 \\
@@ -89,12 +89,17 @@ def main():
     # test that pysam is installed.
     # bgzip check. MDSum?
 
+
+
     fstat_order = []         # store order of paired samples.
     pop_size_order = []
     fixed_alleles_order = []
     vcf_count = 0
 
-    for count, result in enumerate(map(calc_SNP_stats, vcf_iterator(args))):
+    p = multiprocessing.Pool(processes=int(args.cores), maxtasksperchild=10000)
+
+    #for count, result in enumerate(map(calc_SNP_stats, vcf_iterator(args))):
+    for count, result in enumerate(p.imap(calc_SNP_stats, vcf_iterator(args))):
         pos, chrm, pop_size_stats, fstats, fixed_alleles = result
         vcf_count += 1
 

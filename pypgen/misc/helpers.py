@@ -21,27 +21,27 @@ def float_2_string(value, places):
     return value
 
 
-class Unbuffered:
-    """Process STOUT so that it is printed as it is produced.
+# class Unbuffered:
+#     """Process STOUT so that it is printed as it is produced.
 
-        Note: This slows the program donw, a bit, but allows
-        its progress to be easily tracked. I feel the tradeoff
-        is worth it.
-    """
+#         Note: This slows the program donw, a bit, but allows
+#         its progress to be easily tracked. I feel the tradeoff
+#         is worth it.
+#     """
 
-    def __init__(self, stream):
-        self.stream = stream
+#     def __init__(self, stream):
+#         self.stream = stream
 
-    def write(self, data):
-        self.stream.write(data)
+#     def write(self, data):
+#         self.stream.write(data)
 
-        try:
-            self.stream.flush()
-        except IOError:  # Ensure exit is clean if piping into head (or similar)
-            sys.exit()
+#         try:
+#             self.stream.flush()
+#         except IOError:  # Ensure exit is clean if piping into head (or similar)
+#             sys.exit()
 
-    def __getattr__(self, attr):
-        return getattr(self.stream, attr)
+#     def __getattr__(self, attr):
+#         return getattr(self.stream, attr)
 
 
 def open_vcf(args):

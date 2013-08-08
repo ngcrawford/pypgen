@@ -29,7 +29,6 @@ Features:
    -  snp count per window
    -  mean read depth (+/- STDEV) per window
    -  populations with fixed alleles per SNP
-   -  more as I think of them
 
 
 Prerequisites:
@@ -64,7 +63,7 @@ However, it's recommended, at least in these early days of pypgen, to install it
 Reporting Problems:
 +++++++++++++++++++
 
-If you have a general with pypgen you should post in on `biostar <http://www.biostars.org/>`_ and tag it ``pypgen``. If you think you've found a bug in pypgen you can open an `issue <https://github.com/ngcrawford/pypgen/issues>`_ in the pypgen github repo. 
+If you have a general questions about pypgen you should post them on `biostar <http://www.biostars.org/>`_ and tag it ``pypgen``. Detailed questions about If you think you've found a bug in pypgen you can open an `issue <https://github.com/ngcrawford/pypgen/issues>`_ in the pypgen github repo. 
  
 Contents:
 +++++++++

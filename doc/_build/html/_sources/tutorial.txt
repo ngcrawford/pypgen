@@ -1,22 +1,22 @@
 Tutorial:
 =========
 
-Once pygen is installed two scripts, ``vcf_sliding_window.py`` and ``vcf_snpwise_fstats.py`` should be available at the commandline.
+Once pygen is installed two scripts, ``vcfWindowedFstats`` and ``vcfSNVfstats``, should be available at the command line.
 
 Running [script name].py will print out a short list of commands and adding the ``--help`` or ``-h`` prints out a more detailed list. 
 
 Basic analysis
 ++++++++++++++
 
-1. Run your samples through GATK or samtools (or similar SNV caller) that emits calls in the standard `VCF format <http://www.1000genomes.org/wiki/Analysis/Variant%20Call%20Format/vcf-variant-call-format-version-41>`_. By default pypgen's VCF parser only looks at SNVs with where the ``FILTER`` column is set to ``PASS`` so you should filter or recalibrate your VCF appropriately before running pypgen.
+1. Run your samples through GATK or samtools (or similar SNV caller) that emits calls in the standard `VCF format <http://www.1000genomes.org/wiki/Analysis/Variant%20Call%20Format/vcf-variant-call-format-version-41>`_. By default pypgen's VCF parser only looks at SNVs where the ``FILTER`` column is set to ``PASS`` so you should filter or recalibrate your VCF appropriately before running pypgen.
 
-2. Once you have a VCF file you'll need to bgzip it. `Tabix <http://samtools.sourceforge.net/tabix.shtml>`_ provides this tool so you make sure you have it installed. Tabix and samtools installation is detailed in the :ref:`samtools-tabix` section of this guide. The basic command to run bgzip is:
+2. Once you have a VCF file you'll need to bgzip it. `Tabix <http://samtools.sourceforge.net/tabix.shtml>`_ include bgzip so you make sure you have tabix installed. Tabix and samtools installation is detailed in the :ref:`samtools-tabix` section of this guide. The basic command to run bgzip is:
 
 	::
 	
  		bgzip -c  path/to/vcf_file.vcf > path/to/vcf_file.vcf.bgz
 
- This can take a couple of minutes if your uncompressed VCF file is very large. 
+ This can exceed 30 minutes if your uncompressed VCF file is very large. 
 
 3. Next you need to index your bgzipped VCF file. The command to do this is:
 
@@ -32,7 +32,7 @@ Basic analysis
 
 	::
 	
-	    vcf_snpwise_fstats.py \
+	    vcfSNVfstats \
 		 -i path/to/vcf_file.vcf.bgz \
 		 -p pop1:sample1,sample2 \
 		    pop2:sample3,sample4,sample5 \
@@ -59,4 +59,10 @@ Basic analysis
 		sh path/to/shell_script.sh
 		
  If everything worked you should see a header line followed by ~ 9 lines of data. The amount of output varies depending on the region so it's a good idea to pick a region that you know contains SNVs.
+
+ Replacing ``vcfSNVfstats`` with ``vcfWindowedFstats`` and setting the ``--window`` flag is all that is necessary to run a sliding window analysis
+
+Followup analysis
++++++++++++++++++
+
 

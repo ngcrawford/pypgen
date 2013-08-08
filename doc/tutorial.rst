@@ -1,7 +1,7 @@
 Tutorial:
 =========
 
-Once pygen is installed two scripts, ``vcf_sliding_window.py`` and ``vcf_snpwise_fstats.py``, should be available at the command line.
+Once pygen is installed two scripts, ``vcfWindowedFstats`` and ``vcfSNVfstats``, should be available at the command line.
 
 Running [script name].py will print out a short list of commands and adding the ``--help`` or ``-h`` prints out a more detailed list. 
 
@@ -32,7 +32,7 @@ Basic analysis
 
 	::
 	
-	    vcf_snpwise_fstats.py \
+	    vcfSNVfstats \
 		 -i path/to/vcf_file.vcf.bgz \
 		 -p pop1:sample1,sample2 \
 		    pop2:sample3,sample4,sample5 \
@@ -60,7 +60,7 @@ Basic analysis
 		
  If everything worked you should see a header line followed by ~ 9 lines of data. The amount of output varies depending on the region so it's a good idea to pick a region that you know contains SNVs.
 
- Replacing ``vcf_snpwise_fstats.py`` with ``vcf_sliding_window.py`` and setting the ``--window`` flag is all that is necessary to run a sliding window analysis
+ Replacing ``vcfSNVfstats`` with ``vcfWindowedFstats`` and setting the ``--window`` flag is all that is necessary to run a sliding window analysis
 
 Followup analysis
 +++++++++++++++++
