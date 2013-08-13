@@ -551,13 +551,13 @@ def print_results(lines, best_tree_line, const_trees_dict, args):
     chrm, start, stop = re.split(r':|-', args.regions)
 
     args.output.write('\t'.join([str(i) for i in [args.regions, "best.tre", "GTRGAMMA", 
-    best_tree_line[4], chrm, start, stop, best_tree_line[5].strip('\''), 'NA', 'NA']]))
+    best_tree_line[4], chrm, start, stop, best_tree_line[5].strip('\''), 'NA', 'NA']]) + "\n")
 
     for count, l in enumerate(lines):
 
         sh_tests = const_trees_dict[l[-1]]
         args.output.write('\t'.join([str(i) for i in [ args.regions, "constraint{}".format(count + 1), "GTRGAMMA", \
-        l[2], chrm, start, stop, l[-3], sh_tests[0], sh_tests[1]]]))
+        l[2], chrm, start, stop, l[-3], sh_tests[0], sh_tests[1]]]) + "\n")
 
 def do_work(args, print_header=False):
     chrm, start, stop = re.split(r':|-', args.regions)
