@@ -32,7 +32,7 @@ def get_header_sizes(fin):
 
 
 window = 5000
-fin = open("test_header_lines.txt",'rU')
+fin = open("/Users/ngcrawford/Desktop/Code/TNT/test_header_lines.txt",'rU')
 chrm_info = get_header_sizes(fin)
 
 slices = []
@@ -51,7 +51,7 @@ for count, i in enumerate(chrm_info.iteritems()):
 
     slices.extend(zip(chrms, starts, stops))
 
-n = 20
+n = 100
 l = slices
 chunks = make_chunks(l, n)
 

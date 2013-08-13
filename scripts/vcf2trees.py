@@ -89,7 +89,13 @@ def get_args():
                         action="store_true",
                         default=False)
 
+    parser.add_argument('-s','--scratch-dir',
+                        nargs=1,
+                        default=None,
+                        help='Path to scratch directory.')
+
     #parser.add_argument('--as-alignment')
+
 
     parser.add_argument('input',
                         nargs=1,
@@ -129,7 +135,7 @@ def calculate_trees(phylip, args, pos):
     if os.path.exists('tmp/') is False:
         os.mkdir('tmp/')
 
-    temp_in = tempfile.NamedTemporaryFile(suffix='.out', dir='tmp/')   # delete=False)
+    temp_in = tempfile.NamedTemporaryFile(suffix='.out', dir=args.scratch_dir)   # delete=False)
     for line in phylip:
         temp_in.write(line)
     temp_in.seek(0)     # move pointer to beginning of file
@@ -137,7 +143,7 @@ def calculate_trees(phylip, args, pos):
     # SETUP CONSTRAINT TREE FILE
     if args.constraint_tree is not None:
 
-        constraint_file = tempfile.NamedTemporaryFile(suffix='.tree', dir='tmp/')
+        constraint_file = tempfile.NamedTemporaryFile(suffix='.tree', dir=args.scratch_dir)
         constraint_file.write(args.constraint_tree + '\n')
         constraint_file.seek(0)
 
@@ -183,7 +189,7 @@ def calculate_raxml_trees(phylip, args, pos):
     if os.path.exists('tmp/') is False:
         os.mkdir('tmp/')
 
-    temp_in = tempfile.NamedTemporaryFile(suffix='.out', dir='tmp/')   # delete=False)
+    temp_in = tempfile.NamedTemporaryFile(suffix='.out', dir=args.scratch_dir)   # delete=False)
     for line in phylip:
         temp_in.write(line)
     temp_in.seek(0)     # move pointer to beginning of file
@@ -193,7 +199,7 @@ def calculate_raxml_trees(phylip, args, pos):
     # SETUP CONSTRAINT TREE FILE
     if args.constraint_tree is not None:
 
-        constraint_file = tempfile.NamedTemporaryFile(suffix='.tree', dir='tmp/')
+        constraint_file = tempfile.NamedTemporaryFile(suffix='.tree', dir=args.scratch_dir)
         constraint_file.write(args.constraint_tree + '\n')
         constraint_file.seek(0)
 
@@ -472,20 +478,20 @@ def calculate_sh_test(phylip, args, pos, constraint_trees, best_tree=None):
     args.constraint_tree = None
 
     # WRITE TREES TO TEMP FILES
-    best_file = tempfile.NamedTemporaryFile(suffix='.best', dir='tmp/')   # delete=False)
+    best_file = tempfile.NamedTemporaryFile(suffix='.best', dir=args.scratch_dir)   # delete=False)
     if type(best_tree) is dict:
         best_file.write(best_tree["tree"] + "\n")
     else:
         best_file.write(best_tree + "\n")
     best_file.seek(0)
 
-    const_file = tempfile.NamedTemporaryFile(suffix='.const', dir='tmp/')   # delete=False)
+    const_file = tempfile.NamedTemporaryFile(suffix='.const', dir=args.scratch_dir)   # delete=False)
     for t in fitted_trees:
         const_file.write(t["tree"] + "\n")
     const_file.seek(0)     # move pointer to beginning of file
 
     # WRITE ALIGNMENT TO TEMP FILE
-    temp_in = tempfile.NamedTemporaryFile(suffix='.out', dir='tmp/')   # delete=False)
+    temp_in = tempfile.NamedTemporaryFile(suffix='.out', dir=args.scratch_dir)   # delete=False)
     for line in phylip:
         temp_in.write(line)
     temp_in.seek(0)     # move pointer to beginning of file
@@ -540,7 +546,7 @@ def print_results(lines, best_tree_line, const_trees_dict, args):
     """
 
     Region          treename    ?   model_evol      lnL scaffold    start   stop    tree here SH-Test SH-test of constraints
-                                                                
+
     HE671174:390001-395000  best.tre    TRUE    GTRGAMMA    -1800.635416    HE671174    390001  395000  TREE    NA      NA
     HE671174:390001-395000  constraint1 TRUE    GTRGAMMA    -1893.713626    HE671174    390001  395000  TREE    Yes(1%)     Yes (?)
     HE671174:390001-395000  constraint2 TRUE    GTRGAMMA    -1889.310928    HE671174    390001  395000  TREE    Yes(1%)     No (?)

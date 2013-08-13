@@ -14,8 +14,9 @@ setup(
     test_suite='nose.collector',
     tests_require=['nose'],
     install_requires=[
-        "pysam == 0.6.0"   # Newer versions don't seem to compile correctly.
-    ],
+                      "pysam"
+                     ],
+
 
     packages=[
             'pypgen.fstats',
@@ -35,6 +36,8 @@ setup(
     include_package_data=True,
 
     scripts=[
+             'scripts/vcf2Dadi.py',
+             'scripts/vcf2phylip.py',
              'scripts/vcfSNVfstats',
              'scripts/vcfWindowedFstats',
             ],
