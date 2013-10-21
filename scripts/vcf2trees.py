@@ -90,7 +90,6 @@ def get_args():
                         default=False)
 
     parser.add_argument('-s','--scratch-dir',
-                        nargs=1,
                         default=None,
                         help='Path to scratch directory.')
 
