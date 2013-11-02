@@ -115,7 +115,6 @@ class SHTest(object):
     """docstring for SHTest"""
     def __init__(self):
         super(SHTest, self).__init__()
-    
 
     def count_informative_sites(self, alignment_array):
         """Informative Sites must have two different SNPs"""
@@ -471,8 +470,7 @@ class SHTest(object):
 
         # CONVERT SLICE TO PHYLIP
         oneliner = self.process_vcf_slice(args.input[0], region, position_data)
-        phylip = self.oneliner2phylip(oneliner)
-
+        phylip = self.oneliner2phylip(oneliner)sb
 
         # CALCULATE BEST TREE
         best_tree = deepcopy(self.calculate_raxml_trees(phylip, args.model, args.threads, region, const_tree=None))
@@ -504,7 +502,7 @@ class SHTest(object):
 
         updated_results = self.recursively_sh_test(phylip, region, args.model, args.threads, best_tree, const_trees, fitted_trees, tree_names, results_template)
         SH_results = self.deconvolve_sh_results(updated_results)
-        
+
         for ct, comparison in enumerate(SH_results,1):
             updated_results["SH_Comparison_{0}".format(ct)] = comparison
 
