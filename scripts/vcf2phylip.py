@@ -190,23 +190,23 @@ def parse_window_vcf(vcf, start, stop, window_size, chrm, fout):
 
 def header_slices(vcf, window_size=5000):
     vcf = pysam.Tabixfile(vcf)
-    
+
     slices = {}
     for line in vcf.header:
-        
+
         if line.startswith('##contig'):
-            
+
             line_dict = dict([item.split("=") for item in line.split("<")[1].strip('>').split(",")])
             length = int(line_dict['length'])
-            
+
             if length < window_size: continue
 
             start = (length % window_size)/2
             stop = ((length/window_size) * window_size) + start
-            
+
             s = xrange(start,stop,window_size)
             slices[line_dict['ID']] = s
-    
+
     return slices
 
 
@@ -222,7 +222,7 @@ def process_vcf_slice(tabix_file, chrm, start, stop, position_data):
     tbx_lines = tbx.fetch(chrm, start, stop)
 
     numb_of_seqs = len(position_data._fields[9:])
-    alignment = np.zeros((stop-start,numb_of_seqs), np.string0)
+    alignment = np.zeros((stop-start, numb_of_seqs), np.string0)
 
     # This 'error handling' needs to be rewritten.
     current_data = []
