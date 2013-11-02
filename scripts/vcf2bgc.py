@@ -113,7 +113,7 @@ def process_header(tabix_file):
                 chrm_IDs_dict[chrm] = chrm_count
 
             if chrm != current_chrom:
-                chrm_count += 1          
+                chrm_count += 1
 
                 chrm_IDs_dict[chrm] = chrm_count
 
@@ -123,7 +123,7 @@ def process_header(tabix_file):
 def get_read_depths(pop_ids, vcf_line, args):
     pops = args.populations[pop_ids]
     pops_snvs = {k: vcf_line[k] for k in pops}
-    
+
     read_depths = []
     for k in pops_snvs.keys():
         if pops_snvs[k] != None:
@@ -192,6 +192,7 @@ def main():
 
 
 if __name__ == '__main__':
+
     main()
 
     # SETUP ARGS
@@ -207,10 +208,10 @@ if __name__ == '__main__':
     fixed_alleles_order = []
     vcf_count = 0
 
-    outfiles = {"P1": open("{0}.p1.txt".format(args.output), 'w'),
-                "P2": open("{0}.p2.txt".format(args.output), 'w'),
+    outfiles = {"P1":    open("{0}.p1.txt".format(args.output), 'w'),
+                "P2":    open("{0}.p2.txt".format(args.output), 'w'),
                 "mixed": open("{0}.mixed.txt".format(args.output), 'w'),
-                "map": open("{0}.map.txt".format(args.output), 'w'),
+                "map":   open("{0}.map.txt".format(args.output), 'w'),
                 }
 
     for count, result in enumerate(map(generate_bgc_input, vcf_iterator(args))):
@@ -229,7 +230,10 @@ if __name__ == '__main__':
         for i in result['P1']:
             outfiles["mixed"].write("{0} {1}\n".format(*i))
 
-
-        outfiles["map"].write("{0} {1} {2}\n".format(*result["map"]))    
+        outfiles["map"].write("{0} {1} {2}\n".format(*result["map"]))
 
         vcf_count += 1
+
+
+
+
