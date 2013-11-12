@@ -45,9 +45,8 @@ class TestSlicing(unittest.TestCase):
 class TestVCFInfoParsing(unittest.TestCase):
 
     def setUp(self):
-        module_dir = os.path.dirname(pypgen.__file__)     
+        module_dir = os.path.dirname(pypgen.__file__)
         self.bgzip_path = os.path.join(module_dir, "data/example.vcf.gz")
-        
 
         self.populations_list = [
             "cydno:c511,c512,c513,c514,c515,c563,c614,c630,c639,c640",
