@@ -85,11 +85,10 @@ def main():
     """)
 
     args = args.parse_args()
+
     # TODO:
     # test that pysam is installed.
     # bgzip check. MDSum?
-
-
 
     fstat_order = []         # store order of paired samples.
     pop_size_order = []
@@ -98,16 +97,16 @@ def main():
 
     p = multiprocessing.Pool(processes=int(args.cores), maxtasksperchild=10000)
 
-    #for count, result in enumerate(map(calc_SNP_stats, vcf_iterator(args))):
-    for count, result in enumerate(p.imap(calc_SNP_stats, vcf_iterator(args))):
+    for count, result in enumerate(map(calc_SNP_stats, vcf_iterator(args))):
+    #for count, result in enumerate(p.imap(calc_SNP_stats, vcf_iterator(args))):
         pos, chrm, pop_size_stats, fstats, fixed_alleles = result
         vcf_count += 1
 
-        # Update postions if zero-based flag is set
+        # Update positions if zero-based flag is set
         if args.zero_based == True:
             pos -= 1
 
-        # Get all the values propperly sorted.
+        # Get all the values properly sorted.
         fstats, fstat_order = f_statistics_2_sorted_list(fstats, order=fstat_order)
         pop_size_stats, pop_size_order = pop_size_statistics_2_sorted_list(pop_size_stats, order=pop_size_order)
         fixed_alleles, fixed_alleles_order = pop_size_statistics_2_sorted_list(fixed_alleles, order=fixed_alleles_order)

@@ -13,10 +13,8 @@ setup(
     long_description=open('README.rst').read(),
     test_suite='nose.collector',
     tests_require=['nose'],
-    install_requires=[
-        "pysam == 0.6.0"   # Newer versions don't seem to compile correctly.
-    ],
-
+    install_requires=["pysam"],   # Newer versions don't seem to compile correctly.
+    
     packages=[
             'pypgen.fstats',
             'pypgen.parser',

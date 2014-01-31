@@ -662,8 +662,8 @@ def calc_slice_stats(data):
             vcf_line_dict = parse_vcf_line(line, header)
 
             # CREATE FILTERS HERE:
-            if vcf_line_dict["FILTER"] != 'PASS':
-                continue
+            # if vcf_line_dict["FILTER"] != 'PASS':
+            #     continue
 
             # COUNT SAMPLES IN EACH POPULATION
             for pop, size in get_population_sizes(vcf_line_dict, populations).iteritems():
