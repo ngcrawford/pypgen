@@ -15,7 +15,7 @@ from collections import OrderedDict
 class TestSlicing(unittest.TestCase):
 
     def setUp(self):
-        module_dir = os.path.dirname(pypgen.__file__)     
+        module_dir = os.path.dirname(pypgen.__file__)
         self.bgzip_path = os.path.join(module_dir, "data/example.vcf.gz")
 
     def test_make_slices_default_settings(self):
@@ -45,9 +45,9 @@ class TestSlicing(unittest.TestCase):
 class TestVCFInfoParsing(unittest.TestCase):
 
     def setUp(self):
-        module_dir = os.path.dirname(pypgen.__file__)     
+        module_dir = os.path.dirname(pypgen.__file__)
         self.bgzip_path = os.path.join(module_dir, "data/example.vcf.gz")
-        
+
 
         self.populations_list = [
             "cydno:c511,c512,c513,c514,c515,c563,c614,c630,c639,c640",
@@ -193,10 +193,10 @@ class TestFstatsCalculations(unittest.TestCase):
         self.trivial_allele_counts = {'pop1': {0: 2.0, 1: 8.0, },
                                       'pop2': {0: 8.0, 1: 2.0, }}
 
-        self.normal_allele_counts = {'melpo': {0: 18.0, 1: 2.0, 2: 0.0, 3: 0.0, 4: 0.0},
-                                     'cydno': {0: 16.0, 1: 4.0, 2: 0.0, 3: 0.0, 4: 0.0},
-                                     'pachi': {0: 4.0, 1: 16.0, 2: 0.0, 3: 0.0, 4: 0.0},
-                                     'outgroups': {0: 4.0, 1: 0.0, 2: 0.0, 3: 0.0, 4: 0.0}}
+        self.normal_allele_counts = {'melpo': {0: 18.0, 1: 2.0, 2: 0.0, 3: 0.0},
+                                     'cydno': {0: 16.0, 1: 4.0, 2: 0.0, 3: 0.0},
+                                     'pachi': {0: 4.0, 1: 16.0, 2: 0.0, 3: 0.0},
+                                     'outgroups': {0: 4.0, 1: 0.0, 2: 0.0, 3: 0.0}}
 
     def test_calc_fstats_trivial_allele_counts(self):
         f_statistics = VCF.calc_fstats(self.trivial_allele_counts)
