@@ -145,7 +145,7 @@ def Hs_prime_est(allele_freqs, n):
         H's : array_like"""
 
     n = float(n)
-    Hj = [1.0 - sum([freq ** 2 for freq in pop[:4]]) for pop in allele_freqs]
+    Hj = [1.0 - sum([freq ** 2 for freq in pop]) for pop in allele_freqs]
     Hs_prime_est = (1 / n) * sum(Hj)
     return Hs_prime_est
 
@@ -163,7 +163,7 @@ def Ht_prime_est(allele_freqs, n):
     subpopulations (Nei and Chesser 1983)"""
 
     n = float(n)
-    inner = [((1 / n) * sum(allele_list)) ** 2 for allele_list in zip(*allele_freqs)[:4]]
+    inner = [((1 / n) * sum(allele_list)) ** 2 for allele_list in zip(*allele_freqs)]
     Ht_prime_est = 1.0 - sum(inner)
     return Ht_prime_est
 
