@@ -118,7 +118,7 @@ def process_snp_call(snp_call, ref, alt, IUPAC_ambiguities=False):
 
     #called_base = ""
     snp_call = snp_call.split(":")
-
+    #print snp_call
     # process blanks
     if snp_call[0] == "./.":
         called_base = "-"
@@ -134,7 +134,7 @@ def process_snp_call(snp_call, ref, alt, IUPAC_ambiguities=False):
             called_base = alt
 
         # process "0/N"
-        if allele1 == '0' and allele2 != '0':
+        if allele1 != allele2:
 
             if IUPAC_ambiguities == False:
                 called_base = 'N'

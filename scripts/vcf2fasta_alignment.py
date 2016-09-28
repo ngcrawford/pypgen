@@ -241,6 +241,7 @@ def process_vcf_slice(tabix_file, chrm=None, start=None, stop=None, position_dat
         tbx_lines = vcf_line_iterator(vcf_file_handle)
 
     numb_of_seqs = len(position_data._fields[9:])
+
     alignment = np.zeros((stop-start, numb_of_seqs), np.string0)
 
     # This 'error handling' needs to be rewritten.
@@ -248,22 +249,35 @@ def process_vcf_slice(tabix_file, chrm=None, start=None, stop=None, position_dat
     if tbx_lines == None:
         return 'error'
 
-    for line in tbx_lines:
+    fa = pysam.FastaFile('/home/ngcrawford/data/genomes/hg19/hg19.chroms.noChr.fa')
+    pos = start
+    for count, line in enumerate(tbx_lines):
 
         # Calculate minor allele frequency
-        line_info = line.split('\t')[7].split(';')
-        line_info = dict([i.split('=') for i in line_info])
-        if float(line_info["AF"]) <= 0.5:
-            maf = float(line_info["AF"])
+        current_base = position_data._make(line.strip().split("\t"))
+        info_dict = dict([i.split('=') for i in current_base.INFO.split(';')])
+
+
+        if float(info_dict['AF']) <= 0.5:
+            maf = float(info_dict['AF'])
         else:
-            maf = 1.0 - float(line_info["AF"])
+            maf = 1.0 - float(info_dict['AF'])
 
         if maf <= 0.1:
             continue
 
-        current_base = position_data._make(line.strip().split("\t"))
+        if pos != 0:
+            seq = fa.fetch(reference=str(current_base.CHROM), start=pos, end=int(current_base.POS))
+            seq = seq.upper()
+            seqs = [seq for i in range(0, numb_of_seqs)]
+            current_data.append(seqs)
+
         base_calls = callSNPs(current_base, numb_of_seqs, IUPAC_ambiguities=True)
+
         current_data.append(base_calls.copy())
+        pos = int(current_base.POS)
+
+
 
     alignment = np.array(current_data)
     inform_sites = count_informative_sites(alignment)
@@ -288,10 +302,10 @@ def oneliner2phylip(line):
     label_seqs = zip(seqs[:-1:2],seqs[1::2])
     taxa_count = len(label_seqs)
     seq_length = len(label_seqs[0][1])
-    alignment = "%s %s\n" % (taxa_count, seq_length) # add header
+    alignment = ''
     for taxa_name, seq in label_seqs:
         taxa_name = taxa_name.strip()
-        alignment += '%-10s%s\n' % (taxa_name, seq)
+        alignment += '>{}\n{}\n'.format(taxa_name, seq)
     return alignment
 
 def main():
